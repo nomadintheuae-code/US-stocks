@@ -1,9 +1,3 @@
-“””
-config.py — SENTINEL PRO 設定・定数・ティッカーリスト
-
-すべての設定は環境変数または .streamlit/secrets.toml で上書き可能。
-GitHub Secretsに空文字で登録されていても安全にデフォルト値へフォールバック。
-“””
 
 import os
 
