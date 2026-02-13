@@ -1,3 +1,8 @@
+"""
+🛡️ SENTINEL PRO — 完全版 app.py
+市場スキャン + リアルタイム診断 + ポートフォリオ管理
+"""
+
 import json
 import os
 import pickle
@@ -16,10 +21,37 @@ import streamlit as st
 import yfinance as yf
 from openai import OpenAI
 
-from config import config
-from engines.data import CurrencyEngine, DataEngine
-from engines.fundamental import FundamentalEngine, InsiderEngine
-from engines.news import NewsEngine
+# engines がなくても動くようにフォールバック（必要に応じてコメントアウト解除）
+try:
+    from config import config
+    from engines.data import CurrencyEngine, DataEngine
+    from engines.fundamental import FundamentalEngine, InsiderEngine
+    from engines.news import NewsEngine
+except ImportError:
+    # フォールバック用ダミー（公開版用）
+    class DummyEngine:
+        @staticmethod
+        def get_usd_jpy(): return 150.0
+        @staticmethod
+        def get_data(ticker, period="1y"): return None
+        @staticmethod
+        def get_current_price(ticker): return None
+        @staticmethod
+        def get(ticker): return {}
+        @staticmethod
+        def format_for_prompt(data, price): return []
+    CurrencyEngine = DataEngine = DummyEngine
+    FundamentalEngine = InsiderEngine = NewsEngine = DummyEngine
+    config = {
+        "CAPITAL_JPY": 10000000,
+        "MIN_RS_RATING": 70,
+        "MIN_VCP_SCORE": 55,
+        "MIN_PROFIT_FACTOR": 1.5,
+        "STOP_LOSS_ATR": 2.0,
+        "TARGET_R_MULTIPLE": 2.5,
+        "MAX_SAME_SECTOR": 2,
+        "MAX_POSITIONS": 8,
+    }
 
 warnings.filterwarnings("ignore")
 
@@ -58,39 +90,27 @@ st.set_page_config(
 st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
-
   html, body, [class*="css"] { font-family: 'Rajdhani', sans-serif; }
-
   [data-testid="metric-container"] {
-    background: #0d1117;
-    border: 1px solid #1e2d40;
-    border-radius: 10px;
-    padding: 12px 10px;
+    background: #0d1117; border: 1px solid #1e2d40; border-radius: 10px; padding: 12px 10px;
   }
   [data-testid="metric-container"] label { font-size: 0.72rem !important; color: #6b7280; }
   [data-testid="metric-container"] [data-testid="stMetricValue"] { font-size: 1.15rem !important; font-weight: 700; }
-
   .stButton > button { min-height: 48px; font-size: 1rem !important; font-weight: 600; border-radius: 8px; }
-
   .stTabs [data-baseweb="tab"] { font-size: 0.9rem; padding: 10px 8px; font-weight: 600; }
-
-  .pos-card          { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
-  .pos-card.urgent   { border-color: #ef4444; }
-  .pos-card.caution  { border-color: #f59e0b; }
-  .pos-card.profit   { border-color: #00ff7f; }
-
+  .pos-card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .pos-card.urgent { border-color: #ef4444; }
+  .pos-card.caution { border-color: #f59e0b; }
+  .pos-card.profit { border-color: #00ff7f; }
   .pnl-pos { color: #00ff7f; font-weight: 700; font-size: 1.2rem; }
   .pnl-neg { color: #ef4444; font-weight: 700; font-size: 1.2rem; }
   .pnl-neu { color: #9ca3af; font-weight: 700; font-size: 1.2rem; }
-
   .exit-info { font-size: 0.8rem; color: #9ca3af; line-height: 1.8; font-family: 'Share Tech Mono', monospace; }
-
   .section-header {
     font-size: 1.1rem; font-weight: 700; color: #00ff7f;
     border-bottom: 1px solid #1f2937; padding-bottom: 6px;
     margin: 14px 0 10px; font-family: 'Share Tech Mono', monospace;
   }
-
   [data-testid="stDataFrame"] { overflow-x: auto; }
   .block-container { padding-top: 0.8rem !important; padding-bottom: 1rem !important; }
   @media (max-width: 768px) {
@@ -100,7 +120,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📋 セッション状態初期化
+# 📋 セッション状態
 # ==============================================================================
 
 _defaults = {
@@ -116,7 +136,7 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ==============================================================================
-# 💾 データ取得（キャッシュ付き）
+# 💾 データ取得（Streamlitキャッシュ）
 # ==============================================================================
 
 @st.cache_data(ttl=600)
@@ -125,16 +145,13 @@ def get_usd_jpy() -> float:
     st.session_state["usd_jpy"] = rate
     return rate
 
-
 @st.cache_data(ttl=300)
 def fetch_price_data(ticker: str, period: str = "1y") -> Optional[pd.DataFrame]:
     return DataEngine.get_data(ticker, period)
 
-
 @st.cache_data(ttl=60)
 def get_current_price(ticker: str) -> Optional[float]:
     return DataEngine.get_current_price(ticker)
-
 
 @st.cache_data(ttl=300)
 def get_atr(ticker: str) -> Optional[float]:
@@ -151,7 +168,6 @@ def get_atr(ticker: str) -> Optional[float]:
     ], axis=1).max(axis=1)
     atr_val = tr.rolling(14).mean().iloc[-1]
     return round(float(atr_val), 4) if not pd.isna(atr_val) else None
-
 
 @st.cache_data(ttl=600)
 def load_historical_json() -> pd.DataFrame:
@@ -171,23 +187,20 @@ def load_historical_json() -> pd.DataFrame:
                 pass
     return pd.DataFrame(all_data)
 
-
 @st.cache_data(ttl=1800)
 def fetch_news_cached(ticker: str) -> dict:
     return NewsEngine.get(ticker)
 
-
 @st.cache_data(ttl=3600)
 def fetch_fundamental_cached(ticker: str) -> dict:
     return FundamentalEngine.get(ticker)
-
 
 @st.cache_data(ttl=3600)
 def fetch_insider_cached(ticker: str) -> dict:
     return InsiderEngine.get(ticker)
 
 # ==============================================================================
-# 🧠 VCP 分析（アプリ内実装）
+# 🧠 VCP分析（アプリ内）
 # ==============================================================================
 
 def calc_vcp(df: pd.DataFrame) -> dict:
@@ -196,14 +209,12 @@ def calc_vcp(df: pd.DataFrame) -> dict:
         high = df["High"]
         low = df["Low"]
         volume = df["Volume"]
-
         tr = pd.concat([
             high - low,
             (high - close.shift()).abs(),
             (low - close.shift()).abs(),
         ], axis=1).max(axis=1)
         atr = float(tr.rolling(14).mean().iloc[-1])
-
         if np.isnan(atr) or atr <= 0:
             return {"score": 0, "atr": 0, "signals": [], "is_dryup": False}
 
@@ -228,12 +239,9 @@ def calc_vcp(df: pd.DataFrame) -> dict:
         )
 
         signals = []
-        if range_pct < 0.06:
-            signals.append("極度収縮")
-        if is_dryup:
-            signals.append("Vol枯渇")
-        if trend_score == 30:
-            signals.append("MA整列")
+        if range_pct < 0.06: signals.append("極度収縮")
+        if is_dryup: signals.append("Vol枯渇")
+        if trend_score == 30: signals.append("MA整列")
 
         return {
             "score": int(max(0, tight_score + vol_score + trend_score)),
@@ -245,24 +253,24 @@ def calc_vcp(df: pd.DataFrame) -> dict:
         return {"score": 0, "atr": 0, "signals": [], "is_dryup": False}
 
 # ==============================================================================
-# 🤖 DeepSeek AI 呼び出し
+# 🤖 AI呼び出し
 # ==============================================================================
 
 def call_ai(prompt: str) -> str:
     api_key = st.secrets.get("DEEPSEEK_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
-        return "⚠️ DEEPSEEK_API_KEY が設定されていません。\nStreamlit secrets または環境変数に追加してください。"
+        return "⚠️ DEEPSEEK_API_KEY が未設定です。"
     try:
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-        response = client.chat.completions.create(
+        res = client.chat.completions.create(
             model="deepseek-reasoner",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=1200,
         )
-        return response.choices[0].message.content.strip() or ""
+        return res.choices[0].message.content.strip() or ""
     except Exception as e:
-        return f"DeepSeek API エラー: {str(e)}"
+        return f"DeepSeek Error: {str(e)}"
 
 # ==============================================================================
 # 📋 Watchlist 管理
@@ -273,7 +281,7 @@ def load_watchlist() -> list[str]:
         try:
             with open(WATCHLIST_FILE, encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except:
             pass
     return []
 
@@ -302,7 +310,7 @@ def remove_watchlist(ticker: str) -> bool:
     return False
 
 # ==============================================================================
-# 💼 Portfolio 管理
+# 💼 Portfolio 管理（ここから復元）
 # ==============================================================================
 
 def load_portfolio() -> dict:
@@ -310,7 +318,7 @@ def load_portfolio() -> dict:
         try:
             with open(PORTFOLIO_FILE, encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except:
             pass
     return {"positions": {}, "closed": [], "meta": {"created": NOW.isoformat()}}
 
@@ -320,25 +328,17 @@ def save_portfolio(data: dict):
         json.dump(data, f, ensure_ascii=False, indent=2, default=str)
     tmp.replace(PORTFOLIO_FILE)
 
-def upsert_position(
-    ticker: str,
-    shares: int,
-    avg_cost: float,
-    memo: str = "",
-    target: float = 0.0,
-    stop: float = 0.0
-) -> dict:
+def upsert_position(ticker: str, shares: int, avg_cost: float,
+                    memo: str = "", target: float = 0.0, stop: float = 0.0) -> dict:
     ticker = re.sub(r"[^A-Z0-9.\-]", "", ticker.upper())[:10]
     data = load_portfolio()
     pos = data["positions"]
-
     if ticker in pos:
         old = pos[ticker]
-        total_shares = old["shares"] + shares
-        new_avg = round((old["shares"] * old["avg_cost"] + shares * avg_cost) / total_shares, 4)
+        tot = old["shares"] + shares
         pos[ticker].update({
-            "shares": total_shares,
-            "avg_cost": new_avg,
+            "shares": tot,
+            "avg_cost": round((old["shares"] * old["avg_cost"] + shares * avg_cost) / tot, 4),
             "memo": memo or old.get("memo", ""),
             "target": target or old.get("target", 0.0),
             "stop": stop or old.get("stop", 0.0),
@@ -355,7 +355,6 @@ def upsert_position(
             "added_at": NOW.isoformat(),
             "updated_at": NOW.isoformat(),
         }
-
     save_portfolio(data)
     return pos[ticker]
 
@@ -364,47 +363,37 @@ def close_position(ticker: str, shares_sold: Optional[int] = None, sell_price: O
     pos = data["positions"]
     if ticker not in pos:
         return False
-
     p = pos[ticker]
-    actual_sold = shares_sold if shares_sold and shares_sold <= p["shares"] else p["shares"]
-
-    if sell_price is not None:
-        pnl_usd = (sell_price - p["avg_cost"]) * actual_sold
+    actual = shares_sold if shares_sold and shares_sold < p["shares"] else p["shares"]
+    if sell_price:
+        pnl = (sell_price - p["avg_cost"]) * actual
         data["closed"].append({
             "ticker": ticker,
-            "shares": actual_sold,
+            "shares": actual,
             "avg_cost": p["avg_cost"],
             "sell_price": sell_price,
-            "pnl_usd": round(pnl_usd, 2),
-            "pnl_pct": round((sell_price / p["avg_cost"] - 1) * 100, 2) if p["avg_cost"] > 0 else 0.0,
+            "pnl_usd": round(pnl, 2),
+            "pnl_pct": round((sell_price / p["avg_cost"] - 1) * 100, 2) if p["avg_cost"] > 0 else 0,
             "closed_at": NOW.isoformat(),
             "memo": p.get("memo", ""),
         })
-
     if shares_sold and shares_sold < p["shares"]:
         pos[ticker]["shares"] -= shares_sold
     else:
         del pos[ticker]
-
     save_portfolio(data)
     return True
 
-# ==============================================================================
-# 📊 ポートフォリオ損益計算
-# ==============================================================================
-
 def calc_pos_stats(pos: dict, usd_jpy: float) -> dict:
-    ticker = pos["ticker"]
-    cp = get_current_price(ticker)
-    atr = get_atr(ticker)
-
+    cp = get_current_price(pos["ticker"])
+    atr = get_atr(pos["ticker"])
     if cp is None:
         return {**pos, "error": True, "current_price": None}
 
     shares = pos["shares"]
     avg = pos["avg_cost"]
     pnl_usd = (cp - avg) * shares
-    pnl_pct = (cp / avg - 1) * 100 if avg > 0 else 0.0
+    pnl_pct = (cp / avg - 1) * 100 if avg > 0 else 0
     mv_usd = cp * shares
     cb_usd = avg * shares
 
@@ -419,33 +408,17 @@ def calc_pos_stats(pos: dict, usd_jpy: float) -> dict:
         eff_tgt = reg_tgt if reg_tgt > 0 else round(avg + risk * EXIT_CFG["TARGET_R_MULT"], 4)
         trail = round(cp - atr * EXIT_CFG["TRAIL_ATR_MULT"], 4) if cur_r >= EXIT_CFG["TRAIL_START_R"] else None
         scale = round(avg + risk * EXIT_CFG["SCALE_OUT_R"], 4)
-
-        ex = {
-            "atr": atr,
-            "risk": round(risk, 4),
-            "dyn_stop": dyn_stop,
-            "eff_stop": eff_stop,
-            "eff_tgt": eff_tgt,
-            "scale_out": scale,
-            "cur_r": round(cur_r, 2),
-            "trail": trail,
-        }
+        ex = {"atr": atr, "risk": round(risk, 4), "dyn_stop": dyn_stop, "eff_stop": eff_stop,
+              "eff_tgt": eff_tgt, "scale_out": scale, "cur_r": round(cur_r, 2), "trail": trail}
 
     cur_r = ex.get("cur_r", 0)
-    if pnl_pct <= -8:
-        status = "🚨"
-    elif pnl_pct <= -4:
-        status = "⚠️"
-    elif cur_r >= EXIT_CFG["TARGET_R_MULT"]:
-        status = "🎯"
-    elif cur_r >= EXIT_CFG["TRAIL_START_R"]:
-        status = "📈"
-    elif cur_r >= EXIT_CFG["SCALE_OUT_R"]:
-        status = "💰"
-    elif pnl_pct > 0:
-        status = "✅"
-    else:
-        status = "🔵"
+    if pnl_pct <= -8: status = "🚨"
+    elif pnl_pct <= -4: status = "⚠️"
+    elif cur_r >= EXIT_CFG["TARGET_R_MULT"]: status = "🎯"
+    elif cur_r >= EXIT_CFG["TRAIL_START_R"]: status = "📈"
+    elif cur_r >= EXIT_CFG["SCALE_OUT_R"]: status = "💰"
+    elif pnl_pct > 0: status = "✅"
+    else: status = "🔵"
 
     return {
         **pos,
@@ -459,36 +432,20 @@ def calc_pos_stats(pos: dict, usd_jpy: float) -> dict:
         "status": status,
     }
 
-
 def get_portfolio_summary(usd_jpy: float) -> dict:
     data = load_portfolio()
-    positions = data["positions"]
-    if not positions:
-        return {
-            "positions": [],
-            "total": {},
-            "closed": data.get("closed", []),
-        }
+    pos_d = data["positions"]
+    if not pos_d:
+        return {"positions": [], "total": {}, "closed": data.get("closed", [])}
 
-    stats = []
-    for p in positions.values():
-        stat = calc_pos_stats(p, usd_jpy)
-        if not stat.get("error"):
-            stats.append(stat)
-
-    if not stats:
-        return {
-            "positions": [],
-            "total": {},
-            "closed": data.get("closed", []),
-        }
-
-    total_mv = sum(s["mv_usd"] for s in stats)
-    total_cb = sum(s["cb_usd"] for s in stats)
-    total_pnl = sum(s["pnl_usd"] for s in stats)
+    stats = [calc_pos_stats(p, usd_jpy) for p in pos_d.values()]
+    valid = [s for s in stats if not s.get("error")]
+    total_mv = sum(s["mv_usd"] for s in valid)
+    total_cb = sum(s["cb_usd"] for s in valid)
+    total_pnl = sum(s["pnl_usd"] for s in valid)
     cap_usd = config.get("CAPITAL_JPY", 10000000) / usd_jpy
 
-    for s in stats:
+    for s in valid:
         s["pw"] = round(s["mv_usd"] / total_mv * 100, 1) if total_mv > 0 else 0.0
 
     closed = data.get("closed", [])
@@ -497,13 +454,13 @@ def get_portfolio_summary(usd_jpy: float) -> dict:
     return {
         "positions": stats,
         "total": {
-            "count": len(stats),
+            "count": len(valid),
             "mv_usd": round(total_mv, 2),
             "mv_jpy": round(total_mv * usd_jpy, 0),
             "pnl_usd": round(total_pnl, 2),
             "pnl_jpy": round(total_pnl * usd_jpy, 0),
-            "pnl_pct": round(total_pnl / total_cb * 100, 2) if total_cb > 0 else 0.0,
-            "exposure": round(total_mv / cap_usd * 100, 1) if cap_usd > 0 else 0.0,
+            "pnl_pct": round(total_pnl / total_cb * 100 if total_cb else 0, 2),
+            "exposure": round(total_mv / cap_usd * 100 if cap_usd else 0, 1),
             "cash_jpy": round((cap_usd - total_mv) * usd_jpy, 0),
         },
         "closed_stats": {
@@ -543,7 +500,7 @@ with st.sidebar:
     st.metric("💱 USD/JPY", f"¥{usd_jpy_sidebar:,.0f}")
 
 # ==============================================================================
-# 🧭 メインコンテンツ - モード選択
+# 🧭 モード選択
 # ==============================================================================
 
 mode_options = ["📊 スキャン", "🔍 リアルタイム", "💼 ポートフォリオ"]
@@ -559,7 +516,7 @@ st.session_state["mode"] = mode
 usd_jpy = get_usd_jpy()
 
 # ==============================================================================
-# 📊 MODE 1: スキャン結果
+# 📊 MODE 1: スキャン結果（復元）
 # ==============================================================================
 
 if mode == "📊 スキャン":
@@ -629,7 +586,7 @@ if mode == "📊 スキャン":
                 st.write(NewsEngine.format_for_prompt(news))
 
 # ==============================================================================
-# 🔍 MODE 2: リアルタイム診断
+# 🔍 MODE 2: リアルタイム診断（復元）
 # ==============================================================================
 
 elif mode == "🔍 リアルタイム":
@@ -669,7 +626,6 @@ elif mode == "🔍 リアルタイム":
                 vcp = calc_vcp(data)
                 cp = get_current_price(clean)
 
-                # KPI 表示
                 k1, k2, k3, k4 = st.columns(4)
                 k1.metric("💰 現在値", f"${cp:.2f}" if cp else "N/A")
                 k2.metric("🎯 VCPスコア", f"{vcp['score']}/100")
@@ -688,7 +644,6 @@ elif mode == "🔍 リアルタイム":
                 elif insider.get("summary"):
                     st.caption(f"👤 インサイダー動向: {insider.get('summary', '')}")
 
-                # チャート
                 tail = data.tail(60)
                 fig_rt = go.Figure(go.Candlestick(
                     x=tail.index,
@@ -705,7 +660,6 @@ elif mode == "🔍 リアルタイム":
                 )
                 st.plotly_chart(fig_rt, use_container_width=True)
 
-                # 各種計算値
                 price_now = round(float(cp if cp else data["Close"].iloc[-1]), 2)
                 price_1w = round(float(data["Close"].iloc[-5]), 2) if len(data) >= 5 else price_now
                 price_1m = round(float(data["Close"].iloc[-21]), 2) if len(data) >= 21 else price_now
@@ -724,7 +678,6 @@ elif mode == "🔍 リアルタイム":
                 insider_lines = InsiderEngine.format_for_prompt(insider)
                 news_text = NewsEngine.format_for_prompt(news)
 
-                # AIプロンプト（日本語で自然に）
                 prompt = f"""あなたはウォール街のトップヘッジファンドマネージャー「SENTINEL」として、銘柄 {clean} を徹底診断してください。
 現在の日付は {TODAY_STR} です。以下の最新データを基に、古い知識ではなく実測値のみで分析せよ。
 
@@ -764,7 +717,7 @@ VCPスコア: {vcp['score']}/100   シグナル: {', '.join(vcp['signals']) or '
                     st.json(fund)
 
 # ==============================================================================
-# 💼 MODE 3: ポートフォリオ
+# 💼 MODE 3: ポートフォリオ（すでに復元済み）
 # ==============================================================================
 
 else:
@@ -772,7 +725,7 @@ else:
 
     tabs = st.tabs(["📊 損益", "➕ 新規建玉", "🤖 AI分析", "📜 決済履歴"])
 
-    with tabs[0]:  # 損益
+    with tabs[0]:
         if st.session_state["portfolio_dirty"]:
             st.session_state["portfolio_summary"] = get_portfolio_summary(usd_jpy)
             st.session_state["portfolio_dirty"] = False
@@ -782,7 +735,6 @@ else:
             st.info("ポジションがありません。「新規建玉」タブから追加してください。")
         else:
             t = summary["total"]
-            pnl_color = "pnl-pos" if t.get("pnl_jpy", 0) >= 0 else "pnl-neg"
             k1, k2, k3, k4 = st.columns(4)
             k1.metric("💰 評価損益", f"¥{t.get('pnl_jpy', 0):+,}", f"{t.get('pnl_pct', 0):+.2f}%")
             k2.metric("📦 ポジション数", t.get("count", 0))
@@ -820,7 +772,7 @@ else:
                     st.session_state["portfolio_dirty"] = True
                     st.rerun()
 
-    with tabs[1]:  # 新規建玉
+    with tabs[1]:
         st.markdown('<div class="section-header">➕ 新規建玉</div>', unsafe_allow_html=True)
         with st.form("add_position_form"):
             f1, f2 = st.columns(2)
@@ -839,7 +791,7 @@ else:
                     st.success(f"{new_ticker} {new_shares}株 @ ${new_cost:.2f} を追加しました")
                     st.rerun()
 
-    with tabs[2]:  # AI分析
+    with tabs[2]:
         st.markdown('<div class="section-header">🤖 ポートフォリオAI分析</div>', unsafe_allow_html=True)
         if st.button("🚀 AI分析開始", type="primary", use_container_width=True):
             summary = get_portfolio_summary(usd_jpy)
@@ -879,7 +831,7 @@ else:
                 st.markdown(ai.replace("$", r"\$"))
                 st.markdown("---")
 
-    with tabs[3]:  # 決済履歴
+    with tabs[3]:
         st.markdown('<div class="section-header">📜 決済履歴</div>', unsafe_allow_html=True)
         summary = get_portfolio_summary(usd_jpy)
         closed = summary.get("closed", [])
