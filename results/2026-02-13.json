@@ -1,12 +1,9 @@
 {
   "date": "2026-02-13",
-<<<<<<< Updated upstream
   "timestamp": "2026-02-13T22:01:12.500909",
   "runtime": "13.94s",
-=======
   "timestamp": "2026-02-13T22:01:34.722892",
   "runtime": "9.56s",
->>>>>>> Stashed changes
   "usd_jpy": 152.65,
   "scan_count": 315,
   "qualified_count": 38,
