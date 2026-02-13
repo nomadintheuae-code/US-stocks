@@ -1,3 +1,11 @@
+"""
+🛡️ SENTINEL PRO — 完全復元版 app.py
+・市場スキャン（sentinel.pyのJSON結果表示）
+・リアルタイム診断（個別銘柄 + AIレポート）
+・ポートフォリオ管理（損益・登録・AI分析・決済履歴）
+すべて動作するように修正済み
+"""
+
 import json
 import os
 import pickle
@@ -16,14 +24,13 @@ import streamlit as st
 import yfinance as yf
 from openai import OpenAI
 
-# engines がなくても動くようにフォールバック（必要に応じてコメントアウト解除）
+# config と engines がなくても動くフォールバック（GitHub公開用）
 try:
     from config import CONFIG
     from engines.data import CurrencyEngine, DataEngine
     from engines.fundamental import FundamentalEngine, InsiderEngine
     from engines.news import NewsEngine
 except ImportError:
-    # フォールバック用ダミー（公開版用）
     class DummyEngine:
         @staticmethod
         def get_usd_jpy(): return 150.0
@@ -35,9 +42,11 @@ except ImportError:
         def get(ticker): return {}
         @staticmethod
         def format_for_prompt(data, price): return []
+        @staticmethod
+        def get_sector(ticker): return "Unknown"
     CurrencyEngine = DataEngine = DummyEngine
     FundamentalEngine = InsiderEngine = NewsEngine = DummyEngine
-    config = {
+    CONFIG = {
         "CAPITAL_JPY": 10000000,
         "MIN_RS_RATING": 70,
         "MIN_VCP_SCORE": 55,
@@ -46,6 +55,11 @@ except ImportError:
         "TARGET_R_MULTIPLE": 2.5,
         "MAX_SAME_SECTOR": 2,
         "MAX_POSITIONS": 8,
+        "CACHE_EXPIRY": 12*3600,
+        "FUND_CACHE_EXPIRY": 24*3600,
+        "NEWS_CACHE_EXPIRY": 3600,
+        "NEWS_FETCH_TIMEOUT": 6,
+        "NEWS_MAX_CHARS": 400,
     }
 
 warnings.filterwarnings("ignore")
@@ -131,7 +145,7 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ==============================================================================
-# 💾 データ取得（Streamlitキャッシュ）
+# 💾 データ取得
 # ==============================================================================
 
 @st.cache_data(ttl=600)
@@ -195,7 +209,7 @@ def fetch_insider_cached(ticker: str) -> dict:
     return InsiderEngine.get(ticker)
 
 # ==============================================================================
-# 🧠 VCP分析（アプリ内）
+# 🧠 VCP分析（アプリ内実装）
 # ==============================================================================
 
 def calc_vcp(df: pd.DataFrame) -> dict:
@@ -305,7 +319,7 @@ def remove_watchlist(ticker: str) -> bool:
     return False
 
 # ==============================================================================
-# 💼 Portfolio 管理（ここから復元）
+# 💼 Portfolio 管理
 # ==============================================================================
 
 def load_portfolio() -> dict:
@@ -438,7 +452,7 @@ def get_portfolio_summary(usd_jpy: float) -> dict:
     total_mv = sum(s["mv_usd"] for s in valid)
     total_cb = sum(s["cb_usd"] for s in valid)
     total_pnl = sum(s["pnl_usd"] for s in valid)
-    cap_usd = config.get("CAPITAL_JPY", 10000000) / usd_jpy
+    cap_usd = CONFIG.get("CAPITAL_JPY", 10000000) / usd_jpy
 
     for s in valid:
         s["pw"] = round(s["mv_usd"] / total_mv * 100, 1) if total_mv > 0 else 0.0
@@ -511,7 +525,7 @@ st.session_state["mode"] = mode
 usd_jpy = get_usd_jpy()
 
 # ==============================================================================
-# 📊 MODE 1: スキャン結果（復元）
+# 📊 MODE 1: スキャン結果
 # ==============================================================================
 
 if mode == "📊 スキャン":
@@ -581,7 +595,7 @@ if mode == "📊 スキャン":
                 st.write(NewsEngine.format_for_prompt(news))
 
 # ==============================================================================
-# 🔍 MODE 2: リアルタイム診断（復元）
+# 🔍 MODE 2: リアルタイム診断
 # ==============================================================================
 
 elif mode == "🔍 リアルタイム":
@@ -699,7 +713,7 @@ VCPスコア: {vcp['score']}/100   シグナル: {', '.join(vcp['signals']) or '
 4. 【損切りライン】ATR ${atr_val:.2f} ベースで具体的な価格
 5. 【利確目標】Target1/2/3 を具体価格で
 6. 【総合判断】Buy / Watch / Avoid を明言 + 一言根拠
-
+"""
 
                 ai_response = call_ai(prompt)
                 st.markdown("---")
@@ -712,7 +726,7 @@ VCPスコア: {vcp['score']}/100   シグナル: {', '.join(vcp['signals']) or '
                     st.json(fund)
 
 # ==============================================================================
-# 💼 MODE 3: ポートフォリオ（すでに復元済み）
+# 💼 MODE 3: ポートフォリオ
 # ==============================================================================
 
 else:
@@ -747,7 +761,7 @@ else:
 
                 st.markdown(f"""
 <div class="pos-card {card_cls}">
-  <b>{pos['status']} {pos['ticker']}</b> - {pos['shares']}株 @ ${pos['avg_cost']:.2f}<br>
+  <b>{pos['status']} {pos['ticker']}</b> — {pos['shares']}株 @ ${pos['avg_cost']:.2f}<br>
   現在値: ${pos['current_price']:.2f}　比重: {pos.get('pw', 0):.1f}%<br>
   <span class="{pnl_cls}">{pnl_pct:+.2f}%　¥{pos.get('pnl_jpy', 0):+}</span>
   <div class="exit-info">
@@ -806,7 +820,7 @@ else:
                 prompt = f"""プロのヘッジファンドマネージャーとして、このポートフォリオを分析せよ。
 日時: {TODAY_STR}   USD/JPY: {usd_jpy:,.0f}
 
-総資金: ¥{config.get('CAPITAL_JPY', '不明'):,}   運用中: ¥{t.get('mv_jpy', 0):,.0f}
+総資金: ¥{CONFIG.get('CAPITAL_JPY', '不明'):,}   運用中: ¥{t.get('mv_jpy', 0):,.0f}
 評価損益: ¥{t.get('pnl_jpy', 0):+,.0f}  ({t.get('pnl_pct', 0):+.2f}%)
 エクスポージャー: {t.get('exposure', 0):.1f}%
 
@@ -842,3 +856,9 @@ else:
             df_closed = pd.DataFrame(closed[::-1])
             show_cols = [c for c in ["closed_at", "ticker", "shares", "avg_cost", "sell_price", "pnl_usd", "pnl_pct", "memo"] if c in df_closed.columns]
             st.dataframe(df_closed[show_cols], use_container_width=True, height=350)
+
+# ==============================================================================
+# フッター
+# ==============================================================================
+st.markdown("---")
+st.caption(f"🛡️ SENTINEL PRO | {TODAY_STR} | USD/JPY: {usd_jpy:.1f}")
