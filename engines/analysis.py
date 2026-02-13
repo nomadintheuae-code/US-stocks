@@ -1,11 +1,3 @@
-“””
-engines/analysis.py — テクニカル分析エンジン
-
-- VCPAnalyzer       : Volatility Contraction Pattern スコアリング (0-100)
-- RSAnalyzer        : IBD方式 RSパーセンタイルランキング
-- StrategyValidator : 250日ウォークフォワードバックテスト
-  “””
-
 import pandas as pd
 import numpy as np
 
