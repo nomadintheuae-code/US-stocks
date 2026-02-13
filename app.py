@@ -747,7 +747,7 @@ else:
 
                 st.markdown(f"""
 <div class="pos-card {card_cls}">
-  <b>{pos['status']} {pos['ticker']}</b> — {pos['shares']}株 @ ${pos['avg_cost']:.2f}<br>
+  <b>{pos['status']} {pos['ticker']}</b> - {pos['shares']}株 @ ${pos['avg_cost']:.2f}<br>
   現在値: ${pos['current_price']:.2f}　比重: {pos.get('pw', 0):.1f}%<br>
   <span class="{pnl_cls}">{pnl_pct:+.2f}%　¥{pos.get('pnl_jpy', 0):+}</span>
   <div class="exit-info">
