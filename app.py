@@ -3,7 +3,7 @@ app.py — SENTINEL PRO Streamlit UI
 
 モード:
     📊 スキャン    — 前回スキャン結果の表示・セクターマップ
-    🔍 リアルタイム — 個別銘柄のAI深度診断(DeepSeek-Reasoner)
+    🔍 リアルタイム — 個別銘柄のAI深度診断（DeepSeek-Reasoner）
     💼 ポートフォリオ — 損益管理・出口戦略・AI分析
 """
 
@@ -123,7 +123,7 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ==============================================================================
-# 💾 データ取得(Streamlit キャッシュ付き)
+# 💾 データ取得（Streamlit キャッシュ付き）
 # ==============================================================================
 
 @st.cache_data(ttl=600)
@@ -190,7 +190,7 @@ def fetch_insider_cached(ticker: str) -> dict:
     return InsiderEngine.get(ticker)
 
 # ==============================================================================
-# 🧠 VCP 分析(app内ローカル — sentinel不要で動作)
+# 🧠 VCP 分析（app内ローカル — sentinel不要で動作）
 # ==============================================================================
 
 def calc_vcp(df: pd.DataFrame) -> dict:
@@ -233,7 +233,7 @@ def calc_vcp(df: pd.DataFrame) -> dict:
         return {"score": 0, "atr": 0, "signals": [], "is_dryup": False}
 
 # ==============================================================================
-# 🤖 AI(DeepSeek-Reasoner)
+# 🤖 AI（DeepSeek-Reasoner）
 # ==============================================================================
 
 def call_ai(prompt: str) -> str:
@@ -479,31 +479,6 @@ if mode == "📊 スキャン":
         latest_date = df_hist["date"].max()
         latest_df   = df_hist[df_hist["date"] == latest_date].drop_duplicates("ticker")
 
-        # 市場環境バナー(JSONから読み込み)
-        try:
-            import json as _json
-            latest_file = sorted(Path("./results").glob("*.json"), reverse=True)[0]
-            with open(latest_file) as f:
-                latest_raw = _json.load(f)
-            regime_data = latest_raw.get("regime", {})
-            regime = regime_data.get("regime", "BULL")
-            regime_color = {"BULL": "🟢", "CAUTION": "🟡", "BEAR": "🔴"}.get(regime, "⚪")
-            if regime != "BULL":
-                st.warning(
-                    f"{regime_color} **{regime}市場** — "
-                    f"SPY ${regime_data.get('spy','?')}  "
-                    f"vs MA50: {regime_data.get('spy_vs_ma50',0):+.1f}%  "
-                    f"vs MA200: {regime_data.get('spy_vs_ma200',0):+.1f}%"
-                )
-            else:
-                st.success(
-                    f"{regime_color} **{regime}市場** — "
-                    f"SPY ${regime_data.get('spy','?')}  "
-                    f"vs MA50: {regime_data.get('spy_vs_ma50',0):+.1f}%"
-                )
-        except:
-            pass
-
         # サマリー KPI
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("📅 最終スキャン", latest_date)
@@ -514,23 +489,21 @@ if mode == "📊 スキャン":
         # セクターマップ
         st.markdown('<div class="section-header">🗺️ セクターマップ</div>', unsafe_allow_html=True)
         if "vcp_score" in latest_df.columns and "sector" in latest_df.columns:
-            color_col = "score" if "score" in latest_df.columns else ("rs" if "rs" in latest_df.columns else "vcp_score")
             fig = px.treemap(
                 latest_df, path=["sector", "ticker"],
                 values="vcp_score",
-                color=color_col,
+                color="rs" if "rs" in latest_df.columns else "vcp_score",
                 color_continuous_scale="RdYlGn",
             )
             fig.update_layout(template="plotly_dark", height=320, margin=dict(t=10, b=0))
             st.plotly_chart(fig, use_container_width=True)
 
-        # 銘柄テーブル(scoreカラム追加)
+        # 銘柄テーブル
         st.markdown('<div class="section-header">💎 銘柄リスト</div>', unsafe_allow_html=True)
-        show_cols = [c for c in ["ticker", "status", "price", "score", "vcp_score", "rs", "sector"] if c in latest_df.columns]
-        grad_cols = [c for c in ["score", "vcp_score"] if c in show_cols]
+        show_cols = [c for c in ["ticker", "status", "price", "vcp_score", "rs", "sector"] if c in latest_df.columns]
         st.dataframe(
-            latest_df[show_cols].sort_values("score", ascending=False).style.background_gradient(
-                subset=grad_cols if grad_cols else [], cmap="Greens"
+            latest_df[show_cols].style.background_gradient(
+                subset=["vcp_score"] if "vcp_score" in show_cols else [], cmap="Greens"
             ),
             use_container_width=True, height=300,
         )
@@ -545,7 +518,6 @@ if mode == "📊 スキャン":
                 fig_c = go.Figure(go.Candlestick(
                     x=tail.index, open=tail["Open"], high=tail["High"],
                     low=tail["Low"], close=tail["Close"],
-
                 ))
                 fig_c.update_layout(template="plotly_dark", height=320,
                                      xaxis_rangeslider_visible=False, margin=dict(t=10, b=0))
@@ -647,19 +619,19 @@ elif mode == "🔍 リアルタイム":
                 # ── AIプロンプト ──────────────────────────────────────
                 prompt = (
                     f"ウォール街のトップファンドマネージャーAI「SENTINEL」として{clean}を診断せよ。\n\n"
-                    f"━━━ テクニカルデータ(価格根拠はこれのみ。古い学習データは使うな) ━━━\n"
+                    f"━━━ テクニカルデータ（価格根拠はこれのみ。古い学習データは使うな） ━━━\n"
                     f"診断日: {TODAY_STR}\n"
                     f"現在値: ${price_now}  (1週:{chg_1w:+.1f}%  1ヶ月:{chg_1m:+.1f}%  3ヶ月:{chg_3m:+.1f}%)\n"
                     f"52週安値: ${price_52wl}  52週高値: ${price_52wh}\n"
                     f"MA50: ${ma50_val}  MA200: ${ma200_val}\n"
                     f"ATR(14): ${atr_val}  直近20日ピボット: ${pivot_val}\n"
                     f"VCPスコア: {vcp['score']}/100  シグナル: {vcp['signals']}\n\n"
-                    f"━━━ ファンダメンタルデータ(実測値 — 必ず分析に組み込め) ━━━\n"
+                    f"━━━ ファンダメンタルデータ（実測値 — 必ず分析に組み込め） ━━━\n"
                     f"{chr(10).join(fund_lines) if fund_lines else '取得できず'}\n\n"
-                    + (f"━━━ インサイダー取引(実測値) ━━━\n{chr(10).join(insider_lines)}\n\n" if insider_lines else "")
-                    + f"━━━ 最新ニュース(本文抜粋含む — 内容を深く読み取り必ず反映せよ) ━━━\n"
+                    + (f"━━━ インサイダー取引（実測値） ━━━\n{chr(10).join(insider_lines)}\n\n" if insider_lines else "")
+                    + f"━━━ 最新ニュース（本文抜粋含む — 内容を深く読み取り必ず反映せよ） ━━━\n"
                     f"{news_text}\n\n"
-                    f"━━━ 出力形式(800文字以上、Markdown形式) ━━━\n"
+                    f"━━━ 出力形式（800文字以上、Markdown形式） ━━━\n"
                     f"1. 【現状分析】現在値${price_now}を起点に、ニュース・ファンダメンタルを引用して語れ\n"
                     f"2. 【隠れたリスク】アナリスト目標乖離/インサイダー動向/空売り比率を必ず言及せよ\n"
                     f"3. 【エントリー戦略】現在値${price_now}から5〜15%以内の現実的な押し目水準を示せ\n"
