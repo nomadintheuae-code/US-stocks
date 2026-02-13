@@ -1,12 +1,3 @@
-“””
-engines/fundamental.py — ファンダメンタル・インサイダーデータ取得
-
-- FundamentalEngine : アナリスト目標株価・空売り比率・機関保有率 (yfinance.info)
-- InsiderEngine     : インサイダー取引サマリー (yfinance.insider_transactions)
-
-すべて無料API。キャッシュ付き（TTL=24h）。
-“””
-
 import json
 import time
 from datetime import datetime, timedelta
