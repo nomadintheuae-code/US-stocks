@@ -22,7 +22,7 @@ from engines.data import CurrencyEngine, DataEngine
 from engines.fundamental import FundamentalEngine, InsiderEngine
 from engines.news import NewsEngine
 
-warnings.filterwarnings(“ignore”)
+warnings.filterwarnings("ignore")
 
 # ==============================================================================
 
