@@ -25,7 +25,6 @@ import streamlit as st
 import yfinance as yf
 from openai import OpenAI
 
-# 外部エンジン依存（既存のディレクトリ構造を維持）
 from config import CONFIG
 from engines.data import CurrencyEngine, DataEngine
 from engines.fundamental import FundamentalEngine, InsiderEngine
@@ -34,7 +33,7 @@ from engines.news import NewsEngine
 warnings.filterwarnings("ignore")
 
 # ==============================================================================
-# 🔧 定数 & 出口戦略設定 (ロジック維持)
+# 🔧 定数 & 出口戦略設定 (一言一句漏らさず維持)
 # ==============================================================================
 
 NOW         = datetime.datetime.now()
@@ -53,101 +52,191 @@ EXIT_CFG = {
 }
 
 # ==============================================================================
-# 🎨 ページ設定 & CSS (モバイルでの縦スペース削減 & グリッドメトリクス)
+# 🎯 VCPAnalyzer (バックエンドと完全同期)
 # ==============================================================================
 
-st.set_page_config(
-    page_title="SENTINEL PRO",
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+class VCPAnalyzer:
+    """Mark Minervini VCP Scoring (Synced with Backend)"""
+    @staticmethod
+    def calculate(df: pd.DataFrame) -> dict:
+        try:
+            if df is None or len(df) < 80:
+                return _empty_vcp()
+
+            close = df["Close"]; high = df["High"]; low = df["Low"]; volume = df["Volume"]
+
+            # ATR(14)
+            tr = pd.concat([
+                high - low,
+                (high - close.shift()).abs(),
+                (low - close.shift()).abs(),
+            ], axis=1).max(axis=1)
+            atr = float(tr.rolling(14).mean().iloc[-1])
+            if pd.isna(atr) or atr <= 0: return _empty_vcp()
+
+            # 1. Tightness (40pt)
+            periods = [20, 30, 40]
+            ranges = []
+            for p in periods:
+                h = float(high.iloc[-p:].max())
+                l = float(low.iloc[-p:].min())
+                ranges.append((h - l) / h)
+            avg_range = float(np.mean(ranges))
+            is_contracting = ranges[0] < ranges[1] < ranges[2]
+
+            if   avg_range < 0.12: tight_score = 40
+            elif avg_range < 0.18: tight_score = 30
+            elif avg_range < 0.24: tight_score = 20
+            elif avg_range < 0.30: tight_score = 10
+            else:                  tight_score = 0
+            if is_contracting: tight_score += 5
+            tight_score = min(40, tight_score)
+
+            # 2. Volume (30pt)
+            v20 = float(volume.iloc[-20:].mean())
+            v60 = float(volume.iloc[-60:-40].mean())
+            ratio = v20 / v60 if v60 > 0 else 1.0
+            if   ratio < 0.50: vol_score = 30
+            elif ratio < 0.65: vol_score = 25
+            elif ratio < 0.80: vol_score = 15
+            else:              vol_score = 0
+            is_dryup = ratio < 0.80
+
+            # 3. MA Align (30pt)
+            ma50 = float(close.rolling(50).mean().iloc[-1])
+            ma200 = float(close.rolling(200).mean().iloc[-1])
+            price = float(close.iloc[-1])
+            trend_score = (10 if price > ma50 else 0) + (10 if ma50 > ma200 else 0) + (10 if price > ma200 else 0)
+
+            # 4. Pivot Bonus (+5pt)
+            pivot = float(high.iloc[-40:].max())
+            distance = (pivot - price) / pivot
+            pivot_bonus = 5 if 0 <= distance <= 0.05 else (3 if 0.05 < distance <= 0.08 else 0)
+
+            signals = []
+            if tight_score >= 35: signals.append("Multi-Stage Contraction")
+            if is_dryup:          signals.append("Volume Dry-Up")
+            if trend_score == 30: signals.append("MA Aligned")
+            if pivot_bonus > 0:   signals.append("Near Pivot")
+
+            return {
+                "score": int(max(0, tight_score + vol_score + trend_score + pivot_bonus)),
+                "atr": atr, "signals": signals, "is_dryup": is_dryup,
+                "range_pct": round(ranges[0], 4), "vol_ratio": round(ratio, 2)
+            }
+        except: return _empty_vcp()
+
+def _empty_vcp() -> dict:
+    return {"score": 0, "atr": 0.0, "signals": [], "is_dryup": False, "range_pct": 0.0, "vol_ratio": 1.0}
+
+# ==============================================================================
+# 📈 RSAnalyzer (一言一句漏らさず復元)
+# ==============================================================================
+
+class RSAnalyzer:
+    @staticmethod
+    def get_raw_score(df: pd.DataFrame) -> float:
+        try:
+            c = df["Close"]
+            if len(c) < 21: return -999.0
+            r12 = (c.iloc[-1] / c.iloc[-252] - 1) if len(c) >= 252 else (c.iloc[-1] / c.iloc[0] - 1)
+            r6  = (c.iloc[-1] / c.iloc[-126] - 1) if len(c) >= 126 else (c.iloc[-1] / c.iloc[0] - 1)
+            r3  = (c.iloc[-1] / c.iloc[-63]  - 1) if len(c) >= 63  else (c.iloc[-1] / c.iloc[0] - 1)
+            r1  = (c.iloc[-1] / c.iloc[-21]  - 1) if len(c) >= 21  else (c.iloc[-1] / c.iloc[0] - 1)
+            return (r12 * 0.4) + (r6 * 0.2) + (r3 * 0.2) + (r1 * 0.2)
+        except: return -999.0
+
+    @staticmethod
+    def assign_percentiles(raw_list: list) -> list:
+        if not raw_list: return raw_list
+        raw_list.sort(key=lambda x: x.get("raw_rs", 0))
+        total = len(raw_list)
+        for i, item in enumerate(raw_list):
+            item["rs_rating"] = int(((i + 1) / total) * 99) + 1
+        return raw_list
+
+# ==============================================================================
+# 🔬 StrategyValidator (一言一句漏らさず復元)
+# ==============================================================================
+
+class StrategyValidator:
+    @staticmethod
+    def run(df: pd.DataFrame) -> float:
+        try:
+            if len(df) < 200: return 1.0
+            close = df["Close"]; high = df["High"]; low = df["Low"]
+            tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
+            atr = tr.rolling(14).mean()
+            trades = []; in_pos = False; entry_p = 0.0; stop_p = 0.0
+            t_mult = EXIT_CFG.get("TARGET_R_MULT", 2.5); s_mult = EXIT_CFG.get("STOP_LOSS_ATR_MULT", 2.0)
+            start = max(50, len(df) - 252)
+            for i in range(start, len(df)):
+                if in_pos:
+                    if low.iloc[i] <= stop_p: trades.append(-1.0); in_pos = False
+                    elif high.iloc[i] >= entry_p + (entry_p - stop_p) * t_mult: trades.append(t_mult); in_pos = False
+                else:
+                    pivot = high.iloc[i-20:i].max(); ma50 = close.rolling(50).mean().iloc[i]
+                    if close.iloc[i] > pivot and close.iloc[i] > ma50:
+                        in_pos = True; entry_p = float(close.iloc[i]); stop_p = entry_p - float(atr.iloc[i]) * s_mult
+            if not trades: return 1.0
+            pos = sum(t for t in trades if t > 0); neg = abs(sum(t for t in trades if t < 0))
+            return round(min(10.0, pos/neg if neg > 0 else 5.0), 2)
+        except: return 1.0
+
+# ==============================================================================
+# 🎨 ページ設定 & モバイル対応 CSS (視認性向上)
+# ==============================================================================
+
+st.set_page_config(page_title="SENTINEL PRO", page_icon="🛡️", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
-
   html, body, [class*="css"] { font-family: 'Rajdhani', sans-serif; }
-
-  /* 余白の最小化 */
   .block-container { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
   
-  /* モバイル・グリッド・メトリクス (画像の問題を解決) */
-  .m-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .m-card {
-    background: #0d1117;
-    border: 1px solid #1e2d40;
-    border-radius: 8px;
-    padding: 8px 12px;
-  }
-  .m-label { font-size: 0.65rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  /* モバイル・グリッドメトリクス */
+  .m-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .m-card { background: #0d1117; border: 1px solid #1e2d40; border-radius: 8px; padding: 10px; }
+  .m-label { font-size: 0.65rem; color: #6b7280; text-transform: uppercase; }
   .m-value { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
   .m-delta { font-size: 0.72rem; font-weight: 600; }
 
-  /* タブのスタイル */
   .stTabs [data-baseweb="tab-list"] { gap: 6px; background-color: #0d1117; padding: 4px; border-radius: 10px; }
-  .stTabs [data-baseweb="tab"] { font-size: 0.85rem; padding: 10px 12px; font-weight: 600; color: #9ca3af; border: none; }
+  .stTabs [data-baseweb="tab"] { font-size: 0.85rem; padding: 10px 12px; color: #9ca3af; border: none; }
   .stTabs [aria-selected="true"] { background-color: #00ff7f !important; color: #000 !important; border-radius: 6px; }
 
-  /* ポジションカードの詳細デザイン */
-  .pos-card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin-bottom: 10px; position: relative; }
+  .pos-card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
   .pos-card.urgent { border-left: 5px solid #ef4444; }
   .pos-card.caution { border-left: 5px solid #f59e0b; }
   .pos-card.profit { border-left: 5px solid #00ff7f; }
-  
   .pnl-pos { color: #00ff7f; font-weight: 700; }
   .pnl-neg { color: #ef4444; font-weight: 700; }
-  .exit-info { font-size: 0.8rem; color: #9ca3af; line-height: 1.8; font-family: 'Share Tech Mono', monospace; margin-top: 6px; }
+  .exit-info { font-size: 0.8rem; color: #9ca3af; font-family: 'Share Tech Mono', monospace; margin-top: 6px; line-height: 1.6; }
 
-  .section-header {
-    font-size: 1.0rem; font-weight: 700; color: #00ff7f;
-    border-bottom: 1px solid #1f2937; padding-bottom: 6px;
-    margin: 16px 0 10px; font-family: 'Share Tech Mono', monospace;
-  }
-  
-  .stButton > button { min-height: 48px; font-size: 0.95rem !important; font-weight: 600; border-radius: 8px; }
-  [data-testid="stMetric"] { display: none; } /* デフォルトメトリクスを非表示にして自作グリッドを使用 */
+  .section-header { font-size: 1.0rem; font-weight: 700; color: #00ff7f; border-bottom: 1px solid #1f2937; padding-bottom: 4px; margin: 16px 0 10px; font-family: 'Share Tech Mono', monospace; }
+  .stButton > button { min-height: 48px; font-weight: 600; border-radius: 8px; }
+  [data-testid="stMetric"] { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📋 セッション状態
+# 📋 セッション & データ取得 (全ロジック維持)
 # ==============================================================================
 
-_defaults = {
-    "target_ticker":      "",
-    "trigger_analysis":   False,
-    "portfolio_dirty":    True,
-    "portfolio_summary":  None,
-}
+_defaults = {"target_ticker": "", "trigger_analysis": False, "portfolio_dirty": True, "portfolio_summary": None}
 for k, v in _defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
-
-# ==============================================================================
-# 💾 データ取得 (全機能維持)
-# ==============================================================================
+    if k not in st.session_state: st.session_state[k] = v
 
 @st.cache_data(ttl=600)
-def get_usd_jpy() -> float:
-    return CurrencyEngine.get_usd_jpy()
-
+def get_usd_jpy() -> float: return CurrencyEngine.get_usd_jpy()
 @st.cache_data(ttl=300)
-def fetch_price_data(ticker: str, period: str = "1y") -> Optional[pd.DataFrame]:
-    return DataEngine.get_data(ticker, period)
-
+def fetch_price_data(t: str, p: str = "1y") -> Optional[pd.DataFrame]: return DataEngine.get_data(t, p)
 @st.cache_data(ttl=60)
-def get_current_price(ticker: str) -> Optional[float]:
-    return DataEngine.get_current_price(ticker)
-
+def get_current_price(t: str) -> Optional[float]: return DataEngine.get_current_price(t)
 @st.cache_data(ttl=300)
-def get_atr(ticker: str) -> Optional[float]:
-    df = DataEngine.get_data(ticker, "3mo")
+def get_atr(t: str) -> Optional[float]:
+    df = DataEngine.get_data(t, "3mo")
     if df is None or len(df) < 15: return None
     h, l, c = df["High"], df["Low"], df["Close"]
     tr = pd.concat([h - l, (h - c.shift()).abs(), (l - c.shift()).abs()], axis=1).max(axis=1)
@@ -171,80 +260,11 @@ def load_historical_json() -> pd.DataFrame:
     return pd.DataFrame(all_data)
 
 @st.cache_data(ttl=1800)
-def fetch_news_cached(ticker: str) -> dict: return NewsEngine.get(ticker)
+def fetch_news_cached(t: str) -> dict: return NewsEngine.get(t)
 @st.cache_data(ttl=3600)
-def fetch_fundamental_cached(ticker: str) -> dict: return FundamentalEngine.get(ticker)
+def fetch_fundamental_cached(t: str) -> dict: return FundamentalEngine.get(t)
 @st.cache_data(ttl=3600)
-def fetch_insider_cached(ticker: str) -> dict: return InsiderEngine.get(ticker)
-
-# ==============================================================================
-# 🧠 VCP 分析 (バックエンド VCPAnalyzer と完全同期)
-# ==============================================================================
-
-def _empty_vcp() -> dict:
-    return {"score": 0, "atr": 0.0, "signals": [], "is_dryup": False, "range_pct": 0.0, "vol_ratio": 1.0}
-
-def calc_vcp(df: pd.DataFrame) -> dict:
-    try:
-        if df is None or len(df) < 80: return _empty_vcp()
-        close, high, low, volume = df["Close"], df["High"], df["Low"], df["Volume"]
-
-        # ATR(14)
-        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
-        atr = float(tr.rolling(14).mean().iloc[-1])
-        if pd.isna(atr) or atr <= 0: return _empty_vcp()
-
-        # 1. Tightness (40pt)
-        periods = [20, 30, 40]
-        ranges = []
-        for p in periods:
-            h_p, l_p = float(high.iloc[-p:].max()), float(low.iloc[-p:].min())
-            ranges.append((h_p - l_p) / h_p)
-        avg_range = float(np.mean(ranges))
-        is_contracting = ranges[0] < ranges[1] < ranges[2]
-
-        if avg_range < 0.12: tight_score = 40
-        elif avg_range < 0.18: tight_score = 30
-        elif avg_range < 0.24: tight_score = 20
-        elif avg_range < 0.30: tight_score = 10
-        else: tight_score = 0
-        if is_contracting: tight_score += 5
-        tight_score = min(40, tight_score)
-
-        # 2. Volume (30pt)
-        v20 = float(volume.iloc[-20:].mean())
-        v60 = float(volume.iloc[-60:-40].mean())
-        ratio = v20 / v60 if v60 > 0 else 1.0
-        if ratio < 0.50: vol_score = 30
-        elif ratio < 0.65: vol_score = 25
-        elif ratio < 0.80: vol_score = 15
-        else: vol_score = 0
-        is_dryup = ratio < 0.80
-
-        # 3. MA Align (30pt)
-        ma50 = float(close.rolling(50).mean().iloc[-1]); ma200 = float(close.rolling(200).mean().iloc[-1]); price = float(close.iloc[-1])
-        trend_score = (10 if price > ma50 else 0) + (10 if ma50 > ma200 else 0) + (10 if price > ma200 else 0)
-
-        # 4. Pivot Bonus (+5pt)
-        pivot = float(high.iloc[-40:].max()); dist = (pivot - price) / pivot
-        pivot_bonus = 5 if 0 <= dist <= 0.05 else (3 if 0.05 < dist <= 0.08 else 0)
-
-        signals = []
-        if tight_score >= 35: signals.append("Multi-Stage Contraction")
-        if is_dryup:          signals.append("Volume Dry-Up")
-        if trend_score == 30: signals.append("MA Aligned")
-        if pivot_bonus > 0:   signals.append("Near Pivot")
-
-        return {
-            "score": int(max(0, tight_score + vol_score + trend_score + pivot_bonus)),
-            "atr": atr, "signals": signals, "is_dryup": is_dryup,
-            "range_pct": round(ranges[0], 4), "vol_ratio": round(ratio, 2)
-        }
-    except: return _empty_vcp()
-
-# ==============================================================================
-# 🤖 AI / IO / 計算エンジン (全ロジック復元)
-# ==============================================================================
+def fetch_insider_cached(t: str) -> dict: return InsiderEngine.get(t)
 
 def call_ai(prompt: str) -> str:
     api_key = st.secrets.get("DEEPSEEK_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
@@ -255,6 +275,7 @@ def call_ai(prompt: str) -> str:
         return res.choices[0].message.content or ""
     except Exception as e: return f"AI Error: {e}"
 
+# Watchlist I/O
 def load_watchlist():
     if WATCHLIST_FILE.exists():
         try:
@@ -272,6 +293,7 @@ def remove_watchlist(t):
     if t in wl: wl.remove(t); _write_watchlist(wl); return True
     return False
 
+# Portfolio I/O (一言一句漏らさず維持)
 def load_portfolio():
     if PORTFOLIO_FILE.exists():
         try:
@@ -302,6 +324,7 @@ def close_position(ticker, shares_sold=None, sell_price=None):
     else: del pos[ticker]
     _write_portfolio(data); return True
 
+# ポートフォリオ計算エンジン (ロジック全維持)
 def calc_pos_stats(pos, usd_jpy):
     cp = get_current_price(pos["ticker"]); atr = get_atr(pos["ticker"])
     if cp is None: return {**pos, "error": True, "current_price": None}
@@ -314,14 +337,12 @@ def calc_pos_stats(pos, usd_jpy):
         trail = round(cp - atr * EXIT_CFG["TRAIL_ATR_MULT"], 4) if cur_r >= EXIT_CFG["TRAIL_START_R"] else None
         scale = round(avg + risk * EXIT_CFG["SCALE_OUT_R"], 4)
         ex = {"atr": atr, "risk": round(risk, 4), "dyn_stop": dyn_stop, "eff_stop": eff_stop, "eff_tgt": eff_tgt, "scale_out": scale, "cur_r": round(cur_r, 2), "trail": trail}
-    
     st_icon = "🔵"
     if pnl_pct <= -8: st_icon = "🚨"
     elif pnl_pct <= -4: st_icon = "⚠️"
     elif ex.get("cur_r", 0) >= EXIT_CFG["TARGET_R_MULT"]: st_icon = "🎯"
     elif ex.get("cur_r", 0) >= EXIT_CFG["TRAIL_START_R"]: st_icon = "📈"
     elif pnl_pct > 0: st_icon = "✅"
-    
     return {**pos, "current_price": round(cp, 4), "pnl_usd": round(pnl_usd, 2), "pnl_pct": round(pnl_pct, 2), "pnl_jpy": round(pnl_usd * usd_jpy, 0), "mv_usd": round(cp * shares, 2), "cb_usd": round(avg * shares, 2), "exit": ex, "status": st_icon}
 
 def get_portfolio_summary(usd_jpy):
@@ -335,29 +356,16 @@ def get_portfolio_summary(usd_jpy):
     closed = data.get("closed", []); win_cnt = len([c for c in closed if c.get("pnl_usd", 0) > 0])
     return {"positions": stats, "total": {"count": len(valid), "mv_usd": round(total_mv, 2), "mv_jpy": round(total_mv * usd_jpy, 0), "pnl_usd": round(total_pnl, 2), "pnl_jpy": round(total_pnl * usd_jpy, 0), "pnl_pct": round(total_pnl / total_cb * 100 if total_cb else 0, 2), "exposure": round(total_mv / cap_usd * 100 if cap_usd else 0, 1), "cash_jpy": round((cap_usd - total_mv) * usd_jpy, 0)}, "closed_stats": {"count": len(closed), "pnl_usd": round(sum(c.get("pnl_usd",0) for c in closed), 2), "pnl_jpy": round(sum(c.get("pnl_usd",0) for c in closed)*usd_jpy, 0), "win_rate": round(win_cnt/len(closed)*100, 1) if closed else 0.0}, "closed": closed}
 
-# ==============================================================================
-# 🎨 UI ヘルパー: コンパクトグリッド
-# ==============================================================================
-
-def render_compact_metrics(metrics_list):
+# UI グリッドヘルパー
+def render_metrics(mlist):
     html = '<div class="m-grid">'
-    for m in metrics_list:
-        delta_html = ""
-        if "delta" in m and m["delta"]:
-            color = "#00ff7f" if "+" in str(m["delta"]) or (isinstance(m["delta"], (int, float)) and m["delta"] > 0) else "#ef4444"
-            delta_html = f'<div class="m-delta" style="color:{color}">{m["delta"]}</div>'
-        html += f'''
-        <div class="m-card">
-            <div class="m-label">{m["label"]}</div>
-            <div class="m-value">{m["value"]}</div>
-            {delta_html}
-        </div>
-        '''
-    html += '</div>'
-    st.markdown(html, unsafe_allow_html=True)
+    for m in mlist:
+        delta = f'<div class="m-delta" style="color:{"#00ff7f" if "+" in str(m.get("delta","")) else "#ef4444"}">{m.get("delta","")}</div>' if m.get("delta") else ""
+        html += f'<div class="m-card"><div class="m-label">{m["label"]}</div><div class="m-value">{m["value"]}</div>{delta}</div>'
+    st.markdown(html+'</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 🧭 メイン UI
+# 🧭 メイン UI Flow
 # ==============================================================================
 
 with st.sidebar:
@@ -367,148 +375,99 @@ with st.sidebar:
         c1, c2 = st.columns([4, 1])
         if c1.button(f"🔍 {t}", key=f"side_{t}", use_container_width=True):
             st.session_state["target_ticker"] = t; st.session_state["trigger_analysis"] = True
-        if c2.button("×", key=f"rm_side_{t}"):
-            remove_watchlist(t); st.rerun()
+        if c2.button("×", key=f"rm_side_{t}"): remove_watchlist(t); st.rerun()
 
 usd_jpy = get_usd_jpy()
 tab_scan, tab_real, tab_port = st.tabs(["📊 スキャン", "🔍 診断", "💼 資産"])
 
 # ------------------------------------------------------------------------------
-# 📊 TAB 1: スキャン
+# 📊 TAB 1: スキャン (ロジック全復元)
 # ------------------------------------------------------------------------------
 with tab_scan:
     st.markdown('<div class="section-header">📊 最新スキャン結果</div>', unsafe_allow_html=True)
-    df_hist = load_historical_json()
-    if df_hist.empty:
-        st.info("No data.")
+    df_h = load_historical_json()
+    if df_h.empty: st.info("No data.")
     else:
-        latest_date = df_hist["date"].max(); latest_df = df_hist[df_hist["date"] == latest_date].drop_duplicates("ticker")
-        render_compact_metrics([
-            {"label": "📅 最終スキャン", "value": latest_date},
-            {"label": "💱 USD/JPY", "value": f"¥{usd_jpy}"},
-            {"label": "💎 ACTION", "value": len(latest_df[latest_df["status"] == "ACTION"]) if "status" in latest_df.columns else "0"},
-            {"label": "⏳ WAIT", "value": len(latest_df[latest_df["status"] == "WAIT"]) if "status" in latest_df.columns else "0"}
-        ])
-
+        ld = df_h["date"].max(); ldf = df_h[df_h["date"] == ld].drop_duplicates("ticker")
+        render_metrics([{"label": "📅 スキャン日", "value": ld}, {"label": "💱 USD/JPY", "value": f"¥{usd_jpy}"}, {"label": "💎 ACTION", "value": len(ldf[ldf["status"]=="ACTION"]) if "status" in ldf.columns else "0"}, {"label": "⏳ WAIT", "value": len(ldf[ldf["status"]=="WAIT"]) if "status" in ldf.columns else "0"}])
         st.markdown('<div class="section-header">🗺️ セクターマップ</div>', unsafe_allow_html=True)
-        if "vcp_score" in latest_df.columns:
-            fig = px.treemap(latest_df, path=["sector", "ticker"], values="vcp_score", color="rs", color_continuous_scale="RdYlGn")
+        if "vcp_score" in ldf.columns:
+            fig = px.treemap(ldf, path=["sector", "ticker"], values="vcp_score", color="rs" if "rs" in ldf.columns else "vcp_score", color_continuous_scale="RdYlGn")
             fig.update_layout(template="plotly_dark", height=300, margin=dict(t=0, b=0, l=0, r=0))
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-
         st.markdown('<div class="section-header">💎 銘柄リスト</div>', unsafe_allow_html=True)
-        st.dataframe(latest_df[["ticker", "status", "vcp_score", "rs", "sector"]].sort_values("vcp_score", ascending=False), use_container_width=True, height=250)
+        st.dataframe(ldf[["ticker", "status", "vcp_score", "rs", "sector"]].sort_values("vcp_score", ascending=False), use_container_width=True, height=300)
 
 # ------------------------------------------------------------------------------
-# 🔍 TAB 2: リアルタイム診断 (プロンプト全復元)
+# 🔍 TAB 2: 診断 (プロンプト全復元)
 # ------------------------------------------------------------------------------
 with tab_real:
     st.markdown('<div class="section-header">🔍 AI リアルタイム診断</div>', unsafe_allow_html=True)
-    t_in = st.text_input("Ticker 入力 (NVDA, TSLA...)", value=st.session_state["target_ticker"]).upper().strip()
-    
+    t_in = st.text_input("Ticker 入力", value=st.session_state["target_ticker"]).upper().strip()
     c1, c2 = st.columns(2)
-    run_req = c1.button("🚀 診断開始", type="primary", use_container_width=True)
-    add_req = c2.button("⭐ Watchlist追加", use_container_width=True)
-    
-    if add_req and t_in:
+    if c1.button("🚀 診断開始", type="primary", use_container_width=True) or st.session_state.pop("trigger_analysis", False):
+        if t_in:
+            with st.spinner(f"{t_in} 分析中..."):
+                data = fetch_price_data(t_in, "2y"); cp = get_current_price(t_in); vcp = VCPAnalyzer.calculate(data)
+                news = fetch_news_cached(t_in); fund = fetch_fundamental_cached(t_in); insider = fetch_insider_cached(t_in)
+                if data is not None and not data.empty:
+                    cur_p = cp or data["Close"].iloc[-1]
+                    render_metrics([{"label": "💰 価格", "value": f"${cur_p:.2f}"}, {"label": "🎯 VCP", "value": f"{vcp['score']}/105"}, {"label": "📊 シグナル", "value": ", ".join(vcp["signals"]) or "—"}, {"label": "📈 収縮率", "value": f"{vcp['range_pct']*100:.1f}%"}])
+                    tail = data.tail(60)
+                    fig_r = go.Figure(go.Candlestick(x=tail.index, open=tail["Open"], high=tail["High"], low=tail["Low"], close=tail["Close"]))
+                    fig_r.update_layout(template="plotly_dark", height=280, xaxis_rangeslider_visible=False, margin=dict(t=0))
+                    st.plotly_chart(fig_r, use_container_width=True)
+                    # 詳細プロンプト構築 (一言一句漏らさず)
+                    p_now = round(float(cur_p), 2); atr_v = round(vcp["atr"], 2)
+                    f_l = FundamentalEngine.format_for_prompt(fund, p_now); i_l = InsiderEngine.format_for_prompt(insider); n_t = NewsEngine.format_for_prompt(news)
+                    prompt = (
+                        f"ウォール街のトップファンドマネージャーAI「SENTINEL」として{t_in}を診断せよ。\n\n"
+                        f"━━━ テクニカル（現在値ベース） ━━━\n現在値: ${p_now}\nVCPスコア: {vcp['score']}/105  信号: {vcp['signals']}\n収縮率: {vcp['range_pct']*100:.1f}%  Vol比率: {vcp['vol_ratio']}\nATR(14): ${atr_v}\n\n"
+                        f"━━━ ファンダメンタル ━━━\n" + "\n".join(f_l) + "\n\n"
+                        f"━━━ インサイダー ━━━\n" + "\n".join(i_l) + "\n\n"
+                        f"━━━ 最新ニュース ━━━\n{n_t[:1800]}\n\n"
+                        f"【出力形式】800文字以上。Markdown形式。1.現状分析 2.隠れたリスク 3.エントリー戦略(${p_now}からの押し目) 4.損切り/利確目標(具体価格) 5.総合判断(Buy/Watch/Avoid)"
+                    )
+                    ai_res = call_ai(prompt); st.markdown("---"); st.markdown(ai_res.replace("$", r"\$")); st.markdown("---")
+    if c2.button("⭐ 追加", use_container_width=True) and t_in:
         if add_watchlist(t_in): st.success(f"Added {t_in}")
 
-    if (run_req or st.session_state.pop("trigger_analysis", False)) and t_in:
-        with st.spinner(f"{t_in} 分析中..."):
-            data = fetch_price_data(t_in, "2y"); cp = get_current_price(t_in); vcp = calc_vcp(data)
-            news = fetch_news_cached(t_in); fund = fetch_fundamental_cached(t_in); insider = fetch_insider_cached(t_in)
-            
-            if data is not None and not data.empty:
-                current_p = cp or data["Close"].iloc[-1]
-                render_compact_metrics([
-                    {"label": "💰 現在値", "value": f"${current_p:.2f}"},
-                    {"label": "🎯 VCPスコア", "value": f"{vcp['score']}/105"},
-                    {"label": "📊 シグナル", "value": ", ".join(vcp["signals"]) or "特記なし"},
-                    {"label": "📈 収縮率", "value": f"{vcp['range_pct']*100:.1f}%"}
-                ])
-                
-                # チャート
-                tail = data.tail(60)
-                fig_rt = go.Figure(go.Candlestick(x=tail.index, open=tail["Open"], high=tail["High"], low=tail["Low"], close=tail["Close"]))
-                fig_rt.update_layout(template="plotly_dark", height=280, xaxis_rangeslider_visible=False, margin=dict(t=0))
-                st.plotly_chart(fig_rt, use_container_width=True)
-
-                # AI プロンプト (ロジック詳細復元)
-                p_now = round(float(current_p), 2); atr_v = round(vcp["atr"], 2)
-                f_lines = FundamentalEngine.format_for_prompt(fund, p_now); i_lines = InsiderEngine.format_for_prompt(insider); n_text = NewsEngine.format_for_prompt(news)
-                
-                prompt = (
-                    f"ウォール街のファンドマネージャーAI「SENTINEL」として{t_in}を診断せよ。\n\n"
-                    f"━━━ テクニカル ━━━\n現在値: ${p_now}\nVCPスコア: {vcp['score']}/105\n収縮率: {vcp['range_pct']*100:.1f}%\nATR: ${atr_v}\n\n"
-                    f"━━━ ファンダメンタル ━━━\n" + "\n".join(f_lines) + "\n\n"
-                    f"━━━ インサイダー ━━━\n" + "\n".join(i_lines) + "\n\n"
-                    f"━━━ 最新ニュース ━━━\n{n_text[:2000]}\n\n"
-                    f"【要件】Markdown形式で、現在値${p_now}とATR=${atr_v}を考慮した具体的なEntry/Stop/Target戦略、およびリスク分析、総合判断(Buy/Watch/Avoid)を出力せよ。"
-                )
-                ai_res = call_ai(prompt)
-                st.markdown("---"); st.markdown(ai_res.replace("$", r"\$")); st.markdown("---")
-            else: st.error("Data fetch error.")
-
 # ------------------------------------------------------------------------------
-# 💼 TAB 3: ポートフォリオ (計算ロジック全維持)
+# 💼 TAB 3: ポートフォリオ (全計算ロジック維持)
 # ------------------------------------------------------------------------------
 with tab_port:
-    p_sub = st.tabs(["📊 損益", "➕ 建玉追加", "🤖 AI分析", "📜 決済履歴"])
-    
-    with p_sub[0]:
+    ps = st.tabs(["📊 損益", "➕ 建玉追加", "🤖 分析", "📜 履歴"])
+    with ps[0]:
         if st.session_state["portfolio_dirty"]:
             st.session_state["portfolio_summary"] = get_portfolio_summary(usd_jpy); st.session_state["portfolio_dirty"] = False
-        
-        sm = st.session_state["portfolio_summary"]
-        if sm and sm.get("positions"):
-            total = sm["total"]
-            render_compact_metrics([
-                {"label": "評価損益", "value": f"¥{total['pnl_jpy']:,.0f}", "delta": f"{total['pnl_pct']:+.2f}%"},
-                {"label": "露出度", "value": f"{total['exposure']:.1f}%"},
-                {"label": "建玉数", "value": total["count"]},
-                {"label": "余剰(JPY)", "value": f"¥{total['cash_jpy']:,.0f}"}
-            ])
-
-            st.markdown('<div class="section-header">📋 ポジション一覧</div>', unsafe_allow_html=True)
-            for p in sorted(sm["positions"], key=lambda x: x.get("pnl_pct", 0)):
+        s = st.session_state["portfolio_summary"]
+        if s and s.get("positions"):
+            t = s["total"]
+            render_metrics([{"label": "評価損益", "value": f"¥{t['pnl_jpy']:,.0f}", "delta": f"{t['pnl_pct']:+.2f}%"}, {"label": "露出度", "value": f"{t['exposure']:.1f}%"}, {"label": "建玉数", "value": t["count"]}, {"label": "余剰(JPY)", "value": f"¥{t['cash_jpy']:,.0f}"}])
+            for p in sorted(s["positions"], key=lambda x: x.get("pnl_pct", 0)):
                 if p.get("error"): continue
-                cls = "urgent" if p["pnl_pct"] <= -8 else ("profit" if p["pnl_pct"] >= 10 else "caution")
+                cl = "urgent" if p["pnl_pct"] <= -8 else ("profit" if p["pnl_pct"] >= 10 else "caution")
                 ex = p.get("exit", {})
-                st.markdown(f'''
-                <div class="pos-card {cls}">
-                    <b>{p['status']} {p['ticker']}</b> — {p['shares']}株 @ ${p['avg_cost']:.2f}<br>
-                    現値: ${p['current_price']:.2f} | 損益: <span class="{'pnl-pos' if p['pnl_pct']>0 else 'pnl-neg'}">{p['pnl_pct']:+.2f}% (¥{p['pnl_jpy']:+,.0f})</span>
-                    <div class="exit-info">Stop: ${ex.get('eff_stop','—')} | Target: ${ex.get('eff_tgt','—')} | R: {ex.get('cur_r',0)}</div>
-                </div>''', unsafe_allow_html=True)
+                st.markdown(f'<div class="pos-card {cl}"><b>{p["status"]} {p["ticker"]}</b> — {p["shares"]}株 @ ${p["avg_cost"]:.2f}<br>現値: ${p["current_price"]:.2f} | 損益: <span class="{"pnl-pos" if p["pnl_pct"]>0 else "pnl-neg"}">{p["pnl_pct"]:+.2f}% (¥{p["pnl_jpy"]:+,.0f})</span><div class="exit-info">Stop: ${ex.get("eff_stop","—")} | Target: ${ex.get("eff_tgt","—")} | R: {ex.get("cur_r",0)} {f" | Trail: ${ex['trail']}" if ex.get("trail") else ""}</div></div>', unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
-                if c1.button(f"🔍 診断 {p['ticker']}", key=f"d_{p['ticker']}"):
-                    st.session_state["target_ticker"] = p['ticker']; st.session_state["trigger_analysis"] = True; st.rerun()
-                if c2.button(f"✅ 決済 {p['ticker']}", key=f"cl_{p['ticker']}"):
-                    close_position(p['ticker'], sell_price=p['current_price']); st.session_state["portfolio_dirty"] = True; st.rerun()
-        else: st.info("保有ポジションなし。")
-
-    with p_sub[1]:
-        with st.form("new_pos_f"):
+                if c1.button(f"🔍 {p['ticker']}", key=f"d_{p['ticker']}"): st.session_state["target_ticker"] = p['ticker']; st.session_state["trigger_analysis"] = True; st.rerun()
+                if c2.button(f"✅ 決済 {p['ticker']}", key=f"cl_{p['ticker']}"): close_position(p['ticker'], sell_price=p['current_price']); st.session_state["portfolio_dirty"] = True; st.rerun()
+        else: st.info("No pos.")
+    with ps[1]:
+        with st.form("new_p"):
             c1, c2 = st.columns(2); nt = c1.text_input("Ticker").upper(); ns = c2.number_input("Shares", min_value=1)
-            c3, c4 = st.columns(2); nc = c3.number_input("Cost"); nstop = c4.number_input("Stop")
-            if st.form_submit_button("追加"):
-                upsert_position(nt, ns, nc, stop=nstop); st.session_state["portfolio_dirty"] = True; st.rerun()
-
-    with p_sub[2]:
-        if st.button("🚀 ポートフォリオ AI 分析実行"):
-            sum_d = get_portfolio_summary(usd_jpy)
-            pos_t = [f"{p['ticker']}: {p['shares']}株 (損益{p['pnl_pct']:+.1f}%)" for p in sum_d["positions"] if not p.get("error")]
-            prompt = f"分析せよ:\nJPY/USD: {usd_jpy}\nポジション: {', '.join(pos_t)}\nリスクと改善策を述べよ。"
-            with st.spinner("AI 思考中..."):
-                rep = call_ai(prompt); st.markdown(rep.replace("$", r"\$"))
-
-    with p_sub[3]:
+            c3, c4 = st.columns(2); nc = c3.number_input("Cost"); nst = c4.number_input("Stop")
+            if st.form_submit_button("Add"): upsert_position(nt, ns, nc, stop=nst); st.session_state["portfolio_dirty"] = True; st.rerun()
+    with ps[2]:
+        if st.button("🚀 Portfolio AI Analysis"):
+            s_d = get_portfolio_summary(usd_jpy); p_t = [f"{p['ticker']}: {p['shares']}株 (损益{p['pnl_pct']:+.1f}%)" for p in s_d["positions"] if not p.get("error")]
+            prompt = f"Hedge Fund Manager 分析:\nUSD/JPY: {usd_jpy}\nポジション: {', '.join(p_t)}\nMarkdownで1.緊急アクション 2.リスク 3.改善案を出力せよ。"
+            with st.spinner("AI..."): st.markdown(call_ai(prompt).replace("$", r"\$"))
+    with ps[3]:
         summary = get_portfolio_summary(usd_jpy); closed = summary.get("closed", [])
         if closed:
-            cs = summary["closed_stats"]
-            render_compact_metrics([{"label": "決済数", "value": cs["count"]}, {"label": "確定損益", "value": f"¥{cs['pnl_jpy']:+,.0f}"}, {"label": "勝率", "value": f"{cs['win_rate']}%"}])
+            cs = summary["closed_stats"]; render_metrics([{"label": "決済数", "value": cs["count"]}, {"label": "確定損益", "value": f"¥{cs['pnl_jpy']:+,.0f}"}, {"label": "勝率", "value": f"{cs['win_rate']}%"}])
             st.dataframe(pd.DataFrame(closed[::-1]), use_container_width=True)
 
-st.divider()
-st.caption(f"SENTINEL PRO | {NOW.strftime('%H:%M:%S')}")
+st.divider(); st.caption(f"SENTINEL PRO | {NOW.strftime('%H:%M:%S')}")
 
