@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from config import CONFIG, TICKERS
+from config import config, TICKERS
 from engines.analysis import RSAnalyzer, VCPAnalyzer, StrategyValidator
 from engines.data import CurrencyEngine, DataEngine
 from engines.fundamental import FundamentalEngine, InsiderEngine
