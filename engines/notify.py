@@ -1,7 +1,7 @@
 import os
 import requests
 
-from config import config
+from config import CONFIG
 
 # ==============================================================================
 # 📐 ポジションサイジング
