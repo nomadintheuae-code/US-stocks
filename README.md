@@ -7,7 +7,7 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 
 ## Live Demo (Public No-AI Version)
 
-👉 Try it here: [https://beikokukabu.streamlit.app/](https://beikokukabu.streamlit.app/)
+👉 Try it here: [
 
 (Hosted on Streamlit Community Cloud – data via yfinance, no login required)
 
