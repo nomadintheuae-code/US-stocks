@@ -1,11 +1,3 @@
-“””
-app.py — SENTINEL PRO Streamlit UI
-
-モード:
-📊 スキャン    — 前回スキャン結果の表示・セクターマップ
-🔍 リアルタイム — 個別銘柄のAI深度診断（DeepSeek-Reasoner）
-💼 ポートフォリオ — 損益管理・出口戦略・AI分析
-“””
 
 import json
 import os
