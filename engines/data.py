@@ -1,10 +1,3 @@
-“””
-engines/data.py — 価格データ・為替レート取得
-
-- CurrencyEngine : USD/JPY レートをyfinanceから取得
-- DataEngine     : OHLCVデータの取得とキャッシュ管理（pickle）
-  “””
-
 import json
 import pickle
 import time
