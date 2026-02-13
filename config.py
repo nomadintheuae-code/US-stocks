@@ -18,7 +18,7 @@ def _ef(key: str, default: float) -> float:
 # ⚙️ CONFIG
 # ==============================================================================
 
-CONFIG = {
+config = {
     # --- 資金・ポジション管理 ---
     "CAPITAL_JPY":       _ei("CAPITAL_JPY", 1_000_000),   # 運用資金（円）
     "MAX_POSITIONS":     _ei("MAX_POSITIONS", 20),         # 最大同時保有数
