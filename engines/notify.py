@@ -1,10 +1,3 @@
-“””
-engines/notify.py — ポジションサイジング・LINE通知
-
-- calculate_position : ATRベースのリスク管理ポジションサイズ計算
-- send_line          : LINE Messaging API へプッシュ通知
-  “””
-
 import os
 
 import requests
