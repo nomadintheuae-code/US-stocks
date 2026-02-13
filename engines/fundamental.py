@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yfinance as yf
 
-from config import CONFIG
+from config import config
 
 CACHE_DIR = Path("./cache_v45")
 CACHE_DIR.mkdir(exist_ok=True)
