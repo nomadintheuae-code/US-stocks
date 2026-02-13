@@ -7,7 +7,7 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 
 ## Live Demo (Public No-AI Version)
 
-👉 Try it here: [
+👉 Try it here: [https://us-stockssc.streamlit.app]
 
 (Hosted on Streamlit Community Cloud – data via yfinance, no login required)
 
