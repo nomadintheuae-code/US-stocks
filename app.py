@@ -16,7 +16,6 @@ import streamlit as st
 import yfinance as yf
 from openai import OpenAI
 
-config と engines がなくても動くフォールバック
 
 try:
 from config import CONFIG
