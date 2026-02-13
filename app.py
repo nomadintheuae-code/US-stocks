@@ -552,7 +552,7 @@ if mode == "📊 スキャン":
 
         st.markdown('<div class="section-header">🗺️ セクターマップ</div>', unsafe_allow_html=True)
         if "vcp_score" in latest_df.columns and "sector" in latest_df.columns:
-   fig = px.treemap(
+            fig = px.treemap(
                 latest_df,
                 path=["sector", "ticker"],
                 values="vcp_score",
