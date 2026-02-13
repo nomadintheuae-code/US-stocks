@@ -31,7 +31,7 @@ warnings.filterwarnings("ignore")
 # ==============================================================================
 
 NOW         = datetime.datetime.now()
-TODAY_STR   = NOW.strftime(”%Y-%m-%d”)
+TODAY_STR   = NOW.strftime("%Y-%m-%d")
 CACHE_DIR   = Path(”./cache_v45”); CACHE_DIR.mkdir(exist_ok=True)
 RESULTS_DIR = Path(”./results”);   RESULTS_DIR.mkdir(exist_ok=True)
 WATCHLIST_FILE = Path(“watchlist.json”)
