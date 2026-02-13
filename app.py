@@ -1,4 +1,3 @@
-フロントエンドとバックエンドの数字ずれるのわかる？
 import json
 import os
 import pickle
