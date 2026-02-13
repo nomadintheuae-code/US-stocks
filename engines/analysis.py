@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from config import CONFIG
+from config import config
 
 # ==============================================================================
 # 🎯 VCPAnalyzer
