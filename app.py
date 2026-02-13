@@ -16,25 +16,26 @@ import streamlit as st
 import yfinance as yf
 from openai import OpenAI
 
-# 外部エンジンのインポート（configやenginesフォルダが同階層にある前提）
+# 外部エンジンのインポート（GitHubの構成に準拠）
 try:
-    from config import config
+    from config import CONFIG
     from engines.data import CurrencyEngine, DataEngine
     from engines.fundamental import FundamentalEngine, InsiderEngine
     from engines.news import NewsEngine
 except ImportError:
-    # 開発環境用フォールバック
+    # ローカル実行時やファイル不足時のためのフォールバック
     class MockEngine:
         @staticmethod
         def get_usd_jpy(): return 150.0
         @staticmethod
         def get_data(t, p): return None
         @staticmethod
-        def get_current_price(t): return 100.0
+        def get_current_price(t): return None
         @staticmethod
         def get(t): return {}
         @staticmethod
-        def format_for_prompt(d, p=None): return ["データ取得制限中"]
+        def format_for_prompt(d, p=None): return []
+    
     CONFIG = {"CAPITAL_JPY": 10000000}
     CurrencyEngine = DataEngine = FundamentalEngine = InsiderEngine = NewsEngine = MockEngine
 
@@ -133,7 +134,7 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ==============================================================================
-# 💾 データ取得（Streamlit キャッシュ付き）
+# 💾 データ取得
 # ==============================================================================
 
 @st.cache_data(ttl=600)
@@ -193,7 +194,7 @@ def fetch_insider_cached(ticker: str) -> dict:
     return InsiderEngine.get(ticker)
 
 # ==============================================================================
-# 🧠 VCP 分析（app内ローカル — sentinel不要で動作）
+# 🧠 VCP 分析
 # ==============================================================================
 
 def calc_vcp(df: pd.DataFrame) -> dict:
@@ -208,8 +209,7 @@ def calc_vcp(df: pd.DataFrame) -> dict:
         if np.isnan(atr) or atr <= 0:
             return {"score": 0, "atr": 0, "signals": [], "is_dryup": False}
 
-        h10 = float(high.iloc[-10:].max())
-        l10 = float(low.iloc[-10:].min())
+        h10 = float(high.iloc[-10:].max()); l10 = float(low.iloc[-10:].min())
         range_pct = (h10 - l10) / h10
         tight_score = 40 if range_pct <= 0.05 else int(40 * (1 - (range_pct - 0.05) / 0.10))
         tight_score = max(0, min(40, tight_score))
@@ -228,16 +228,11 @@ def calc_vcp(df: pd.DataFrame) -> dict:
             (10 if price > ma200 else 0)
         )
         signals = []
-        if range_pct < 0.06:  signals.append("極度収縮")
-        if is_dryup:          signals.append("Vol枯渇")
+        if range_pct < 0.06: signals.append("極度収縮")
+        if is_dryup: signals.append("Vol枯渇")
         if trend_score == 30: signals.append("MA整列")
-        
-        return {
-            "score": int(max(0, tight_score + vol_score + trend_score)),
-            "atr": atr, 
-            "signals": signals, 
-            "is_dryup": bool(is_dryup)
-        }
+        return {"score": int(max(0, tight_score + vol_score + trend_score)),
+                "atr": atr, "signals": signals, "is_dryup": bool(is_dryup)}
     except:
         return {"score": 0, "atr": 0, "signals": [], "is_dryup": False}
 
@@ -376,11 +371,9 @@ def calc_pos_stats(pos: dict, usd_jpy: float) -> dict:
         eff_tgt = reg_tgt if reg_tgt > 0 else round(avg + risk * EXIT_CFG["TARGET_R_MULT"], 4)
         trail = round(cp - atr * EXIT_CFG["TRAIL_ATR_MULT"], 4) if cur_r >= EXIT_CFG["TRAIL_START_R"] else None
         scale = round(avg + risk * EXIT_CFG["SCALE_OUT_R"], 4)
-        ex = {
-            "atr": atr, "risk": round(risk, 4),
-            "dyn_stop": dyn_stop, "eff_stop": eff_stop, "eff_tgt": eff_tgt,
-            "scale_out": scale, "cur_r": round(cur_r, 2), "trail": trail
-        }
+        ex = {"atr": atr, "risk": round(risk, 4),
+              "dyn_stop": dyn_stop, "eff_stop": eff_stop, "eff_tgt": eff_tgt,
+              "scale_out": scale, "cur_r": round(cur_r, 2), "trail": trail}
 
     cur_r = ex.get("cur_r", 0)
     if pnl_pct <= -8: status = "🚨"
@@ -391,13 +384,11 @@ def calc_pos_stats(pos: dict, usd_jpy: float) -> dict:
     elif pnl_pct > 0: status = "✅"
     else: status = "🔵"
 
-    return {
-        **pos, "current_price": round(cp, 4),
-        "pnl_usd": round(pnl_usd, 2), "pnl_pct": round(pnl_pct, 2),
-        "pnl_jpy": round(pnl_usd * usd_jpy, 0),
-        "mv_usd": round(mv_usd, 2), "cb_usd": round(cb_usd, 2),
-        "exit": ex, "status": status
-    }
+    return {**pos, "current_price": round(cp, 4),
+            "pnl_usd": round(pnl_usd, 2), "pnl_pct": round(pnl_pct, 2),
+            "pnl_jpy": round(pnl_usd * usd_jpy, 0),
+            "mv_usd": round(mv_usd, 2), "cb_usd": round(cb_usd, 2),
+            "exit": ex, "status": status}
 
 def get_portfolio_summary(usd_jpy: float) -> dict:
     data = load_portfolio()
@@ -416,7 +407,6 @@ def get_portfolio_summary(usd_jpy: float) -> dict:
 
     closed = data.get("closed", [])
     win_cnt = len([c for c in closed if c.get("pnl_usd", 0) > 0])
-    
     return {
         "positions": stats,
         "total": {
@@ -545,6 +535,7 @@ if mode == "📊 スキャン":
 
 elif mode == "🔍 リアルタイム":
     st.markdown('<div class="section-header">🔍 リアルタイム診断</div>', unsafe_allow_html=True)
+
     ticker_in = st.text_input(
         "ティッカー入力",
         value=st.session_state["target_ticker"],
@@ -754,13 +745,13 @@ else:
                         f"{p['ticker']}: {p['shares']}株 @ ${p['avg_cost']:.2f} → 現在${p['current_price']:.2f} "
                         f"({p['pnl_pct']:+.2f}%) R={ex_data.get('cur_r',0):.2f}"
                     )
-                t_pf = summary["total"]
+                t_data = summary["total"]
                 prompt_pf = (
                     f"プロのヘッジファンドマネージャーとして、このポートフォリオを分析せよ。\n\n"
                     f"日時: {TODAY_STR}  USD/JPY: {usd_jpy}\n"
-                    f"総資金: ¥{CONFIG['CAPITAL_JPY']:,}  運用中: ¥{t_pf.get('mv_jpy',0):,.0f}\n"
-                    f"評価損益: ¥{t_pf.get('pnl_jpy',0):+,.0f} ({t_pf.get('pnl_pct',0):+.2f}%)\n"
-                    f"エクスポージャー: {t_pf.get('exposure',0):.1f}%\n\n"
+                    f"総資金: ¥{CONFIG['CAPITAL_JPY']:,}  運用中: ¥{t_data.get('mv_jpy',0):,.0f}\n"
+                    f"評価損益: ¥{t_data.get('pnl_jpy',0):+,.0f} ({t_data.get('pnl_pct',0):+.2f}%)\n"
+                    f"エクスポージャー: {t_data.get('exposure',0):.1f}%\n\n"
                     f"ポジション:\n" + "\n".join(positions_text) + "\n\n"
                     f"以下をMarkdown形式で出力せよ:\n"
                     f"1. 【緊急アクション】損切り間近・利確すべき銘柄を優先で\n"
@@ -777,18 +768,19 @@ else:
     # ── Tab 4: 決済履歴 ──────────────────────────────────────────────
     with tabs[3]:
         st.markdown('<div class="section-header">📜 決済履歴</div>', unsafe_allow_html=True)
-        summary_h = get_portfolio_summary(usd_jpy)
-        closed_list = summary_h.get("closed", [])
+        summary_hist = get_portfolio_summary(usd_jpy)
+        closed_list = summary_hist.get("closed", [])
         if not closed_list:
             st.info("決済履歴がありません。")
         else:
-            cs_h = summary_h.get("closed_stats", {})
+            cs_hist = summary_hist.get("closed_stats", {})
             c1, c2, c3 = st.columns(3)
-            c1.metric("🔢 決済数", cs_h.get("count", 0))
-            c2.metric("💰 確定損益", f"¥{cs_h.get('pnl_jpy',0):+,.0f}")
-            c3.metric("🏆 勝率", f"{cs_h.get('win_rate',0):.1f}%")
+            c1.metric("🔢 決済数", cs_hist.get("count", 0))
+            c2.metric("💰 確定損益", f"¥{cs_hist.get('pnl_jpy',0):+,.0f}")
+            c3.metric("🏆 勝率", f"{cs_hist.get('win_rate',0):.1f}%")
             
-            df_cl = pd.DataFrame(closed_list[::-1])
-            show_cl = ["closed_at","ticker","shares","avg_cost","sell_price","pnl_usd","pnl_pct","memo"]
-            st.dataframe(df_cl[[c for c in show_cl if c in df_cl.columns]], use_container_width=True, height=350)
+            df_closed = pd.DataFrame(closed_list[::-1])
+            cols_to_show = ["closed_at","ticker","shares","avg_cost","sell_price","pnl_usd","pnl_pct","memo"]
+            available_cols = [c for c in cols_to_show if c in df_closed.columns]
+            st.dataframe(df_closed[available_cols], use_container_width=True, height=350)
 
