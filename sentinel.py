@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-“””
-sentinel.py — SENTINEL PRO メインスキャナー
-
-使い方:
-python sentinel.py
-
-設定:
-環境変数または GitHub Secrets で上書き可能。
-詳細は config.py / README.md を参照。
-“””
-
 import json
 import time
 from datetime import datetime
