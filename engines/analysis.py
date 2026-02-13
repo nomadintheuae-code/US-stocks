@@ -1,233 +1,153 @@
 import pandas as pd
 import numpy as np
 
-from config import CONFIG
 
-# ==============================================================================
-# 🎯 VCPAnalyzer
-# ==============================================================================
+class Analyzer:
 
-class VCPAnalyzer:
-    """
-    Mark Minervini の VCP メソドロジーに基づくスコアリング。
+    def __init__(self, config):
+        self.config = config
 
-    採点基準:
-        Tightness  (40pt) — 直近10日の値幅収縮
-        Volume     (30pt) — 出来高ドライアップ（MA50比）
-        MA Align   (30pt) — Price > MA50 > MA200
-    """
+    # ==========================================================
+    # VCP CALCULATION（総合判定型）
+    # ==========================================================
+    def calculate_vcp(self, df):
 
-    @staticmethod
-    def calculate(df: pd.DataFrame) -> dict:
-        """
-        Returns:
-            {
-                "score": int,        # 0-100
-                "atr": float,        # ATR(14)
-                "signals": list,     # 検出シグナル文字列リスト
-                "is_dryup": bool,    # 出来高ドライアップフラグ
-                "range_pct": float,  # 10日値幅率
-                "vol_ratio": float,  # 直近出来高 / MA50
-            }
-        """
-        try:
-            close = df["Close"]
-            high = df["High"]
-            low = df["Low"]
-            volume = df["Volume"]
-
-            # ATR(14)
-            tr = pd.concat([
-                high - low,
-                (high - close.shift()).abs(),
-                (low - close.shift()).abs(),
-            ], axis=1).max(axis=1)
-            atr = float(tr.rolling(14).mean().iloc[-1])
-
-            if pd.isna(atr) or atr <= 0:
-                return _empty_vcp()
-
-            # ── 1. Tightness (40pt) ─────────────────────────────────
-            h10 = float(high.iloc[-10:].max())
-            l10 = float(low.iloc[-10:].min())
-            range_pct = (h10 - l10) / h10
-            tight_score = 40 if range_pct <= 0.05 else int(40 * (1 - (range_pct - 0.05) / 0.10))
-            tight_score = max(0, min(40, tight_score))
-
-            # ── 2. Volume Dry-Up (30pt) ──────────────────────────────
-            vol_ma = float(volume.rolling(50).mean().iloc[-1])
-            vol_ratio = float(volume.iloc[-1] / vol_ma) if vol_ma > 0 else 1.0
-            is_dryup = vol_ratio < 0.7
-            vol_score = 30 if is_dryup else (15 if vol_ratio < 1.1 else 0)
-
-            # ── 3. MA Alignment (30pt) ───────────────────────────────
-            ma50 = float(close.rolling(50).mean().iloc[-1])
-            ma200 = float(close.rolling(200).mean().iloc[-1])
-            price = float(close.iloc[-1])
-            trend_score = (
-                (10 if price > ma50 else 0) +
-                (10 if ma50 > ma200 else 0) +
-                (10 if price > ma200 else 0)
-            )
-
-            signals = []
-            if range_pct < 0.06:
-                signals.append("Extreme Contraction")
-            if is_dryup:
-                signals.append("Volume Dry-Up")
-            if trend_score == 30:
-                signals.append("MA Aligned")
-
+        def _empty():
             return {
-                "score": int(max(0, tight_score + vol_score + trend_score)),
-                "atr": atr,
-                "signals": signals,
-                "is_dryup": is_dryup,
-                "range_pct": round(range_pct, 4),
-                "vol_ratio": round(vol_ratio, 2),
+                "vcp_score": 0,
+                "tightness_score": 0,
+                "volume_score": 0,
+                "ma_score": 0,
             }
 
-        except Exception:
-            return _empty_vcp()
+        if df is None or len(df) < 80:
+            return _empty()
 
+        close = df["Close"]
+        high = df["High"]
+        low = df["Low"]
+        volume = df["Volume"]
 
-def _empty_vcp() -> dict:
-    return {
-        "score": 0,
-        "atr": 0.0,
-        "signals": [],
-        "is_dryup": False,
-        "range_pct": 0.0,
-        "vol_ratio": 1.0
-    }
-
-
-# ==============================================================================
-# 📈 RSAnalyzer
-# ==============================================================================
-
-class RSAnalyzer:
-    """
-    IBD方式の RS Rating をパーセンタイルランキングで実装。
-
-    加重式: (12m × 0.4) + (6m × 0.2) + (3m × 0.2) + (1m × 0.2)
-    全ユニバースに対してパーセンタイル順位（1-99）を割り当てる。
-    """
-
-    @staticmethod
-    def get_raw_score(df: pd.DataFrame) -> float:
-        """ユニバース全体でソートするための生スコアを返す。"""
+        # ==============================
+        # ① Contraction Score (40点)
+        # ==============================
         try:
-            c = df["Close"]
-            if len(c) < 21:
-                return -999.0
+            ranges = []
+            periods = [20, 30, 40]
 
-            r12 = (c.iloc[-1] / c.iloc[-252] - 1) if len(c) >= 252 else (c.iloc[-1] / c.iloc[0] - 1)
-            r6  = (c.iloc[-1] / c.iloc[-126] - 1) if len(c) >= 126 else (c.iloc[-1] / c.iloc[0] - 1)
-            r3  = (c.iloc[-1] / c.iloc[-63]  - 1) if len(c) >= 63  else (c.iloc[-1] / c.iloc[0] - 1)
-            r1  = (c.iloc[-1] / c.iloc[-21]  - 1) if len(c) >= 21  else (c.iloc[-1] / c.iloc[0] - 1)
+            for p in periods:
+                recent_high = high.iloc[-p:].max()
+                recent_low = low.iloc[-p:].min()
+                range_pct = (recent_high - recent_low) / recent_high
+                ranges.append(range_pct)
 
-            return (r12 * 0.4) + (r6 * 0.2) + (r3 * 0.2) + (r1 * 0.2)
+            avg_range = np.mean(ranges)
+
+            # 長期ほど締まっているか
+            is_contracting = ranges[0] > ranges[1] > ranges[2]
+
+            if is_contracting and avg_range < 0.15:
+                tight_score = 40
+            elif avg_range < 0.20:
+                tight_score = 25
+            elif avg_range < 0.25:
+                tight_score = 15
+            else:
+                tight_score = 0
+
         except Exception:
-            return -999.0
+            tight_score = 0
 
-
-    @staticmethod
-    def assign_percentiles(raw_list: list[dict]) -> list[dict]:
-        """
-        raw_rs でソートしてパーセンタイル rank (1-99) を割り当てる。
-
-        Args:
-            raw_list: [{"ticker": str, "df": DataFrame, "raw_rs": float}, ...]
-        Returns:
-            同リストに "rs_rating": int を追加して返す
-        """
-        if not raw_list:
-            return raw_list
-
-        raw_list.sort(key=lambda x: x["raw_rs"])
-        total = len(raw_list)
-
-        for i, item in enumerate(raw_list):
-            # パーセンタイルを 1〜99 の整数に変換
-            item["rs_rating"] = int(((i + 1) / total) * 99) + 1  # 1〜99にするために+1
-
-        return raw_list
-
-
-# ==============================================================================
-# 🔬 StrategyValidator
-# ==============================================================================
-
-class StrategyValidator:
-    """
-    250日ウォークフォワードバックテスト。
-
-    エントリー条件: 直近20日ピボット突破 かつ MA50 上
-    エグジット:     ATR × STOP_LOSS_ATR の損切り または R倍数達成
-    最終日未決済:  含み益/損を R倍数換算でカウント
-    """
-
-    @staticmethod
-    def run(df: pd.DataFrame) -> float:
+        # ==============================
+        # ② Volume Dry-up Score (30点)
+        # ==============================
         try:
-            if len(df) < 200:
-                return 1.0
+            v20 = volume.iloc[-20:].mean()
+            v40 = volume.iloc[-40:-20].mean()
+            v60 = volume.iloc[-60:-40].mean()
 
+            if pd.isna(v20) or pd.isna(v40) or pd.isna(v60):
+                vol_score = 0
+            elif v20 < v40 < v60:
+                vol_score = 30
+            elif v20 < v40:
+                vol_score = 20
+            else:
+                vol_score = 0
+
+        except Exception:
+            vol_score = 0
+
+        # ==============================
+        # ③ MA Alignment Score (30点)
+        # ==============================
+        try:
+            ma50 = close.rolling(50).mean().iloc[-1]
+            ma200 = close.rolling(200).mean().iloc[-1]
+            price = close.iloc[-1]
+
+            if pd.isna(ma50) or pd.isna(ma200):
+                ma_score = 0
+            else:
+                ma_score = (
+                    (10 if price > ma50 else 0)
+                    + (10 if ma50 > ma200 else 0)
+                    + (10 if price > ma200 else 0)
+                )
+
+        except Exception:
+            ma_score = 0
+
+        total_score = tight_score + vol_score + ma_score
+
+        return {
+            "vcp_score": int(total_score),
+            "tightness_score": int(tight_score),
+            "volume_score": int(vol_score),
+            "ma_score": int(ma_score),
+        }
+
+    # ==========================================================
+    # RS RATING（1〜99正規化）
+    # ==========================================================
+    def calculate_rs(self, df):
+
+        if df is None or len(df) < 252:
+            return 0
+
+        try:
             close = df["Close"]
-            high = df["High"]
-            low = df["Low"]
 
-            tr = pd.concat([
-                high - low,
-                (high - close.shift()).abs(),
-                (low - close.shift()).abs(),
-            ], axis=1).max(axis=1)
-            atr = tr.rolling(14).mean()
+            perf_3m = close.iloc[-1] / close.iloc[-63] - 1
+            perf_6m = close.iloc[-1] / close.iloc[-126] - 1
+            perf_12m = close.iloc[-1] / close.iloc[-252] - 1
 
-            trades = []
-            in_pos = False
-            entry_p = 0.0
-            stop_p = 0.0
-            target_mult = CONFIG["TARGET_R_MULTIPLE"]
-            stop_mult = CONFIG["STOP_LOSS_ATR"]
+            # 重み付き平均
+            weighted = (0.4 * perf_3m) + (0.3 * perf_6m) + (0.3 * perf_12m)
 
-            start = max(50, len(df) - 250)
+            # 仮スケーリング（内部ランキング前提）
+            score = int(np.clip((weighted + 1) * 50, 1, 99))
 
-            for i in range(start, len(df)):
-                if in_pos:
-                    # 損切り
-                    if float(low.iloc[i]) <= stop_p:
-                        trades.append(-1.0)
-                        in_pos = False
-                    # 利確
-                    elif float(high.iloc[i]) >= entry_p + (entry_p - stop_p) * target_mult:
-                        trades.append(target_mult)
-                        in_pos = False
-                    # 最終日 — 含み益/損を R換算で記録
-                    elif i == len(df) - 1:
-                        risk = entry_p - stop_p
-                        if risk > 0:
-                            r = (float(close.iloc[i]) - entry_p) / risk
-                            trades.append(r)
-                        in_pos = False
-                else:
-                    # エントリー条件
-                    pivot = float(high.iloc[i - 20:i].max())
-                    ma50 = float(close.rolling(50).mean().iloc[i])
-                    if (float(close.iloc[i]) > pivot and
-                        float(close.iloc[i]) > ma50):
-                        in_pos = True
-                        entry_p = float(close.iloc[i])
-                        stop_p = entry_p - float(atr.iloc[i]) * stop_mult
-
-            if not trades:
-                return 1.0
-
-            pos = sum(t for t in trades if t > 0)
-            neg = abs(sum(t for t in trades if t < 0))
-            pf = pos / neg if neg > 0 else (5.0 if pos > 0 else 1.0)
-            return round(min(10.0, float(pf)), 2)
+            return score
 
         except Exception:
-            return 1.0
+            return 0
+
+    # ==========================================================
+    # 総合スコア
+    # ==========================================================
+    def analyze(self, df):
+
+        vcp_data = self.calculate_vcp(df)
+        rs_score = self.calculate_rs(df)
+
+        total = vcp_data["vcp_score"] + rs_score
+
+        return {
+            "vcp_score": vcp_data["vcp_score"],
+            "rs_score": rs_score,
+            "total_score": total,
+            "tightness_score": vcp_data["tightness_score"],
+            "volume_score": vcp_data["volume_score"],
+            "ma_score": vcp_data["ma_score"],
+        }
