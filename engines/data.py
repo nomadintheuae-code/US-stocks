@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import yfinance as yf
 
-from config import config
+from config import CONFIG
 
 CACHE_DIR = Path("./cache_v45")
 CACHE_DIR.mkdir(exist_ok=True)
