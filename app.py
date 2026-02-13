@@ -23,7 +23,7 @@ from openai import OpenAI
 
 # engines がなくても動くようにフォールバック（必要に応じてコメントアウト解除）
 try:
-    from config import config
+    from config import CONFIG
     from engines.data import CurrencyEngine, DataEngine
     from engines.fundamental import FundamentalEngine, InsiderEngine
     from engines.news import NewsEngine
