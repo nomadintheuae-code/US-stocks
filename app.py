@@ -1,9 +1,9 @@
 """
-🛡️ SENTINEL PRO — 完全復元版 app.py
+🛡️ SENTINEL PRO — 完全スマホ最適化版 app.py
 ・市場スキャン（sentinel.pyのJSON結果表示）
 ・リアルタイム診断（個別銘柄 + AIレポート）
 ・ポートフォリオ管理（損益・登録・AI分析・決済履歴）
-すべて動作するように修正済み
+・ドル円実時間取得 + スマホで全部見えるように修正
 """
 
 import json
@@ -24,7 +24,7 @@ import streamlit as st
 import yfinance as yf
 from openai import OpenAI
 
-# config と engines がなくても動くフォールバック（GitHub公開用）
+# config と engines がなくても動くフォールバック
 try:
     from config import CONFIG
     from engines.data import CurrencyEngine, DataEngine
@@ -33,18 +33,16 @@ try:
 except ImportError:
     class DummyEngine:
         @staticmethod
-        def get_usd_jpy(): return 150.0
-        @staticmethod
         def get_data(ticker, period="1y"): return None
         @staticmethod
         def get_current_price(ticker): return None
         @staticmethod
         def get(ticker): return {}
         @staticmethod
-        def format_for_prompt(data, price): return []
+        def format_for_prompt(data, price=None): return []
         @staticmethod
         def get_sector(ticker): return "Unknown"
-    CurrencyEngine = DataEngine = DummyEngine
+    DataEngine = DummyEngine
     FundamentalEngine = InsiderEngine = NewsEngine = DummyEngine
     CONFIG = {
         "CAPITAL_JPY": 10000000,
@@ -55,11 +53,6 @@ except ImportError:
         "TARGET_R_MULTIPLE": 2.5,
         "MAX_SAME_SECTOR": 2,
         "MAX_POSITIONS": 8,
-        "CACHE_EXPIRY": 12*3600,
-        "FUND_CACHE_EXPIRY": 24*3600,
-        "NEWS_CACHE_EXPIRY": 3600,
-        "NEWS_FETCH_TIMEOUT": 6,
-        "NEWS_MAX_CHARS": 400,
     }
 
 warnings.filterwarnings("ignore")
@@ -86,7 +79,7 @@ EXIT_CFG = {
 }
 
 # ==============================================================================
-# 🎨 ページ設定 & CSS
+# 🎨 ページ設定 & CSS（スマホで隠れないように強化）
 # ==============================================================================
 
 st.set_page_config(
@@ -105,7 +98,7 @@ st.markdown("""
   }
   [data-testid="metric-container"] label { font-size: 0.72rem !important; color: #6b7280; }
   [data-testid="metric-container"] [data-testid="stMetricValue"] { font-size: 1.15rem !important; font-weight: 700; }
-  .stButton > button { min-height: 48px; font-size: 1rem !important; font-weight: 600; border-radius: 8px; }
+  .stButton > button { min-height: 48px; font-size: 1rem !important; font-weight: 600; border-radius: 8px; width: 100% !important; margin-bottom: 0.8rem !important; }
   .stTabs [data-baseweb="tab"] { font-size: 0.9rem; padding: 10px 8px; font-weight: 600; }
   .pos-card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
   .pos-card.urgent { border-color: #ef4444; }
@@ -120,10 +113,15 @@ st.markdown("""
     border-bottom: 1px solid #1f2937; padding-bottom: 6px;
     margin: 14px 0 10px; font-family: 'Share Tech Mono', monospace;
   }
-  [data-testid="stDataFrame"] { overflow-x: auto; }
-  .block-container { padding-top: 0.8rem !important; padding-bottom: 1rem !important; }
+  [data-testid="stDataFrame"] { overflow-x: auto !important; max-height: 400px !important; }
+  .block-container { padding-top: 1rem !important; padding-bottom: 6rem !important; max-width: 100% !important; }
+  
+  /* スマホ専用調整（隠れ防止） */
   @media (max-width: 768px) {
-    .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    [data-testid="column"] { flex: 1 1 100% !important; margin-bottom: 1rem !important; }
+    .stTabs [data-baseweb="tab-list"] { flex-wrap: wrap !important; justify-content: center !important; }
+    .plotly-graph-div { height: 220px !important; }  /* セクターマップ小さく */
+    .stTextInput > div > div > input { font-size: 1.1rem !important; padding: 12px !important; }
   }
 </style>
 """, unsafe_allow_html=True)
@@ -145,14 +143,20 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ==============================================================================
-# 💾 データ取得
+# 💾 データ取得（ドル円をyfinanceで実時間取得）
 # ==============================================================================
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=300)
 def get_usd_jpy() -> float:
-    rate = CurrencyEngine.get_usd_jpy()
-    st.session_state["usd_jpy"] = rate
-    return rate
+    try:
+        ticker = yf.Ticker("JPY=X")
+        df = ticker.history(period="1d", interval="1d")
+        if not df.empty:
+            rate = float(df["Close"].iloc[-1])
+            return round(rate, 2)
+    except Exception:
+        pass
+    return 150.0
 
 @st.cache_data(ttl=300)
 def fetch_price_data(ticker: str, period: str = "1y") -> Optional[pd.DataFrame]:
@@ -209,7 +213,7 @@ def fetch_insider_cached(ticker: str) -> dict:
     return InsiderEngine.get(ticker)
 
 # ==============================================================================
-# 🧠 VCP分析（アプリ内実装）
+# 🧠 VCP分析
 # ==============================================================================
 
 def calc_vcp(df: pd.DataFrame) -> dict:
@@ -319,7 +323,7 @@ def remove_watchlist(ticker: str) -> bool:
     return False
 
 # ==============================================================================
-# 💼 Portfolio 管理
+# 💼 Portfolio 管理（省略せずフルで）
 # ==============================================================================
 
 def load_portfolio() -> dict:
@@ -525,7 +529,7 @@ st.session_state["mode"] = mode
 usd_jpy = get_usd_jpy()
 
 # ==============================================================================
-# 📊 MODE 1: スキャン結果
+# 📊 MODE 1: スキャン結果（スマホで隠れないように）
 # ==============================================================================
 
 if mode == "📊 スキャン":
@@ -539,11 +543,12 @@ if mode == "📊 スキャン":
         latest_date = df_hist["date"].max()
         latest_df = df_hist[df_hist["date"] == latest_date].drop_duplicates("ticker")
 
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric("📅 最終スキャン", latest_date)
-        k2.metric("💎 ACTION", len(latest_df[latest_df["status"] == "ACTION"]) if "status" in latest_df.columns else "—")
-        k3.metric("⏳ WAIT", len(latest_df[latest_df["status"] == "WAIT"]) if "status" in latest_df.columns else "—")
-        k4.metric("💱 USD/JPY", f"¥{usd_jpy:,.0f}")
+        # KPIをスマホで縦並び
+        cols = st.columns(2)
+        cols[0].metric("📅 最終スキャン", latest_date)
+        cols[1].metric("💎 ACTION", len(latest_df[latest_df["status"] == "ACTION"]) if "status" in latest_df.columns else "—")
+        st.metric("⏳ WAIT", len(latest_df[latest_df["status"] == "WAIT"]) if "status" in latest_df.columns else "—")
+        st.metric("💱 USD/JPY", f"¥{usd_jpy:,.0f}")
 
         st.markdown('<div class="section-header">🗺️ セクターマップ</div>', unsafe_allow_html=True)
         if "vcp_score" in latest_df.columns and "sector" in latest_df.columns:
@@ -554,20 +559,20 @@ if mode == "📊 スキャン":
                 color="rs" if "rs" in latest_df.columns else "vcp_score",
                 color_continuous_scale="RdYlGn",
             )
-            fig.update_layout(template="plotly_dark", height=320, margin=dict(t=10, b=0))
+            fig.update_layout(template="plotly_dark", height=240, margin=dict(t=10, b=0))
             st.plotly_chart(fig, use_container_width=True)
 
         st.markdown('<div class="section-header">💎 銘柄リスト</div>', unsafe_allow_html=True)
         show_cols = [c for c in ["ticker", "status", "price", "vcp_score", "rs", "sector"] if c in latest_df.columns]
         if show_cols:
-            st.dataframe(
-                latest_df[show_cols].style.background_gradient(
+            try:
+                styled = latest_df[show_cols].style.background_gradient(
                     subset=["vcp_score"] if "vcp_score" in show_cols else [],
                     cmap="Greens"
-                ),
-                use_container_width=True,
-                height=300,
-            )
+                )
+                st.dataframe(styled, use_container_width=True, height=300)
+            except:
+                st.dataframe(latest_df[show_cols], use_container_width=True, height=300)
 
         st.markdown('<div class="section-header">🔍 詳細チャート</div>', unsafe_allow_html=True)
         drill = st.selectbox("銘柄を選択", [""] + list(latest_df["ticker"].unique()), key="drill_select")
@@ -584,7 +589,7 @@ if mode == "📊 スキャン":
                 ))
                 fig_c.update_layout(
                     template="plotly_dark",
-                    height=320,
+                    height=240,
                     xaxis_rangeslider_visible=False,
                     margin=dict(t=10, b=0)
                 )
@@ -595,7 +600,7 @@ if mode == "📊 スキャン":
                 st.write(NewsEngine.format_for_prompt(news))
 
 # ==============================================================================
-# 🔍 MODE 2: リアルタイム診断
+# 🔍 MODE 2: リアルタイム診断（ボタン縦並び）
 # ==============================================================================
 
 elif mode == "🔍 リアルタイム":
@@ -605,22 +610,24 @@ elif mode == "🔍 リアルタイム":
         "ティッカー入力",
         value=st.session_state["target_ticker"],
         placeholder="NVDA, TSLA, AAPL ...",
-        key="ticker_input"
     ).upper().strip()
 
-    c_run, c_fav = st.columns(2)
-    run_btn = c_run.button("🚀 診断開始", type="primary", use_container_width=True)
-    fav_btn = c_fav.button("⭐ Watchlist追加", use_container_width=True)
+    if st.button("🚀 診断開始", type="primary", use_container_width=True):
+        if ticker_in:
+            st.session_state["target_ticker"] = ticker_in
+            st.session_state["trigger_analysis"] = True
+            st.rerun()
 
-    if fav_btn and ticker_in:
-        if add_watchlist(ticker_in):
-            st.success(f"{ticker_in} をWatchlistに追加しました")
-        else:
-            st.info(f"{ticker_in} は既に登録済みです")
+    if st.button("⭐ Watchlist追加", use_container_width=True):
+        if ticker_in:
+            if add_watchlist(ticker_in):
+                st.success(f"{ticker_in} をWatchlistに追加しました")
+            else:
+                st.info(f"{ticker_in} は既に登録済みです")
 
-    do_run = run_btn or st.session_state.pop("trigger_analysis", False)
-
+    do_run = st.session_state.get("trigger_analysis", False)
     if do_run and ticker_in:
+        st.session_state["trigger_analysis"] = False
         clean = re.sub(r"[^A-Z0-9.\-]", "", ticker_in)[:10]
 
         with st.spinner(f"{clean} を解析中..."):
@@ -635,18 +642,13 @@ elif mode == "🔍 リアルタイム":
                 vcp = calc_vcp(data)
                 cp = get_current_price(clean)
 
-                k1, k2, k3, k4 = st.columns(4)
-                k1.metric("💰 現在値", f"${cp:.2f}" if cp else "N/A")
-                k2.metric("🎯 VCPスコア", f"{vcp['score']}/100")
-                k3.metric("📊 シグナル", ", ".join(vcp["signals"]) or "なし")
+                st.metric("💰 現在値", f"${cp:.2f}" if cp else "N/A")
+                st.metric("🎯 VCPスコア", f"{vcp['score']}/100")
+                st.metric("📊 シグナル", ", ".join(vcp["signals"]) or "なし")
                 if fund.get("analyst_upside") is not None:
-                    k4.metric(
-                        "🎯 アナリスト乖離",
-                        f"{fund['analyst_upside']:+.1f}%",
-                        f"目標 ${fund.get('analyst_target', 'N/A'):.1f}"
-                    )
+                    st.metric("🎯 アナリスト乖離", f"{fund['analyst_upside']:+.1f}%", f"目標 ${fund.get('analyst_target', 'N/A'):.1f}")
                 else:
-                    k4.metric("📋 推奨", (fund.get("recommendation") or "N/A").upper())
+                    st.metric("📋 推奨", (fund.get("recommendation") or "N/A").upper())
 
                 if insider.get("alert"):
                     st.warning(f"⚠️ インサイダー大量売却検出: {insider.get('summary', '')}")
@@ -663,7 +665,7 @@ elif mode == "🔍 リアルタイム":
                 ))
                 fig_rt.update_layout(
                     template="plotly_dark",
-                    height=320,
+                    height=240,
                     xaxis_rangeslider_visible=False,
                     margin=dict(t=10, b=0)
                 )
@@ -726,7 +728,7 @@ VCPスコア: {vcp['score']}/100   シグナル: {', '.join(vcp['signals']) or '
                     st.json(fund)
 
 # ==============================================================================
-# 💼 MODE 3: ポートフォリオ
+# 💼 MODE 3: ポートフォリオ（フルで記載）
 # ==============================================================================
 
 else:
