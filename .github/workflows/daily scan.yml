@@ -2,14 +2,15 @@ name: SENTINEL Daily Scan
 
 on:
   schedule:
-    - cron: '0 22 * * 0-4'   # 日〜木 07:00 JST
-    - cron: '0 2 * * 1-5'    # 月〜金 11:00 JST
-    - cron: '0 4 * * 1-5'    # 月〜金 13:00 JST
-    - cron: '0 12 * * 1-5'   # 月〜金 21:00 JST（大引け後）
-  workflow_dispatch:         # 手動実行ボタン
+    # JST基準で計算（UTC = JST - 9時間）
+    - cron: '0 13 * * 0-4'   # JST 22:00 → UTC 13:00 (日〜木)
+    - cron: '0 17 * * 1-5'   # JST 02:00 → UTC 17:00 (月〜金)
+    - cron: '0 19 * * 1-5'   # JST 04:00 → UTC 19:00 (月〜金)
+    - cron: '0 3  * * 1-5'   # JST 12:00 → UTC 03:00 (月〜金) ※大引け後21:00の意図なら '0 12 * * 1-5' → '0 3 * * 1-5' に修正
+  workflow_dispatch:         # GitHub UIから手動実行可能
 
 permissions:
-  contents: write          # git pushに必要
+  contents: write            # git commit & push に必要
 
 jobs:
   scan:
@@ -19,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # 履歴をすべて取る（pull/rebase用）
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -49,17 +52,21 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID:              ${{ secrets.LINE_USER_ID }}
           CAPITAL_JPY:               ${{ secrets.CAPITAL_JPY }}
-          # 他の必要な秘密変数もここに追加
+          # 必要なら他のsecretsも追加
         run: python sentinel.py
 
       - name: Commit scan results
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # ★重要: リモートの変更を取り込んで同期
+          git pull origin ${{ github.ref_name }} --rebase --autostash || true
+
           git add results/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "📊 Automated scan $(date +'%Y-%m-%d %H:%M JST')"
-            git push
+            git commit -m "📊 Automated scan $(TZ='Asia/Tokyo' date +'%Y-%m-%d %H:%M JST')"
+            git push origin HEAD:${{ github.ref_name }}
           fi
