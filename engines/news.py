@@ -1,14 +1,3 @@
-“””
-engines/news.py — ニュース取得エンジン
-
-1. Yahoo Finance ニュース（yfinance）
-1. Google News RSS（feedparser）
-1. 上位3記事の本文fetch（BeautifulSoup4）
-
-本文まで取得することでAIが表面的な見出しだけでなく
-決算ミス・ガイダンス・インサイダー情報を読み取れる。
-“””
-
 import json
 import time
 from pathlib import Path
