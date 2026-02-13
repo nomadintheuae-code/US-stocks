@@ -1,9 +1,9 @@
 """
-🛡️ SENTINEL PRO — 完全スマホ最適化版 app.py
-・市場スキャン（sentinel.pyのJSON結果表示）
-・リアルタイム診断（個別銘柄 + AIレポート）
+🛡️ SENTINEL PRO — 元コード完全復元 + スマホ対策 + ドル円実時間版
+・市場スキャン（sentinel.py JSON表示）
+・リアルタイム診断（個別銘柄 + AIレポート完全復元）
 ・ポートフォリオ管理（損益・登録・AI分析・決済履歴）
-・ドル円実時間取得 + スマホで全部見えるように修正
+・スマホで上部隠れなし（CSS最適化済み）
 """
 
 import json
@@ -58,13 +58,11 @@ except ImportError:
 warnings.filterwarnings("ignore")
 
 # ==============================================================================
-# 🔧 定数
+# 定数
 # ==============================================================================
 
 NOW = datetime.now()
 TODAY_STR = NOW.strftime("%Y-%m-%d")
-CACHE_DIR = Path("./cache_v45")
-CACHE_DIR.mkdir(exist_ok=True)
 RESULTS_DIR = Path("./results")
 RESULTS_DIR.mkdir(exist_ok=True)
 WATCHLIST_FILE = Path("watchlist.json")
@@ -79,7 +77,7 @@ EXIT_CFG = {
 }
 
 # ==============================================================================
-# 🎨 ページ設定 & CSS（スマホで隠れないように強化）
+# ページ設定 & CSS（スマホ上部隠れ完全対策）
 # ==============================================================================
 
 st.set_page_config(
@@ -92,42 +90,69 @@ st.set_page_config(
 st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
-  html, body, [class*="css"] { font-family: 'Rajdhani', sans-serif; }
-  [data-testid="metric-container"] {
-    background: #0d1117; border: 1px solid #1e2d40; border-radius: 10px; padding: 12px 10px;
-  }
-  [data-testid="metric-container"] label { font-size: 0.72rem !important; color: #6b7280; }
-  [data-testid="metric-container"] [data-testid="stMetricValue"] { font-size: 1.15rem !important; font-weight: 700; }
-  .stButton > button { min-height: 48px; font-size: 1rem !important; font-weight: 600; border-radius: 8px; width: 100% !important; margin-bottom: 0.8rem !important; }
-  .stTabs [data-baseweb="tab"] { font-size: 0.9rem; padding: 10px 8px; font-weight: 600; }
-  .pos-card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
-  .pos-card.urgent { border-color: #ef4444; }
-  .pos-card.caution { border-color: #f59e0b; }
-  .pos-card.profit { border-color: #00ff7f; }
-  .pnl-pos { color: #00ff7f; font-weight: 700; font-size: 1.2rem; }
-  .pnl-neg { color: #ef4444; font-weight: 700; font-size: 1.2rem; }
-  .pnl-neu { color: #9ca3af; font-weight: 700; font-size: 1.2rem; }
-  .exit-info { font-size: 0.8rem; color: #9ca3af; line-height: 1.8; font-family: 'Share Tech Mono', monospace; }
-  .section-header {
-    font-size: 1.1rem; font-weight: 700; color: #00ff7f;
-    border-bottom: 1px solid #1f2937; padding-bottom: 6px;
-    margin: 14px 0 10px; font-family: 'Share Tech Mono', monospace;
-  }
-  [data-testid="stDataFrame"] { overflow-x: auto !important; max-height: 400px !important; }
-  .block-container { padding-top: 1rem !important; padding-bottom: 6rem !important; max-width: 100% !important; }
+  html, body, [class*="css"] { font-family: 'Rajdhani', sans-serif !important; }
   
-  /* スマホ専用調整（隠れ防止） */
+  /* 上部を極限コンパクト化（モード選択が見えるように） */
+  .block-container {
+    padding-top: 0.3rem !important;
+    padding-bottom: 12rem !important;
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+  }
+  
+  header, .stApp > header { display: none !important; }
+  
+  /* モード選択を最上部に固定風 */
+  div[data-testid="stRadio"] {
+    position: sticky;
+    top: 0;
+    background: #0d1117;
+    z-index: 999;
+    padding: 8px 0;
+    margin: 0 !important;
+    border-bottom: 1px solid #1f2937;
+  }
+  .stRadio [role="radiogroup"] {
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+  .stRadio label {
+    font-size: 0.9rem !important;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+  }
+  
+  /* サイドバー極小化 */
+  section[data-testid="stSidebar"] {
+    min-width: 220px !important;
+    width: 220px !important;
+  }
+  .stSidebarUserContent { padding: 0.4rem !important; }
+  
+  /* メトリクス・タイトル超コンパクト */
+  [data-testid="metric-container"] {
+    padding: 6px 8px !important;
+    margin: 0.2rem 0 !important;
+  }
+  [data-testid="metric-container"] label { font-size: 0.62rem !important; }
+  [data-testid="metric-container"] [data-testid="stMetricValue"] { font-size: 0.98rem !important; }
+  .section-header { font-size: 0.95rem !important; margin: 0.5rem 0 0.3rem !important; }
+  
+  /* グラフ・テーブル小さくして下が見える */
+  .plotly-graph-div { height: 140px !important; margin: 0.4rem 0 !important; }
+  [data-testid="stDataFrame"] { max-height: 300px !important; margin-bottom: 1.5rem !important; }
+  
   @media (max-width: 768px) {
-    [data-testid="column"] { flex: 1 1 100% !important; margin-bottom: 1rem !important; }
-    .stTabs [data-baseweb="tab-list"] { flex-wrap: wrap !important; justify-content: center !important; }
-    .plotly-graph-div { height: 220px !important; }  /* セクターマップ小さく */
-    .stTextInput > div > div > input { font-size: 1.1rem !important; padding: 12px !important; }
+    .row-widget.stHorizontal { flex-direction: column !important; gap: 0.3rem !important; }
+    .stTabs [data-baseweb="tab-list"] { gap: 0.2rem !important; flex-wrap: wrap !important; }
   }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 📋 セッション状態
+# セッション状態
 # ==============================================================================
 
 _defaults = {
@@ -143,7 +168,7 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ==============================================================================
-# 💾 データ取得（ドル円をyfinanceで実時間取得）
+# データ取得
 # ==============================================================================
 
 @st.cache_data(ttl=300)
@@ -213,7 +238,7 @@ def fetch_insider_cached(ticker: str) -> dict:
     return InsiderEngine.get(ticker)
 
 # ==============================================================================
-# 🧠 VCP分析
+# VCP分析
 # ==============================================================================
 
 def calc_vcp(df: pd.DataFrame) -> dict:
@@ -266,7 +291,7 @@ def calc_vcp(df: pd.DataFrame) -> dict:
         return {"score": 0, "atr": 0, "signals": [], "is_dryup": False}
 
 # ==============================================================================
-# 🤖 AI呼び出し
+# AI呼び出し
 # ==============================================================================
 
 def call_ai(prompt: str) -> str:
@@ -286,7 +311,7 @@ def call_ai(prompt: str) -> str:
         return f"DeepSeek Error: {str(e)}"
 
 # ==============================================================================
-# 📋 Watchlist 管理
+# Watchlist 管理
 # ==============================================================================
 
 def load_watchlist() -> list[str]:
@@ -323,7 +348,7 @@ def remove_watchlist(ticker: str) -> bool:
     return False
 
 # ==============================================================================
-# 💼 Portfolio 管理（省略せずフルで）
+# Portfolio 管理（フル）
 # ==============================================================================
 
 def load_portfolio() -> dict:
@@ -486,7 +511,7 @@ def get_portfolio_summary(usd_jpy: float) -> dict:
     }
 
 # ==============================================================================
-# 🖥️ サイドバー
+# サイドバー
 # ==============================================================================
 
 with st.sidebar:
@@ -513,8 +538,17 @@ with st.sidebar:
     st.metric("💱 USD/JPY", f"¥{usd_jpy_sidebar:,.0f}")
 
 # ==============================================================================
-# 🧭 モード選択
+# モード選択（stickyで上部固定）
 # ==============================================================================
+
+st.markdown(
+    """
+    <div style="position: sticky; top: 0; background: #0d1117; z-index: 999; padding: 8px 0; border-bottom: 1px solid #1f2937; text-align: center;">
+        <h3 style="margin: 0; color: #00ff7f;">モード選択</h3>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 mode_options = ["📊 スキャン", "🔍 リアルタイム", "💼 ポートフォリオ"]
 mode = st.radio(
@@ -529,7 +563,7 @@ st.session_state["mode"] = mode
 usd_jpy = get_usd_jpy()
 
 # ==============================================================================
-# 📊 MODE 1: スキャン結果（スマホで隠れないように）
+# MODE 1: スキャン結果
 # ==============================================================================
 
 if mode == "📊 スキャン":
@@ -543,11 +577,11 @@ if mode == "📊 スキャン":
         latest_date = df_hist["date"].max()
         latest_df = df_hist[df_hist["date"] == latest_date].drop_duplicates("ticker")
 
-        # KPIをスマホで縦並び
-        cols = st.columns(2)
-        cols[0].metric("📅 最終スキャン", latest_date)
-        cols[1].metric("💎 ACTION", len(latest_df[latest_df["status"] == "ACTION"]) if "status" in latest_df.columns else "—")
-        st.metric("⏳ WAIT", len(latest_df[latest_df["status"] == "WAIT"]) if "status" in latest_df.columns else "—")
+        # KPI縦並び（スマホで隠れない）
+        st.metric("📅 最終スキャン", latest_date)
+        col1, col2 = st.columns(2)
+        col1.metric("💎 ACTION", len(latest_df[latest_df["status"] == "ACTION"]) if "status" in latest_df.columns else "—")
+        col2.metric("⏳ WAIT", len(latest_df[latest_df["status"] == "WAIT"]) if "status" in latest_df.columns else "—")
         st.metric("💱 USD/JPY", f"¥{usd_jpy:,.0f}")
 
         st.markdown('<div class="section-header">🗺️ セクターマップ</div>', unsafe_allow_html=True)
@@ -559,7 +593,7 @@ if mode == "📊 スキャン":
                 color="rs" if "rs" in latest_df.columns else "vcp_score",
                 color_continuous_scale="RdYlGn",
             )
-            fig.update_layout(template="plotly_dark", height=240, margin=dict(t=10, b=0))
+            fig.update_layout(template="plotly_dark", height=140, margin=dict(t=5, b=0))
             st.plotly_chart(fig, use_container_width=True)
 
         st.markdown('<div class="section-header">💎 銘柄リスト</div>', unsafe_allow_html=True)
@@ -589,9 +623,9 @@ if mode == "📊 スキャン":
                 ))
                 fig_c.update_layout(
                     template="plotly_dark",
-                    height=240,
+                    height=140,
                     xaxis_rangeslider_visible=False,
-                    margin=dict(t=10, b=0)
+                    margin=dict(t=5, b=0)
                 )
                 st.plotly_chart(fig_c, use_container_width=True)
 
@@ -600,7 +634,7 @@ if mode == "📊 スキャン":
                 st.write(NewsEngine.format_for_prompt(news))
 
 # ==============================================================================
-# 🔍 MODE 2: リアルタイム診断（ボタン縦並び）
+# MODE 2: リアルタイム診断（AI完全復元）
 # ==============================================================================
 
 elif mode == "🔍 リアルタイム":
@@ -612,22 +646,19 @@ elif mode == "🔍 リアルタイム":
         placeholder="NVDA, TSLA, AAPL ...",
     ).upper().strip()
 
-    if st.button("🚀 診断開始", type="primary", use_container_width=True):
-        if ticker_in:
-            st.session_state["target_ticker"] = ticker_in
-            st.session_state["trigger_analysis"] = True
-            st.rerun()
+    col_run, col_fav = st.columns(2)
+    run_btn = col_run.button("🚀 診断開始", type="primary", use_container_width=True)
+    fav_btn = col_fav.button("⭐ Watchlist追加", use_container_width=True)
 
-    if st.button("⭐ Watchlist追加", use_container_width=True):
-        if ticker_in:
-            if add_watchlist(ticker_in):
-                st.success(f"{ticker_in} をWatchlistに追加しました")
-            else:
-                st.info(f"{ticker_in} は既に登録済みです")
+    if fav_btn and ticker_in:
+        if add_watchlist(ticker_in):
+            st.success(f"{ticker_in} をWatchlistに追加しました")
+        else:
+            st.info(f"{ticker_in} は既に登録済みです")
 
-    do_run = st.session_state.get("trigger_analysis", False)
+    do_run = run_btn or st.session_state.pop("trigger_analysis", False)
+
     if do_run and ticker_in:
-        st.session_state["trigger_analysis"] = False
         clean = re.sub(r"[^A-Z0-9.\-]", "", ticker_in)[:10]
 
         with st.spinner(f"{clean} を解析中..."):
@@ -646,7 +677,11 @@ elif mode == "🔍 リアルタイム":
                 st.metric("🎯 VCPスコア", f"{vcp['score']}/100")
                 st.metric("📊 シグナル", ", ".join(vcp["signals"]) or "なし")
                 if fund.get("analyst_upside") is not None:
-                    st.metric("🎯 アナリスト乖離", f"{fund['analyst_upside']:+.1f}%", f"目標 ${fund.get('analyst_target', 'N/A'):.1f}")
+                    st.metric(
+                        "🎯 アナリスト乖離",
+                        f"{fund['analyst_upside']:+.1f}%",
+                        f"目標 ${fund.get('analyst_target', 'N/A'):.1f}"
+                    )
                 else:
                     st.metric("📋 推奨", (fund.get("recommendation") or "N/A").upper())
 
@@ -665,9 +700,9 @@ elif mode == "🔍 リアルタイム":
                 ))
                 fig_rt.update_layout(
                     template="plotly_dark",
-                    height=240,
+                    height=140,
                     xaxis_rangeslider_visible=False,
-                    margin=dict(t=10, b=0)
+                    margin=dict(t=5, b=0)
                 )
                 st.plotly_chart(fig_rt, use_container_width=True)
 
@@ -728,7 +763,7 @@ VCPスコア: {vcp['score']}/100   シグナル: {', '.join(vcp['signals']) or '
                     st.json(fund)
 
 # ==============================================================================
-# 💼 MODE 3: ポートフォリオ（フルで記載）
+# MODE 3: ポートフォリオ（フル）
 # ==============================================================================
 
 else:
