@@ -1,8 +1,3 @@
-"""
-🛡️ SENTINEL PRO — 完全版 app.py
-市場スキャン + リアルタイム診断 + ポートフォリオ管理
-"""
-
 import json
 import os
 import pickle
@@ -704,7 +699,7 @@ VCPスコア: {vcp['score']}/100   シグナル: {', '.join(vcp['signals']) or '
 4. 【損切りライン】ATR ${atr_val:.2f} ベースで具体的な価格
 5. 【利確目標】Target1/2/3 を具体価格で
 6. 【総合判断】Buy / Watch / Avoid を明言 + 一言根拠
-"""
+
 
                 ai_response = call_ai(prompt)
                 st.markdown("---")
