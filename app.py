@@ -18,7 +18,7 @@ from openai import OpenAI
 
 # 外部エンジンのインポート（GitHubの構成に準拠）
 try:
-    from config import CONFIG
+    from config import config
     from engines.data import CurrencyEngine, DataEngine
     from engines.fundamental import FundamentalEngine, InsiderEngine
     from engines.news import NewsEngine
