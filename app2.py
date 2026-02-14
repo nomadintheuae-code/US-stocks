@@ -298,7 +298,7 @@ candlestick.update_xaxes(
     tickformat="%b %Y"       # 例: Feb 2026
             )
             st.plotly_chart(candlestick, use_container_width=True)
-
+)
         # AI解説ボタン
         if st.button("🤖 AI解説を表示", use_container_width=True):
             ak = st.secrets.get("DEEPSEEK_API_KEY")
