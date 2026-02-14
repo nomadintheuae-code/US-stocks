@@ -1,4 +1,6 @@
 # SENTINEL PRO - US Stock Scanner
+<img width="1843" height="914" alt="image" src="https://github.com/user-attachments/assets/1c2d57de-086e-40cb-a187-bb018c95121f" />
+<img width="1745" height="833" alt="image" src="https://github.com/user-attachments/assets/064513ee-24b6-4f7c-90b6-a30e7493d451" />
 
 **Personal US stock scanner** focused on high-probability setups using Relative Strength (RS) ratings and Volatility Contraction Patterns (VCP).  
 Built for daily automated scanning, interactive visualization, and portfolio tracking — powered by Streamlit for a clean dashboard.
