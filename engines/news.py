@@ -148,3 +148,11 @@ class NewsEngine:
                 lines.append(f"  抜粋: {excerpt}")
 
         return "\n".join(lines)
+
+    # ========== 新しく追加 ==========
+    @staticmethod
+    def get_general_market() -> dict:
+        """
+        市場全体のニュースを取得する（SPYのニュースを代表として使用）
+        """
+        return NewsEngine.get("SPY")
