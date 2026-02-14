@@ -1,4 +1,4 @@
-import json
+ーimport json
 import os
 import time
 import warnings
@@ -287,18 +287,19 @@ with tab_2:
                 close=df_recent['Close']
             )])
             candlestick.update_layout(
-    template="plotly_dark",
-    height=400,
-    margin=dict(l=0, r=0, t=20, b=0),
-    xaxis_rangeslider_visible=False,
-    title=f"{t_input} - 直近6ヶ月"
-)
-candlestick.update_xaxes(
-    dtick="M1",              # 1ヶ月おき
-    tickformat="%b %Y"       # 例: Feb 2026
+                template="plotly_dark",
+                height=400,
+                margin=dict(l=0, r=0, t=20, b=0),
+                xaxis_rangeslider_visible=False,
+                title=f"{t_input} - 直近6ヶ月"
+            )
+            # 横軸を1ヶ月おきに設定
+            candlestick.update_xaxes(
+                dtick="M1",
+                tickformat="%b %Y"
             )
             st.plotly_chart(candlestick, use_container_width=True)
-)
+
         # AI解説ボタン
         if st.button("🤖 AI解説を表示", use_container_width=True):
             ak = st.secrets.get("DEEPSEEK_API_KEY")
@@ -339,7 +340,7 @@ candlestick.update_xaxes(
                         f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
                         f"財務情報:\n{fund_str}\n"
                         f"直近ニュース:\n{news_str}\n\n"
-                        f"※注意：金商法で売買推奨は禁止されているため行わないこと。ただし売買判断の方向性は示すこと。ニュースについて触れること。"
+                        f"※注意：売買推奨は行わないこと。ただし最後に総合評価は下すこと。"
                     )
 
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
