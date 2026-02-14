@@ -79,7 +79,7 @@ def save_watchlist_data(data: list):
     with open(WATCHLIST_FILE, "w") as f: json.dump(data, f)
 
 def get_market_overview_live():
-    """SPYの最新価格を強制フェッチ (異常値 $681 回避用)"""
+    """SPYの最新価格を強制フェッチ"""
     try:
         spy_t = yf.Ticker("SPY")
         spy_h = spy_t.history(period="3d")
@@ -256,6 +256,8 @@ with tab_2:
 
     if st.session_state.quant_results_stored and st.session_state.quant_results_stored["ticker"] == t_input:
         res_q = st.session_state.quant_results_stored
+
+        # 1行目：主要4指標
         draw_sentinel_grid_ui([
             {"label": "💰 現在値", "value": f"${res_q['price']:.2f}" if res_q['price'] else "N/A"},
             {"label": "🎯 VCPスコア", "value": f"{res_q['vcp']['score']}/105"},
@@ -263,21 +265,20 @@ with tab_2:
             {"label": "📏 RSモメンタム", "value": f"{res_q['rs']*100:+.1f}%" if res_q['rs'] != -999 else "N/A"}
         ])
 
-        # VCP内訳表示
+        # 2行目：VCP内訳（4つのカード）
         vcp_bd = res_q['vcp'].get('breakdown', {})
-        vcp_detail = (
-            f"**VCP内訳**  |  "
-            f"Tightness: {vcp_bd.get('tight',0)}点  |  "
-            f"Volume: {vcp_bd.get('vol',0)}点  |  "
-            f"MA: {vcp_bd.get('ma',0)}点  |  "
-            f"Pivot: {vcp_bd.get('pivot',0)}点"
-        )
-        st.markdown(vcp_detail)
+        vcp_items = [
+            {"label": "📏 Tightness", "value": f"{vcp_bd.get('tight',0)}点"},
+            {"label": "📊 Volume", "value": f"{vcp_bd.get('vol',0)}点"},
+            {"label": "📈 MA", "value": f"{vcp_bd.get('ma',0)}点"},
+            {"label": "🎯 Pivot", "value": f"{vcp_bd.get('pivot',0)}点"},
+        ]
+        draw_sentinel_grid_ui(vcp_items)
 
         # チャート描画（直近180日）
-        df_plot = DataEngine.get_data(t_input, "2y")
+        df_plot = DataEngine.get_data(t_input, "180D")
         if df_plot is not None and not df_plot.empty:
-            df_recent = df_plot.last('180D')  # 直近180日
+            df_recent = df_plot.last('180D')
             candlestick = go.Figure(data=[go.Candlestick(
                 x=df_recent.index,
                 open=df_recent['Open'],
@@ -314,7 +315,7 @@ with tab_2:
                     fund_lines = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
                     fund_str = "\n".join(fund_lines) if fund_lines else "特記事項なし"
 
-                    # VCP内訳（再掲）
+                    # VCP内訳（詳細テキスト）
                     vcp_detail = (
                         f"内訳: Tightness {vcp_bd.get('tight',0)}点, "
                         f"Volume {vcp_bd.get('vol',0)}点, "
@@ -334,7 +335,7 @@ with tab_2:
                         f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
                         f"財務情報:\n{fund_str}\n"
                         f"直近ニュース:\n{news_str}\n\n"
-                        f"※注意：最終的な売買決断は法律上厳禁なので行わないが、データを元に売買判断の優劣を示してください。"
+                        f"※注意：金商法で売買推奨は禁止されているため行わないこと。ただし売買判断の方向性は示すこと。ニュースについて触れること。"
                     )
 
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
@@ -344,8 +345,9 @@ with tab_2:
                         st.session_state.ai_analysis_text = ai_res.choices[0].message.content.replace("$", r"\$") + disclaimer
                     except: st.error("AI Error")
         if st.session_state.ai_analysis_text: st.markdown("---"); st.info(st.session_state.ai_analysis_text)
+
 # ------------------------------------------------------------------------------
-# TAB 3: ポートフォリオ (セクター取得強化版)
+# TAB 3: ポートフォリオ
 # ------------------------------------------------------------------------------
 with tab_3:
     st.markdown(f'<div class="section-header">💼 ポートフォリオリスク管理</div>', unsafe_allow_html=True)
@@ -361,7 +363,7 @@ with tab_3:
             portfolio_obj["cash_jpy"] = input_jpy; portfolio_obj["cash_usd"] = input_usd
             save_portfolio_json(portfolio_obj); st.success("更新完了"); st.rerun()
 
-    # ポジション集計ロジック
+    # ポジション集計
     positions_map = portfolio_obj.get("positions", {})
     agg_stock_usd = 0.0
     detailed_positions = []
