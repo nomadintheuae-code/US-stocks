@@ -7,7 +7,7 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 
 ## Live Demo (Public No-AI Version)
 
-👉 Try it here: [https://us-stockssc.streamlit.app]
+👉 Try it here: [https://us-stockssc.streamlit.app](https://us-stockssc.streamlit.app)
 
 (Hosted on Streamlit Community Cloud – data via yfinance, no login required)
 
@@ -26,7 +26,8 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
   - View daily scan results with sortable/filterable tables  
   - Single-stock deep dive: charts (candlestick, volume, indicators), fundamentals, news headlines  
   - Portfolio tracker: entries, average cost, P&L, R-multiples, ATR-based stops/targets  
-  - Real-time price updates via yfinance
+  - Real-time price updates via yfinance  
+  - **Multilingual UI** (Japanese/English) – switch via sidebar
 
 - **Modular Notification** (`engines/notify.py`)  
   LINE integration ready (add your token in config/secrets)
@@ -41,47 +42,73 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 
 ## Installation
 
-1. Clone the repo
+1. Clone the repo  
    ```bash
    git clone https://github.com/EMMA019/US-stocks.git
    cd US-stocks
-	2	(Recommended) Virtual environment python -m venv venv
-	3	source venv/bin/activate          # Windows: venv\Scripts\activate
-	4	
-	5	Install dependencies pip install -r requirements.txt
-	6	
+(Recommended) Virtual environment
+
+bash
+python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+Install dependencies
+
+bash
+pip install -r requirements.txt
 Configuration
 Create .streamlit/secrets.toml (for local dev) or set in Streamlit Cloud settings:
+
+toml
 # .streamlit/secrets.toml
 LINE_NOTIFY_TOKEN = "your-line-notify-access-token"
-# (No AI keys needed in this version)
+DEEPSEEK_API_KEY = "your-deepseek-api-key"   # optional, for AI diagnosis
 Or via environment variables:
+
+bash
 export LINE_NOTIFY_TOKEN="..."
+export DEEPSEEK_API_KEY="..."
 Usage
 Run daily scan (batch mode)
+
+bash
 python sentinel.py
 Launch the dashboard
+
+bash
 streamlit run app.py
 → Open http://localhost:8501
+
 Project Status
-	•	Actively developed (recent commits: app.py, sentinel.py, engines/notify.py, GitHub Actions workflow for daily scans)
-	•	No external API costs (yfinance is free; LINE Notify free tier sufficient)
-	•	Planned:
-	◦	More scan filters & presets
-	◦	Export CSV/Excel from dashboard
-	◦	Enhanced portfolio persistence (JSON or SQLite)
-	◦	Mobile-friendly layout tweaks
+Actively developed (recent commits: app.py, sentinel.py, engines/notify.py, GitHub Actions workflow for daily scans)
+
+No external API costs (yfinance is free; LINE Notify free tier sufficient)
+
+Recent improvements:
+
+Unified analysis logic between batch scan and real-time dashboard
+
+Added multilingual support (Japanese/English)
+
+Planned:
+
+More scan filters & presets
+
+Export CSV/Excel from dashboard
+
+Enhanced portfolio persistence (JSON or SQLite)
+
+Mobile-friendly layout tweaks
+
 License
-MIT License Copyright © 2026 Emma Saka
+MIT License
+Copyright © 2026 Emma Saka
+
 See LICENSE for details.
+
 Disclaimer
-This is an educational/personal tool for scanning and tracking US stocks. It does not provide financial advice. All trading involves risk of loss — use at your own discretion. Data sourced from yfinance (subject to its terms and potential delays/limits).
+This is an educational/personal tool for scanning and tracking US stocks.
+It does not provide financial advice.
+All trading involves risk of loss — use at your own discretion.
+Data sourced from yfinance (subject to its terms and potential delays/limits).
+
 Feedback, issues, or forks welcome! 🛡️
-### Quick Tips for Next Steps
-- **Commit the README**: `git add README.md && git commit -m "Add comprehensive English README" && git push`
-- **Add a screenshot**: Take one of the dashboard (scan table + chart), upload to repo as `screenshots/dashboard.png`, then add to README:
-  ```markdown
-  ![Dashboard Screenshot](screenshots/dashboard.png)
-	•	GitHub Actions: You already have a workflow — nice! It can auto-run sentinel.py daily if set up properly.
-	•	If you later want a separate no-ai branch for public sharing, just branch off main and remove any leftover AI code comments.
-Let me know if you want tweaks (shorter version, more sections like “How RS/VCP Works”, badges, etc.)! 🚀
