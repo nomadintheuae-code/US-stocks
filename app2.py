@@ -15,7 +15,7 @@ import yfinance as yf
 from openai import OpenAI
 
 # ==============================================================================
-# 1. エンジンのインポート (貴殿の環境構成に準拠)
+# 1. エンジンのインポート
 # ==============================================================================
 try:
     from config import CONFIG
@@ -174,7 +174,7 @@ tab_1, tab_2, tab_3 = st.tabs(["📊 マーケットスキャン", "🔍 AI診�
 # ------------------------------------------------------------------------------
 with tab_1:
     st.markdown(f'<div class="section-header">📊 マーケットスキャン (地合い分析)</div>', unsafe_allow_html=True)
-    m_info = get_market_overview_live() 
+    m_info = get_market_overview_live()
 
     scan_df = pd.DataFrame()
     if RESULTS_DIR.exists():
@@ -205,7 +205,6 @@ with tab_1:
                 cl = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
                 try:
                     res = cl.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
-                    # 免責文を追加
                     disclaimer = "\n\n※この分析はAIによる参考情報です。投資判断はご自身の責任で行ってください。"
                     st.session_state.ai_market_text = res.choices[0].message.content.replace("$", r"\$") + disclaimer
                 except: st.error("AI Error")
@@ -275,25 +274,48 @@ with tab_2:
             ak = st.secrets.get("DEEPSEEK_API_KEY")
             if ak:
                 with st.spinner(f"Analyzing {t_input}..."):
-                    news_t = NewsEngine.format_for_prompt(NewsEngine.get(t_input))
-                    fund_t = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
-                    p_text = (
-                        f"あなたは金融アシスタントです。以下の情報を基に、投資家が投資判断において知るべき最重要ポイントを"
-    f"**簡潔に箇条書き（3〜5項目）** でまとめてください。\n"
-    f"・全体で400文字程度に収めてください。\n"
-    f"・専門用語は平易に言い換えてください。\n\n"
-    f"【データ】\n"
-    f"銘柄: {t_input}\n"
-    f"現在値: ${res_q['price']}\n"
-    f"VCPスコア: {res_q['vcp']['score']}/105\n"
-    f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
-    f"財務情報: {fund_t}\n"
-    f"直近ニュース: {news_t}\n\n"
-    f"※注意：売買推奨は行わず、あくまでデータの客観的な読み解き方を示してください。"
+                    # ニュース取得（タイトル＋ソースのみ）
+                    news_data = NewsEngine.get(t_input)
+                    news_items = news_data.get("articles", [])[:3]
+                    news_lines = []
+                    for item in news_items:
+                        title = item.get("title", "")
+                        url = item.get("url", "")
+                        source = url.split('/')[2] if url else "不明"
+                        news_lines.append(f"・{title} ({source})")
+                    news_str = "\n".join(news_lines)
+
+                    # ファンダメンタル情報
+                    fund_lines = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
+                    fund_str = "\n".join(fund_lines) if fund_lines else "特記事項なし"
+
+                    # VCP内訳
+                    vcp_breakdown = res_q['vcp'].get('breakdown', {})
+                    vcp_detail = (
+                        f"内訳: Tightness {vcp_breakdown.get('tight',0)}点, "
+                        f"Volume {vcp_breakdown.get('vol',0)}点, "
+                        f"MA {vcp_breakdown.get('ma',0)}点, "
+                        f"Pivot {vcp_breakdown.get('pivot',0)}点"
                     )
+
+                    prompt = (
+                        f"あなたは金融アシスタントです。以下の情報を基に、投資家が投資判断において知るべき最重要ポイントを"
+                        f"**簡潔に箇条書き（3〜5項目）** でまとめてください。\n"
+                        f"・全体で400文字程度に収めてください。\n"
+                        f"・専門用語は平易に言い換えてください。\n\n"
+                        f"【データ】\n"
+                        f"銘柄: {t_input}\n"
+                        f"現在値: ${res_q['price']}\n"
+                        f"VCPスコア: {res_q['vcp']['score']}/105 ({vcp_detail})\n"
+                        f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
+                        f"財務情報:\n{fund_str}\n"
+                        f"直近ニュース:\n{news_str}\n\n"
+                        f"※注意：売買推奨は行わず、あくまでデータの客観的な読み解き方を示してください。"
+                    )
+
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
                     try:
-                        ai_res = client.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": p_text}])
+                        ai_res = client.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
                         disclaimer = "\n\n※この解説はAIによる参考情報であり、投資助言ではありません。"
                         st.session_state.ai_analysis_text = ai_res.choices[0].message.content.replace("$", r"\$") + disclaimer
                     except: st.error("AI Error")
@@ -322,12 +344,10 @@ with tab_3:
     detailed_positions = []
 
     for tkr, data in positions_map.items():
-        # セクター情報の取得強化
         f_info = FundamentalEngine.get(tkr)
         s_name = f_info.get("sector", "Unknown")
         i_name = f_info.get("industry", "Unknown")
 
-        # フォールバック
         if s_name == "Unknown":
             try:
                 y_raw = yf.Ticker(tkr).info
