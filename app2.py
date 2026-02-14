@@ -290,7 +290,6 @@ with tab_2:
     f"財務情報: {fund_t}\n"
     f"直近ニュース: {news_t}\n\n"
     f"※注意：売買推奨は行わず、あくまでデータの客観的な読み解き方を示してください。"
-)
                     )
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
                     try:
