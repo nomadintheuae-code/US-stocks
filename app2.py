@@ -310,7 +310,7 @@ with tab_2:
                         f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
                         f"財務情報:\n{fund_str}\n"
                         f"直近ニュース:\n{news_str}\n\n"
-                        f"※注意：最終的な売買決断は法律上厳禁なので行わないが、データを元に判断を匂わせる程度に示してください。"
+                        f"※注意：最終的な売買決断は法律上厳禁なので行わないが、データを元に売買判断の優劣を示してください。"
                     )
 
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
