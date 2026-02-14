@@ -1,22 +1,17 @@
 """
 app.py — SENTINEL PRO Streamlit UI
 
-[ABSOLUTE FULL SCALE RESTORATION - 980+ LINES]
-- FIX: NameError (load_portfolio_json 等の関数定義漏れ) を完全に解消。
-- Quant-First: AIキーなしで VCP, RS, PF, ATR を即座に算出・表示する独立回路を実装。
-- HTML露出(1453)根絶: 文字列内の全インデントを物理的に削除しMarkdown誤認を回避。
-- RSAnalyzer: 12ヶ月(40%), 6ヶ月(20%), 3ヶ月(20%), 1ヶ月(20%)の厳格加重計算。
-- StrategyValidator: 252日間の全ロウソク足をループ走査しPFを算出。
-- UI: 物理バッファによるタブ切れ(1452)解消。
+[修正版]
+- engines.analysis から分析クラスをインポート（一元化）
+- 言語切り替え機能（日本語/英語）を追加
+- 不要なスタブクラスを削除
 """
 
 import json
 import os
-import re
 import time
 import warnings
 import datetime
-import textwrap
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -26,49 +21,120 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import yfinance as yf
-from openai import OpenAI
 
-# 外部エンジン構成（既存のディレクトリ構造を100%維持）
-# 読み込みに失敗した場合はスタブを定義し、NameErrorを物理的に防ぐ。
-try:
-    from config import CONFIG
-    from engines.data import CurrencyEngine, DataEngine
-    from engines.fundamental import FundamentalEngine, InsiderEngine
-    from engines.news import NewsEngine
-except ImportError:
-    class CurrencyEngine:
-        @staticmethod
-        def get_usd_jpy(): return 152.65
-    class DataEngine:
-        @staticmethod
-        def get_data(ticker, period): return yf.download(ticker, period=period)
-        @staticmethod
-        def get_current_price(ticker):
-            try: return yf.Ticker(ticker).fast_info['lastPrice']
-            except: return 0.0
-        @staticmethod
-        def get_atr(ticker): return 1.5
-    class FundamentalEngine:
-        @staticmethod
-        def get(ticker): return {"info": "N/A"}
-    class InsiderEngine:
-        @staticmethod
-        def get(ticker): return {"trades": []}
-    class NewsEngine:
-        @staticmethod
-        def get(ticker): return []
+# 外部エンジンのインポート
+from config import CONFIG
+from engines.data import CurrencyEngine, DataEngine
+from engines.fundamental import FundamentalEngine, InsiderEngine
+from engines.news import NewsEngine
+from engines.analysis import VCPAnalyzer, RSAnalyzer, StrategyValidator
 
 warnings.filterwarnings("ignore")
 
 # ==============================================================================
-# 💎 1. セッションステートの強制初期化 (KeyError & UI崩れ対策)
+# 言語設定
+# ==============================================================================
+
+LANG = {
+    "ja": {
+        "title": "🛡️ SENTINEL PRO",
+        "tab_scan": "📊 マーケットスキャン",
+        "tab_diag": "🔍 AI診断",
+        "tab_port": "💼 ポートフォリオ",
+        "scan_date": "📅 スキャン日",
+        "usd_jpy": "💱 USD/JPY",
+        "action_list": "アクション銘柄",
+        "wait_list": "ウォッチ銘柄",
+        "sector_map": "🗺️ セクター別RSマップ",
+        "realtime_scan": "🔍 リアルタイム定量スキャン",
+        "ticker_input": "ティッカーシンボル（例：NVDA）",
+        "run_quant": "🚀 定量スキャン実行",
+        "add_watchlist": "⭐ ウォッチリストに追加",
+        "quant_dashboard": "📊 SENTINEL定量ダッシュボード",
+        "current_price": "💰 現在値",
+        "vcp_score": "🎯 VCPスコア",
+        "profit_factor": "📈 プロフィットファクター",
+        "rs_momentum": "📏 RSモメンタム",
+        "strategic_levels": "🛡️ ATR基準の戦略水準",
+        "stop_loss": "ストップロス (2.0R)",
+        "target1": "目標① (1.0R)",
+        "target2": "目標② (2.5R)",
+        "risk_unit": "リスク単価 ($)",
+        "vcp_breakdown": "📐 VCPスコア内訳",
+        "tightness": "収縮スコア",
+        "volume": "出来高スコア",
+        "ma_trend": "移動平均トレンド",
+        "pivot_bonus": "ピボットボーナス",
+        "ai_reasoning": "🤖 SENTINEL AI診断",
+        "generate_ai": "🚀 AI診断を生成（ニュース＆ファンダメンタル）",
+        "ai_key_missing": "DEEPSEEK_API_KEY が設定されていません。数値スキャンは完了しましたが、AI分析は実行できません。",
+        "portfolio_risk": "💼 ポートフォリオリスク管理",
+        "portfolio_empty": "ポートフォリオは空です。",
+        "unrealized_jpy": "💰 含み損益 (円)",
+        "assets": "📊 保有銘柄数",
+        "exposure": "🛡️ エクスポージャー",
+        "performance": "📈 平均パフォーマンス",
+        "active_positions": "📋 保有中のポジション",
+        "close_position": "決済",
+        "register_new": "➕ 新規ポジション登録",
+        "ticker_symbol": "ティッカーシンボル",
+        "shares": "株数",
+        "avg_cost": "平均取得単価",
+        "add_to_portfolio": "ポートフォリオに追加",
+    },
+    "en": {
+        "title": "🛡️ SENTINEL PRO",
+        "tab_scan": "📊 MARKET SCAN",
+        "tab_diag": "🔍 AI DIAGNOSIS",
+        "tab_port": "💼 PORTFOLIO",
+        "scan_date": "📅 Scan Date",
+        "usd_jpy": "💱 USD/JPY",
+        "action_list": "Action List",
+        "wait_list": "Watch List",
+        "sector_map": "🗺️ Sector RS Map",
+        "realtime_scan": "🔍 REAL-TIME QUANTITATIVE SCAN",
+        "ticker_input": "Ticker Symbol (e.g. NVDA)",
+        "run_quant": "🚀 RUN QUANTITATIVE SCAN",
+        "add_watchlist": "⭐ ADD TO WATCHLIST",
+        "quant_dashboard": "📊 SENTINEL QUANTITATIVE DASHBOARD",
+        "current_price": "💰 Current Price",
+        "vcp_score": "🎯 VCP Score",
+        "profit_factor": "📈 Profit Factor",
+        "rs_momentum": "📏 RS Momentum",
+        "strategic_levels": "🛡️ STRATEGIC LEVELS (ATR-Based)",
+        "stop_loss": "Stop Loss (2.0R)",
+        "target1": "Target 1 (1.0R)",
+        "target2": "Target 2 (2.5R)",
+        "risk_unit": "Risk Unit ($)",
+        "vcp_breakdown": "📐 VCP SCORE BREAKDOWN",
+        "tightness": "Tightness Score",
+        "volume": "Volume Dry-up",
+        "ma_trend": "MA Trend Score",
+        "pivot_bonus": "Pivot Bonus",
+        "ai_reasoning": "🤖 SENTINEL AI CONTEXTUAL REASONING",
+        "generate_ai": "🚀 GENERATE AI DIAGNOSIS (NEWS & FUNDAMENTALS)",
+        "ai_key_missing": "DEEPSEEK_API_KEY is not configured in Secrets. Numerical scan is complete, but AI analysis cannot be performed.",
+        "portfolio_risk": "💼 PORTFOLIO RISK MANAGEMENT",
+        "portfolio_empty": "Portfolio is currently empty.",
+        "unrealized_jpy": "💰 Unrealized JPY",
+        "assets": "📊 Assets",
+        "exposure": "🛡️ Exposure",
+        "performance": "📈 Performance",
+        "active_positions": "📋 ACTIVE POSITIONS",
+        "close_position": "Close",
+        "register_new": "➕ REGISTER NEW POSITION",
+        "ticker_symbol": "Ticker Symbol",
+        "shares": "Shares",
+        "avg_cost": "Avg Cost",
+        "add_to_portfolio": "ADD TO PORTFOLIO",
+    }
+}
+
+# ==============================================================================
+# セッションステートの初期化
 # ==============================================================================
 
 def initialize_sentinel_state():
-    """
-    アプリ起動時、および再レンダリング時に全ステートを確実に確保。
-    初期化漏れは Streamlit において致命的な不具合を招く。
-    """
     if "target_ticker" not in st.session_state:
         st.session_state.target_ticker = ""
     if "trigger_analysis" not in st.session_state:
@@ -79,38 +145,34 @@ def initialize_sentinel_state():
         st.session_state.quant_results_stored = None
     if "ai_analysis_text" not in st.session_state:
         st.session_state.ai_analysis_text = ""
+    if "language" not in st.session_state:
+        st.session_state.language = "ja"  # デフォルトは日本語
 
 initialize_sentinel_state()
 
 # ==============================================================================
-# 🔧 2. ヘルパー関数 (NameError を根絶するために全定義)
+# 定数・パス
 # ==============================================================================
 
-NOW         = datetime.datetime.now()
-TODAY_STR   = NOW.strftime("%Y-%m-%d")
-CACHE_DIR   = Path("./cache_v45"); CACHE_DIR.mkdir(exist_ok=True)
-RESULTS_DIR = Path("./results");   RESULTS_DIR.mkdir(exist_ok=True)
+NOW = datetime.datetime.now()
+TODAY_STR = NOW.strftime("%Y-%m-%d")
+CACHE_DIR = Path("./cache_v45"); CACHE_DIR.mkdir(exist_ok=True)
+RESULTS_DIR = Path("./results"); RESULTS_DIR.mkdir(exist_ok=True)
 WATCHLIST_FILE = Path("watchlist.json")
 PORTFOLIO_FILE = Path("portfolio.json")
 
-EXIT_CFG = {
-    "STOP_LOSS_ATR_MULT": 2.0,
-    "TARGET_R_MULT":      2.5,
-    "TRAIL_START_R":      1.5,
-    "TRAIL_ATR_MULT":     1.5,
-    "SCALE_OUT_R":        1.5,
-}
+# ==============================================================================
+# ヘルパー関数
+# ==============================================================================
 
 @st.cache_data(ttl=3600)
 def get_cached_usd_jpy_rate():
-    """為替レートの取得。"""
     try:
         return CurrencyEngine.get_usd_jpy()
     except:
         return 152.65
 
 def load_portfolio_json() -> dict:
-    """ポートフォリオデータの読み込み。"""
     if not PORTFOLIO_FILE.exists():
         return {"positions": {}, "closed": [], "meta": {"last_update": ""}}
     try:
@@ -120,12 +182,10 @@ def load_portfolio_json() -> dict:
         return {"positions": {}, "closed": []}
 
 def save_portfolio_json(data: dict):
-    """ポートフォリオデータの保存。"""
     with open(PORTFOLIO_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def load_watchlist_data() -> list:
-    """ウォッチリストの読み込み。"""
     if not WATCHLIST_FILE.exists():
         return []
     try:
@@ -135,15 +195,13 @@ def load_watchlist_data() -> list:
         return []
 
 def save_watchlist_data(data: list):
-    """ウォッチリストの保存。"""
     with open(WATCHLIST_FILE, "w") as f:
         json.dump(data, f)
 
 # ==============================================================================
-# 🎨 3. UI スタイル定義 (1452のタブ切れ、1453のHTML漏れを完治)
+# UIスタイル（前回と同じ）
 # ==============================================================================
 
-# 物理的にインデントを1文字も入れないフラットな文字列として定義。
 GLOBAL_STYLE = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
@@ -158,14 +216,12 @@ padding-top: 0rem !important;
 padding-bottom: 2rem !important; 
 }
 
-/* 【画像 1452 完治】 物理的な押し下げバッファ */
 .ui-push-buffer {
 height: 65px;
 width: 100%;
 background: transparent;
 }
 
-/* タブリスト全体の幅圧縮を禁止 */
 .stTabs [data-baseweb="tab-list"] {
 display: flex !important;
 width: 100% !important;
@@ -181,7 +237,6 @@ scrollbar-width: none !important;
 }
 .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { display: none !important; }
 
-/* タブ幅を固定して表示切れを防ぐ */
 .stTabs [data-baseweb="tab"] {
 min-width: 185px !important; 
 flex-shrink: 0 !important;
@@ -195,7 +250,6 @@ white-space: nowrap !important;
 text-align: center !important;
 }
 
-/* 選択タブの強調 */
 .stTabs [aria-selected="true"] {
 color: #ffffff !important;
 background-color: #238636 !important;
@@ -204,7 +258,6 @@ border-radius: 12px 12px 0 0 !important;
 
 .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
 
-/* 2x2タイルグリッド (画像 1449 再現) */
 .sentinel-grid {
 display: grid;
 grid-template-columns: repeat(2, 1fr);
@@ -225,7 +278,6 @@ box-shadow: 0 4px 25px rgba(0,0,0,0.7);
 .sentinel-value { font-size: 1.45rem; font-weight: 700; color: #f0f6fc; line-height: 1.1; }
 .sentinel-delta { font-size: 0.95rem; font-weight: 600; margin-top: 12px; }
 
-/* 診断数値パネル */
 .diagnostic-panel {
 background: #0d1117;
 border: 1px solid #30363d;
@@ -266,248 +318,7 @@ padding: 30px; margin-bottom: 24px; border-left: 12px solid #30363d;
 </style>
 """
 
-# ==============================================================================
-# 🎯 4. VCPAnalyzer (【最新ロジック】 収縮・出来高・MAトレンド判定)
-# ==============================================================================
-
-class VCPAnalyzer:
-    """
-    Mark Minervini VCP 分析エンジン。
-    新ロジック: 多段階収縮ボーナス、出来高ドライアップ判定、ピボット近接性を算出。
-    """
-    @staticmethod
-    def calculate(df: pd.DataFrame) -> dict:
-        """
-        最新のVCPスコアリングロジック。
-        Tightness (40), Volume (30), MA (30), Pivot (5) = 105pt Max
-        """
-        try:
-            if df is None or len(df) < 130:
-                return VCPAnalyzer._empty_result()
-
-            close_s = df["Close"]
-            high_s  = df["High"]
-            low_s   = df["Low"]
-            vol_s   = df["Volume"]
-
-            # ATR(14) 精密算出
-            tr1 = high_s - low_s
-            tr2 = (high_s - close_s.shift(1)).abs()
-            tr3 = (low_s - close_s.shift(1)).abs()
-            tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-            atr_val = float(tr.rolling(14).mean().iloc[-1])
-            
-            if pd.isna(atr_val) or atr_val <= 0:
-                return VCPAnalyzer._empty_result()
-
-            # 1. Tightness (ボラティリティ収縮判定 - 40pt)
-            periods = [20, 30, 40, 60]
-            vol_ranges = []
-            for p in periods:
-                p_high = float(high_s.iloc[-p:].max())
-                p_low  = float(low_s.iloc[-p:].min())
-                if p_high > 0:
-                    vol_ranges.append((p_high - p_low) / p_high)
-                else:
-                    vol_ranges.append(1.0)
-            
-            curr_range = vol_ranges[0]
-            avg_range = float(np.mean(vol_ranges[:3]))
-            
-            # 【新ロジック】 収縮推移判定
-            is_contracting = vol_ranges[0] < vol_ranges[1] < vol_ranges[2]
-
-            if avg_range < 0.10:   tight_score = 40
-            elif avg_range < 0.15: tight_score = 30
-            elif avg_range < 0.20: tight_score = 20
-            elif avg_range < 0.28: tight_score = 10
-            else:                  tight_score = 0
-            
-            if is_contracting: tight_score += 5
-            tight_score = min(40, tight_score)
-
-            # 2. Volume (出来高分析 - 30pt)
-            v20_avg = float(vol_s.iloc[-20:].mean())
-            v60_avg = float(vol_s.iloc[-60:-40].mean())
-            
-            if pd.isna(v20_avg) or pd.isna(v60_avg):
-                return VCPAnalyzer._empty_result()
-            
-            v_ratio = v20_avg / v60_avg if v60_avg > 0 else 1.0
-
-            if v_ratio < 0.45:   vol_score = 30
-            elif v_ratio < 0.60: vol_score = 25
-            elif v_ratio < 0.75: vol_score = 15
-            else:                vol_score = 0
-            
-            is_dryup = v_ratio < 0.75
-
-            # 3. MA Alignment (トレンド分析 - 30pt)
-            ma50_v  = float(close_s.rolling(50).mean().iloc[-1])
-            ma150_v = float(close_s.rolling(150).mean().iloc[-1])
-            ma200_v = float(close_s.rolling(200).mean().iloc[-1])
-            price_v = float(close_s.iloc[-1])
-            
-            m_score = 0
-            if price_v > ma50_v:   m_score += 10
-            if ma50_v > ma150_v:   m_score += 10
-            if ma150_v > ma200_v:  m_score += 10
-
-            # 4. Pivot Bonus (ブレイクアウト近接性 - 5pt)
-            pivot_v = float(high_s.iloc[-50:].max())
-            dist_v = (pivot_v - price_v) / pivot_v
-            
-            p_bonus = 0
-            if 0 <= dist_v <= 0.04:
-                p_bonus = 5
-            elif 0.04 < dist_v <= 0.08:
-                p_bonus = 3
-
-            signals = []
-            if tight_score >= 35: signals.append("Tight Base (VCP)")
-            if is_contracting:    signals.append("V-Contraction Detected")
-            if is_dryup:          signals.append("Volume Dry-up Detected")
-            if m_score >= 20:     signals.append("Trend Alignment OK")
-            if p_bonus > 0:       signals.append("Near Pivot Point")
-
-            return {
-                "score": int(min(105, tight_score + vol_score + m_score + p_bonus)),
-                "atr": atr_val,
-                "signals": signals,
-                "is_dryup": is_dryup,
-                "range_pct": round(curr_range, 4),
-                "vol_ratio": round(v_ratio, 2),
-                "breakdown": {
-                    "tight": tight_score,
-                    "vol": vol_score,
-                    "ma": m_score,
-                    "pivot": p_bonus
-                }
-            }
-        except Exception:
-            return VCPAnalyzer._empty_result()
-
-    @staticmethod
-    def _empty_result():
-        return {
-            "score": 0, "atr": 0.0, "signals": [], 
-            "is_dryup": False, "range_pct": 0.0, "vol_ratio": 1.0,
-            "breakdown": {"tight": 0, "vol": 0, "ma": 0, "pivot": 0}
-        }
-
-# ==============================================================================
-# 📈 5. RSAnalyzer (初期 783行版の加重ランキングロジックを完全復元)
-# ==============================================================================
-
-class RSAnalyzer:
-    """
-    Relative Strength 計算エンジン。
-    12/6/3/1ヶ月の加重モメンタムを個別に算出(40/20/20/20)。
-    """
-    @staticmethod
-    def get_raw_score(df: pd.DataFrame) -> float:
-        """初期 783行版の重み付けを一言一句復元。"""
-        try:
-            c = df["Close"]
-            if len(c) < 252:
-                return -999.0
-            
-            r12m = (c.iloc[-1] / c.iloc[-252]) - 1
-            r6m  = (c.iloc[-1] / c.iloc[-126]) - 1
-            r3m  = (c.iloc[-1] / c.iloc[-63])  - 1
-            r1m  = (c.iloc[-1] / c.iloc[-21])  - 1
-            
-            # 加重平均
-            weighted_momentum = (r12m * 0.4) + (r6m * 0.2) + (r3m * 0.2) + (r1m * 0.2)
-            return weighted_momentum
-        except Exception:
-            return -999.0
-
-# ==============================================================================
-# 🔬 6. StrategyValidator (消失していた 252日フルループバックテストを復元)
-# ==============================================================================
-
-class StrategyValidator:
-    """
-    直近1年間の全トレードシミュレーションによる Profit Factor 算出。
-    期待値の数値化に不可欠な SENTINEL のコアエンジン。
-    """
-    @staticmethod
-    def run(df: pd.DataFrame) -> float:
-        """過去252日間を1日ずつ走査し、仮想トレードを行う重厚なループ。"""
-        try:
-            if len(df) < 252:
-                return 1.0
-            
-            c_data = df["Close"]
-            h_data = df["High"]
-            l_data = df["Low"]
-            
-            tr_calc = pd.concat([
-                h_data - l_data,
-                (h_data - c_data.shift(1)).abs(),
-                (l_data - c_data.shift(1)).abs()
-            ], axis=1).max(axis=1)
-            atr_s = tr_calc.rolling(14).mean()
-            
-            trade_results = []
-            is_in_pos = False
-            entry_p = 0.0
-            stop_p  = 0.0
-            
-            t_mult = EXIT_CFG["TARGET_R_MULT"]
-            s_mult = EXIT_CFG["STOP_LOSS_ATR_MULT"]
-            
-            # 252日間ループを復元
-            idx_start = max(65, len(df) - 252)
-            for i in range(idx_start, len(df)):
-                if is_in_pos:
-                    if float(l_data.iloc[i]) <= stop_p:
-                        trade_results.append(-1.0)
-                        is_in_pos = False
-                    elif float(h_data.iloc[i]) >= entry_p + (entry_p - stop_p) * t_mult:
-                        trade_results.append(t_mult)
-                        is_in_pos = False
-                    elif i == len(df) - 1:
-                        risk_unit = entry_p - stop_p
-                        if risk_unit > 0:
-                            pnl_r = (float(c_data.iloc[i]) - entry_p) / risk_unit
-                            trade_results.append(pnl_r)
-                        is_in_pos = False
-                else:
-                    if i < 20: continue
-                    local_high_20 = float(h_data.iloc[i-20:i].max())
-                    ma50_c = float(c_data.rolling(50).mean().iloc[i])
-                    
-                    if float(c_data.iloc[i]) > local_high_20 and float(c_data.iloc[i]) > ma50_c:
-                        is_in_pos = True
-                        entry_p = float(c_data.iloc[i])
-                        atr_now = float(atr_s.iloc[i])
-                        stop_p = entry_p - (atr_now * s_mult)
-            
-            if not trade_results:
-                return 1.0
-            
-            gp = sum(res for res in trade_results if res > 0)
-            gl = abs(sum(res for res in trade_results if res < 0))
-            
-            if gl == 0:
-                return round(min(10.0, gp if gp > 0 else 1.0), 2)
-            
-            return round(min(10.0, float(gp / gl)), 2)
-            
-        except Exception:
-            return 1.0
-
-# ==============================================================================
-# 📋 7. UI ヘルパー (1453のHTML漏れを物理的に防ぐ)
-# ==============================================================================
-
 def draw_sentinel_grid_ui(metrics: List[Dict[str, Any]]):
-    """
-    1449.png 仕様の 2x2 タイル表示。
-    HTMLタグ露出(1453)を根絶するため、全てのインデントを物理的に排除して文字列をフラットに構築する。
-    """
     html_out = '<div class="sentinel-grid">'
     for m in metrics:
         delta_s = ""
@@ -515,8 +326,6 @@ def draw_sentinel_grid_ui(metrics: List[Dict[str, Any]]):
             is_pos = "+" in str(m["delta"]) or (isinstance(m["delta"], (int, float)) and m["delta"] > 0)
             c_code = "#3fb950" if is_pos else "#f85149"
             delta_s = f'<div class="sentinel-delta" style="color:{c_code}">{m["delta"]}</div>'
-        
-        # インデントを一切持たせない
         item = (
             '<div class="sentinel-card">'
             f'<div class="sentinel-label">{m["label"]}</div>'
@@ -525,29 +334,32 @@ def draw_sentinel_grid_ui(metrics: List[Dict[str, Any]]):
             '</div>'
         )
         html_out += item
-    
     html_out += '</div>'
     st.markdown(html_out.strip(), unsafe_allow_html=True)
 
 # ==============================================================================
-# 🧭 8. メイン UI フロー (【APIキー不要の即時診断】完全独立版)
+# メインUI
 # ==============================================================================
 
 st.set_page_config(
-    page_title="SENTINEL PRO", 
-    page_icon="🛡️", 
-    layout="wide", 
+    page_title="SENTINEL PRO",
+    page_icon="🛡️",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# 【画像 1452・1453 対策】 物理的押し下げバッファ (65px)
+# 物理バッファとスタイル
 st.markdown('<div class="ui-push-buffer"></div>', unsafe_allow_html=True)
-# 全スタイルの適用 (インデントなし)
 st.markdown(GLOBAL_STYLE, unsafe_allow_html=True)
 
-# --- Sidebar ---
+# サイドバー（言語選択とウォッチリスト）
 with st.sidebar:
-    st.markdown("### 🛡️ WATCHLIST")
+    st.markdown("### 🌐 Language")
+    lang = st.selectbox("", ["日本語", "English"], index=0 if st.session_state.language == "ja" else 1)
+    st.session_state.language = "ja" if lang == "日本語" else "en"
+    txt = LANG[st.session_state.language]
+
+    st.markdown(f"### {txt['title']} ウォッチリスト")
     wl_t = load_watchlist_data()
     for t_n in wl_t:
         col_n, col_d = st.columns([4, 1])
@@ -562,17 +374,16 @@ with st.sidebar:
     st.divider()
     st.caption(f"🛡️ SENTINEL V4.5 | {NOW.strftime('%H:%M:%S')}")
 
-# --- Core Context ---
 fx_rate = get_cached_usd_jpy_rate()
 
-# メインタブの構成 (1452.png の修正を CSS で適用済み)
-tab_scan, tab_diag, tab_port = st.tabs(["📊 MARKET SCAN", "🔍 AI DIAGNOSIS", "💼 PORTFOLIO"])
+# メインタブ
+tab_scan, tab_diag, tab_port = st.tabs([txt["tab_scan"], txt["tab_diag"], txt["tab_port"]])
 
 # ------------------------------------------------------------------------------
-# 📊 TAB 1: MARKET SCAN (画像 1450 再現)
+# タブ1: マーケットスキャン
 # ------------------------------------------------------------------------------
 with tab_scan:
-    st.markdown('<div class="section-header">📊 LATEST MARKET SCAN RESULTS</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header">{txt["tab_scan"]}</div>', unsafe_allow_html=True)
     if RESULTS_DIR.exists():
         f_list = sorted(RESULTS_DIR.glob("*.json"), reverse=True)
         if f_list:
@@ -580,46 +391,45 @@ with tab_scan:
                 with open(f_list[0], "r", encoding="utf-8") as f:
                     s_data = json.load(f)
                 s_df = pd.DataFrame(s_data.get("qualified_full", []))
-                # タイル表示 (インデントなし Markdown)
                 draw_sentinel_grid_ui([
-                    {"label": "📅 SCAN DATE", "value": s_data.get("date", TODAY_STR)},
-                    {"label": "💱 USD/JPY", "value": f"¥{fx_rate:.2f}"},
-                    {"label": "Action List", "value": len(s_df[s_df["status"]=="ACTION"]) if not s_df.empty else 0},
-                    {"label": "Wait List", "value": len(s_df[s_df["status"]=="WAIT"]) if not s_df.empty else 0}
+                    {"label": txt["scan_date"], "value": s_data.get("date", TODAY_STR)},
+                    {"label": txt["usd_jpy"], "value": f"¥{fx_rate:.2f}"},
+                    {"label": txt["action_list"], "value": len(s_df[s_df["status"]=="ACTION"]) if not s_df.empty else 0},
+                    {"label": txt["wait_list"], "value": len(s_df[s_df["status"]=="WAIT"]) if not s_df.empty else 0}
                 ])
                 if not s_df.empty:
-                    st.markdown('<div class="section-header">🗺️ SECTOR RELATIVE STRENGTH MAP</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="section-header">{txt["sector_map"]}</div>', unsafe_allow_html=True)
                     s_df["vcp_score"] = s_df["vcp"].apply(lambda x: x.get("score", 0))
                     m_fig = px.treemap(
-                        s_df, 
-                        path=["sector", "ticker"], 
-                        values="vcp_score", 
-                        color="rs", 
-                        color_continuous_scale="RdYlGn", 
+                        s_df,
+                        path=["sector", "ticker"],
+                        values="vcp_score",
+                        color="rs",
+                        color_continuous_scale="RdYlGn",
                         range_color=[70, 100]
                     )
                     m_fig.update_layout(template="plotly_dark", height=600, margin=dict(t=0, b=0, l=0, r=0))
                     st.plotly_chart(m_fig, use_container_width=True)
                     st.dataframe(
-                        s_df[["ticker", "status", "vcp_score", "rs", "sector"]].sort_values("vcp_score", ascending=False), 
-                        use_container_width=True, 
+                        s_df[["ticker", "status", "vcp_score", "rs", "sector"]].sort_values("vcp_score", ascending=False),
+                        use_container_width=True,
                         height=500
                     )
-            except: pass
+            except Exception as e:
+                st.error(f"Error loading scan results: {e}")
 
 # ------------------------------------------------------------------------------
-# 🔍 TAB 2: AI DIAGNOSIS (【APIキー不要の即時診断機能】完全独立版)
+# タブ2: AI診断（リアルタイム定量スキャン）
 # ------------------------------------------------------------------------------
 with tab_diag:
-    st.markdown('<div class="section-header">🔍 REAL-TIME QUANTITATIVE SCAN</div>', unsafe_allow_html=True)
-    
-    t_input = st.text_input("Ticker Symbol (e.g. NVDA)", value=st.session_state.target_ticker).upper().strip()
-    
-    # 計算トリガーとAIトリガーを物理的に分離
+    st.markdown(f'<div class="section-header">{txt["realtime_scan"]}</div>', unsafe_allow_html=True)
+
+    t_input = st.text_input(txt["ticker_input"], value=st.session_state.target_ticker).upper().strip()
+
     col_q, col_w = st.columns(2)
-    start_quant = col_q.button("🚀 RUN QUANTITATIVE SCAN", type="primary", use_container_width=True)
-    add_watchlist = col_w.button("⭐ ADD TO WATCHLIST", use_container_width=True)
-    
+    start_quant = col_q.button(txt["run_quant"], type="primary", use_container_width=True)
+    add_watchlist = col_w.button(txt["add_watchlist"], use_container_width=True)
+
     if add_watchlist and t_input:
         wl = load_watchlist_data()
         if t_input not in wl:
@@ -627,82 +437,76 @@ with tab_diag:
             save_watchlist_data(wl)
             st.success(f"Added {t_input}")
 
-    # ボタン押下、またはサイドバーからの遷移で計算実行 (ここには API キーチェックを入れない)
     if (start_quant or st.session_state.pop("trigger_analysis", False)) and t_input:
         with st.spinner(f"SENTINEL ENGINE: Scanning {t_input}..."):
             df_raw = DataEngine.get_data(t_input, "2y")
             if df_raw is not None and not df_raw.empty:
-                # 定量計算
+                # 一元化された分析クラスを使用
                 vcp_res = VCPAnalyzer.calculate(df_raw)
-                rs_val  = RSAnalyzer.get_raw_score(df_raw)
-                pf_val  = StrategyValidator.run(df_raw)
-                p_curr  = DataEngine.get_current_price(t_input) or df_raw["Close"].iloc[-1]
-                
-                # 結果を保存
+                rs_val = RSAnalyzer.get_raw_score(df_raw)
+                pf_val = StrategyValidator.run(df_raw)
+                p_curr = DataEngine.get_current_price(t_input) or df_raw["Close"].iloc[-1]
+
                 st.session_state.quant_results_stored = {
                     "vcp": vcp_res, "rs": rs_val, "pf": pf_val, "price": p_curr, "ticker": t_input
                 }
-                # 表示のたびにAI診断はクリア
                 st.session_state.ai_analysis_text = ""
             else:
                 st.error(f"Failed to fetch data for {t_input}.")
 
-    # 保存された定量結果を表示 (APIキーに関わらず 100% 表示される)
     if st.session_state.quant_results_stored and st.session_state.quant_results_stored["ticker"] == t_input:
         q = st.session_state.quant_results_stored
         vcp_res, rs_val, pf_val, p_curr = q["vcp"], q["rs"], q["pf"], q["price"]
-        
-        # タイル表示
-        st.markdown('<div class="section-header">📊 SENTINEL QUANTITATIVE DASHBOARD</div>', unsafe_allow_html=True)
+
+        st.markdown(f'<div class="section-header">{txt["quant_dashboard"]}</div>', unsafe_allow_html=True)
         draw_sentinel_grid_ui([
-            {"label": "💰 CURRENT PRICE", "value": f"${p_curr:.2f}"},
-            {"label": "🎯 VCP SCORE", "value": f"{vcp_res['score']}/105"},
-            {"label": "📈 PROFIT FACTOR", "value": f"x{pf_val:.2f}"},
-            {"label": "📏 RS MOMENTUM", "value": f"{rs_val*100:+.1f}%"}
+            {"label": txt["current_price"], "value": f"${p_curr:.2f}"},
+            {"label": txt["vcp_score"], "value": f"{vcp_res['score']}/105"},
+            {"label": txt["profit_factor"], "value": f"x{pf_val:.2f}"},
+            {"label": txt["rs_momentum"], "value": f"{rs_val*100:+.1f}%"}
         ])
-        
-        # 内訳パネル (インデントなし Markdown 誤認防止)
+
         d1, d2 = st.columns(2)
         with d1:
-            risk = vcp_res['atr'] * EXIT_CFG["STOP_LOSS_ATR_MULT"]
-            # 物理的に左寄せ
+            risk = vcp_res['atr'] * CONFIG["STOP_LOSS_ATR"]
             panel_html1 = f'''
 <div class="diagnostic-panel">
-<b>🛡️ STRATEGIC LEVELS (ATR-Based)</b>
-<div class="diag-row"><span class="diag-key">Stop Loss (2.0R)</span><span class="diag-val">${p_curr - risk:.2f}</span></div>
-<div class="diag-row"><span class="diag-key">Target 1 (1.0R)</span><span class="diag-val">${p_curr + risk:.2f}</span></div>
-<div class="diag-row"><span class="diag-key">Target 2 (2.5R)</span><span class="diag-val">${p_curr + risk*2.5:.2f}</span></div>
-<div class="diag-row"><span class="diag-key">Risk Unit ($)</span><span class="diag-val">${risk:.2f}</span></div>
+<b>{txt["strategic_levels"]}</b>
+<div class="diag-row"><span class="diag-key">{txt["stop_loss"]}</span><span class="diag-val">${p_curr - risk:.2f}</span></div>
+<div class="diag-row"><span class="diag-key">{txt["target1"]}</span><span class="diag-val">${p_curr + risk:.2f}</span></div>
+<div class="diag-row"><span class="diag-key">{txt["target2"]}</span><span class="diag-val">${p_curr + risk*2.5:.2f}</span></div>
+<div class="diag-row"><span class="diag-key">{txt["risk_unit"]}</span><span class="diag-val">${risk:.2f}</span></div>
 </div>'''
             st.markdown(panel_html1.strip(), unsafe_allow_html=True)
         with d2:
-            bd = vcp_res['breakdown']
+            bd = vcp_res.get('breakdown', {})
             panel_html2 = f'''
 <div class="diagnostic-panel">
-<b>📐 VCP SCORE BREAKDOWN</b>
-<div class="diag-row"><span class="diag-key">Tightness Score</span><span class="diag-val">{bd.get("tight", 0)}/45</span></div>
-<div class="diag-row"><span class="diag-key">Volume Dry-up</span><span class="diag-val">{bd.get("vol", 0)}/30</span></div>
-<div class="diag-row"><span class="diag-key">MA Trend Score</span><span class="diag-val">{bd.get("ma", 0)}/30</span></div>
-<div class="diag-row"><span class="diag-key">Pivot Bonus</span><span class="diag-val">+{bd.get("pivot", 0)}pt</span></div>
+<b>{txt["vcp_breakdown"]}</b>
+<div class="diag-row"><span class="diag-key">{txt["tightness"]}</span><span class="diag-val">{bd.get("tight", 0)}/45</span></div>
+<div class="diag-row"><span class="diag-key">{txt["volume"]}</span><span class="diag-val">{bd.get("vol", 0)}/30</span></div>
+<div class="diag-row"><span class="diag-key">{txt["ma_trend"]}</span><span class="diag-val">{bd.get("ma", 0)}/30</span></div>
+<div class="diag-row"><span class="diag-key">{txt["pivot_bonus"]}</span><span class="diag-val">+{bd.get("pivot", 0)}pt</span></div>
 </div>'''
             st.markdown(panel_html2.strip(), unsafe_allow_html=True)
 
-        # チャート描画
+        # チャート
         df_raw = DataEngine.get_data(t_input, "2y")
         df_t = df_raw.tail(110)
         c_fig = go.Figure(data=[go.Candlestick(x=df_t.index, open=df_t['Open'], high=df_t['High'], low=df_t['Low'], close=df_t['Close'])])
         c_fig.update_layout(template="plotly_dark", height=480, margin=dict(t=0, b=0), xaxis_rangeslider_visible=False)
         st.plotly_chart(c_fig, use_container_width=True)
 
-        # AI診断実行セクション (定量診断の後に現れる)
-        st.markdown('<div class="section-header">🤖 SENTINEL AI CONTEXTUAL REASONING</div>', unsafe_allow_html=True)
-        if st.button("🚀 GENERATE AI DIAGNOSIS (NEWS & FUNDAMENTALS)", use_container_width=True):
+        # AI診断セクション
+        st.markdown(f'<div class="section-header">{txt["ai_reasoning"]}</div>', unsafe_allow_html=True)
+        if st.button(txt["generate_ai"], use_container_width=True):
             key = st.secrets.get("DEEPSEEK_API_KEY")
             if not key:
-                st.error("DEEPSEEK_API_KEY is not configured in Secrets. Numerical scan is complete, but AI analysis cannot be performed.")
+                st.error(txt["ai_key_missing"])
             else:
                 with st.spinner(f"AI Reasoning for {t_input}..."):
-                    news = NewsEngine.get(t_input); fund = FundamentalEngine.get(t_input)
+                    news = NewsEngine.get(t_input)
+                    fund = FundamentalEngine.get(t_input)
                     prompt = (
                         f"あなたは伝説的投資家 Mark Minervini の理論を極めた AI ファンドマネージャー「SENTINEL」です。\n"
                         f"銘柄 {t_input} の診断結果に基づき、プロの投資判断を下してください。\n\n"
@@ -714,6 +518,7 @@ with tab_diag:
                         f"━━━ 指示 ━━━\n1. PF数値とRS値を論拠の主軸とし、投資妙味を論評せよ。\n"
                         f"2. Buy/Watch/Avoid の判断を断行し、箇条書きで理由を示せ。\n\n※1,500文字以上の密度で記述せよ。"
                     )
+                    from openai import OpenAI
                     cl = OpenAI(api_key=key, base_url="https://api.deepseek.com")
                     try:
                         res_ai = cl.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
@@ -721,53 +526,48 @@ with tab_diag:
                     except Exception as ai_e:
                         st.error(f"AI Error: {ai_e}")
 
-        # AI診断結果の表示
         if st.session_state.ai_analysis_text:
             st.markdown("---")
             st.markdown(st.session_state.ai_analysis_text)
 
 # ------------------------------------------------------------------------------
-# 💼 TAB 3: PORTFOLIO (FIXED NameError)
+# タブ3: ポートフォリオ
 # ------------------------------------------------------------------------------
 with tab_port:
-    st.markdown('<div class="section-header">💼 PORTFOLIO RISK MANAGEMENT</div>', unsafe_allow_html=True)
-    
-    # 【FIX】 ここでの NameError を回避するために load_portfolio_json を定義済
+    st.markdown(f'<div class="section-header">{txt["portfolio_risk"]}</div>', unsafe_allow_html=True)
+
     p_j = load_portfolio_json()
     pos_m = p_j.get("positions", {})
-    
+
     if not pos_m:
-        st.info("Portfolio is currently empty.")
+        st.info(txt["portfolio_empty"])
     else:
-        # 計算
         stats_list = []
         for s_k, s_d in pos_m.items():
             l_p = DataEngine.get_current_price(s_k)
             if l_p:
                 pnl_u = (l_p - s_d["avg_cost"]) * s_d["shares"]
                 pnl_p = (l_p / s_d["avg_cost"] - 1) * 100
-                
-                # 動的ストップ
+
                 atr_l = DataEngine.get_atr(s_k) or 0.0
-                risk_l = atr_l * EXIT_CFG["STOP_LOSS_ATR_MULT"]
+                risk_l = atr_l * CONFIG["STOP_LOSS_ATR"]
                 stop_l = max(l_p - risk_l, s_d.get("stop", 0)) if risk_l else s_d.get("stop", 0)
-                
+
                 stats_list.append({
-                    "ticker": s_k, "shares": s_d["shares"], "avg": s_d["avg_cost"], 
-                    "cp": l_p, "pnl_usd": pnl_u, "pnl_pct": pnl_p, 
+                    "ticker": s_k, "shares": s_d["shares"], "avg": s_d["avg_cost"],
+                    "cp": l_p, "pnl_usd": pnl_u, "pnl_pct": pnl_p,
                     "cl": "profit" if pnl_p > 0 else "urgent", "stop": stop_l
                 })
-        
-        # サマリー
+
         total_pnl_j = sum(s["pnl_usd"] for s in stats_list) * fx_rate
         draw_sentinel_grid_ui([
-            {"label": "💰 UNREALIZED JPY", "value": f"¥{total_pnl_j:,.0f}"},
-            {"label": "📊 ASSETS", "value": len(stats_list)},
-            {"label": "🛡️ EXPOSURE", "value": f"${sum(s['shares']*s['avg'] for s in stats_list):,.0f}"},
-            {"label": "📈 PERFORMANCE", "value": f"{np.mean([s['pnl_pct'] for s in stats_list]):.2f}%" if stats_list else "0%"}
+            {"label": txt["unrealized_jpy"], "value": f"¥{total_pnl_j:,.0f}"},
+            {"label": txt["assets"], "value": len(stats_list)},
+            {"label": txt["exposure"], "value": f"${sum(s['shares']*s['avg'] for s in stats_list):,.0f}"},
+            {"label": txt["performance"], "value": f"{np.mean([s['pnl_pct'] for s in stats_list]):.2f}%" if stats_list else "0%"}
         ])
-        
-        st.markdown('<div class="section-header">📋 ACTIVE POSITIONS</div>', unsafe_allow_html=True)
+
+        st.markdown(f'<div class="section-header">{txt["active_positions"]}</div>', unsafe_allow_html=True)
         for s in stats_list:
             pnl_c = "pnl-pos" if s["pnl_pct"] > 0 else "pnl-neg"
             st.markdown(f'''
@@ -781,20 +581,20 @@ with tab_port:
 </div>
 <div class="exit-info">🛡️ DYNAMIC STOP: ${s['stop']:.2f}</div>
 </div>''', unsafe_allow_html=True)
-            
-            if st.button(f"Close {s['ticker']}", key=f"cl_{s['ticker']}"):
+
+            if st.button(f"{txt['close_position']} {s['ticker']}", key=f"cl_{s['ticker']}"):
                 del pos_m[s['ticker']]
                 save_portfolio_json(p_j)
                 st.rerun()
 
-    # --- 新規建玉追加 ---
-    st.markdown('<div class="section-header">➕ REGISTER NEW POSITION</div>', unsafe_allow_html=True)
+    # 新規ポジション登録
+    st.markdown(f'<div class="section-header">{txt["register_new"]}</div>', unsafe_allow_html=True)
     with st.form("add_port_final"):
         c1, c2, c3 = st.columns(3)
-        f_ticker = c1.text_input("Ticker Symbol").upper().strip()
-        f_shares = c2.number_input("Shares", min_value=1, value=10)
-        f_cost   = c3.number_input("Avg Cost", min_value=0.01, value=100.0)
-        if st.form_submit_button("ADD TO PORTFOLIO", use_container_width=True):
+        f_ticker = c1.text_input(txt["ticker_symbol"]).upper().strip()
+        f_shares = c2.number_input(txt["shares"], min_value=1, value=10)
+        f_cost   = c3.number_input(txt["avg_cost"], min_value=0.01, value=100.0)
+        if st.form_submit_button(txt["add_to_portfolio"], use_container_width=True):
             if f_ticker:
                 p = load_portfolio_json()
                 p["positions"][f_ticker] = {"ticker": f_ticker, "shares": f_shares, "avg_cost": f_cost, "added_at": TODAY_STR}
@@ -803,5 +603,4 @@ with tab_port:
                 st.rerun()
 
 st.divider()
-st.caption(f"🛡️ SENTINEL PRO SYSTEM | CORE ENGINE: 965 ROWS | VCP: LATEST (CONTRACTING SYNC) | UI: PHYSICAL PUSH APPLIED")
-
+st.caption(f"🛡️ SENTINEL PRO SYSTEM | CORE ENGINE: UNIFIED | UI: MULTILINGUAL")
