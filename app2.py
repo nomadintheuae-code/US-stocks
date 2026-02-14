@@ -195,12 +195,19 @@ with tab_1:
                 m_news = NewsEngine.format_for_prompt(NewsEngine.get_general_market())
                 act_n = len(scan_df[scan_df["status"]=="ACTION"]) if not scan_df.empty else 0
                 prompt = (
-                    f"あなたは金融データのアシスタントです。以下の市場データに基づき、"
-                    f"投資家が考慮すべき客観的なポイントを教育目的で列挙してください。\n"
-                    f"SPY: ${m_info['spy']:.2f} ({m_info['spy_change']:+.2f}%), VIX: {m_info['vix']:.2f}\n"
-                    f"シグナル銘柄数: {act_n}\n"
-                    f"最新ニュース:\n{m_news}\n\n"
-                    f"注意：投資判断は行わず、あくまでデータの解説に留めてください。"
+                    f"あなたは金融アシスタントです。以下の情報を基に、投資家が知るべき最重要ポイントを"
+    f"**簡潔に箇条書き（3〜5項目）** でまとめてください。\n"
+    f"・全体で400文字程度に収めてください。\n"
+    f"・専門用語は平易に言い換えてください。\n\n"
+    f"【データ】\n"
+    f"銘柄: {t_input}\n"
+    f"現在値: ${res_q['price']}\n"
+    f"VCPスコア: {res_q['vcp']['score']}/105\n"
+    f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
+    f"財務情報: {fund_t}\n"
+    f"直近ニュース: {news_t}\n\n"
+    f"※注意：売買推奨は行わず、あくまでデータの客観的な読み解き方を示してください。"
+)"
                 )
                 cl = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
                 try:
