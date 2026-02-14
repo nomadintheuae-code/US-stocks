@@ -251,11 +251,11 @@ with tab_diag:
     c1, c2 = st.columns(2)
     if c1.button("🚀 定量スキャン実行", type="primary", use_container_width=True) and t_input:
         with st.spinner(f"Analyzing {t_input}..."):
-            df_raw = DataEngine.get_data(t_input, "2y")
-            if df_raw is not None and not df_raw.empty:
-                vcp_res = VCPAnalyzer.calculate(df_raw)
-                rs_val = RSAnalyzer.get_raw_score(df_raw)
-                pf_val = StrategyValidator.run(df_raw)
+            df_raw_fetch = DataEngine.get_data(t_input, "2y")
+            if df_raw_fetch is not None and not df_raw_fetch.empty:
+                vcp_res = VCPAnalyzer.calculate(df_raw_fetch)
+                rs_val = RSAnalyzer.get_raw_score(df_raw_fetch)
+                pf_val = StrategyValidator.run(df_raw_fetch)
                 p_curr = DataEngine.get_current_price(t_input)
                 st.session_state.quant_results_stored = {"vcp": vcp_res, "rs": rs_val, "pf": pf_val, "price": p_curr, "ticker": t_input}
                 st.session_state.ai_analysis_text = ""
@@ -276,7 +276,14 @@ with tab_diag:
         # チャート
         df_chart = DataEngine.get_data(t_input, "2y")
         if df_chart is not None:
-            fig = go.Figure(data=[go.Candlestick(x=df_chart.index, open=df_raw['Open'], high=df_raw['High'], low=df_raw['Low'], close=df_raw['Close'])])
+            # 修正: df_raw を使わず直前に取得した df_chart をすべての要素に適用
+            fig = go.Figure(data=[go.Candlestick(
+                x=df_chart.index, 
+                open=df_chart['Open'], 
+                high=df_chart['High'], 
+                low=df_chart['Low'], 
+                close=df_chart['Close']
+            )])
             fig.update_layout(template="plotly_dark", height=400, margin=dict(l=0,r=0,t=20,b=0), xaxis_rangeslider_visible=False)
             st.plotly_chart(fig, use_container_width=True)
 
