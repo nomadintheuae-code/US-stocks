@@ -263,13 +263,38 @@ with tab_2:
             {"label": "📏 RSモメンタム", "value": f"{res_q['rs']*100:+.1f}%" if res_q['rs'] != -999 else "N/A"}
         ])
 
-        # チャート描画
+        # VCP内訳表示
+        vcp_bd = res_q['vcp'].get('breakdown', {})
+        vcp_detail = (
+            f"**VCP内訳**  |  "
+            f"Tightness: {vcp_bd.get('tight',0)}点  |  "
+            f"Volume: {vcp_bd.get('vol',0)}点  |  "
+            f"MA: {vcp_bd.get('ma',0)}点  |  "
+            f"Pivot: {vcp_bd.get('pivot',0)}点"
+        )
+        st.markdown(vcp_detail)
+
+        # チャート描画（直近180日）
         df_plot = DataEngine.get_data(t_input, "2y")
-        if df_plot is not None:
-            candlestick = go.Figure(data=[go.Candlestick(x=df_plot.index, open=df_plot['Open'], high=df_plot['High'], low=df_plot['Low'], close=df_plot['Close'])])
-            candlestick.update_layout(template="plotly_dark", height=400, margin=dict(l=0,r=0,t=20,b=0), xaxis_rangeslider_visible=False)
+        if df_plot is not None and not df_plot.empty:
+            df_recent = df_plot.last('180D')  # 直近180日
+            candlestick = go.Figure(data=[go.Candlestick(
+                x=df_recent.index,
+                open=df_recent['Open'],
+                high=df_recent['High'],
+                low=df_recent['Low'],
+                close=df_recent['Close']
+            )])
+            candlestick.update_layout(
+                template="plotly_dark",
+                height=400,
+                margin=dict(l=0, r=0, t=20, b=0),
+                xaxis_rangeslider_visible=False,
+                title=f"{t_input} - 直近6ヶ月"
+            )
             st.plotly_chart(candlestick, use_container_width=True)
 
+        # AI解説ボタン
         if st.button("🤖 AI解説を表示", use_container_width=True):
             ak = st.secrets.get("DEEPSEEK_API_KEY")
             if ak:
@@ -289,13 +314,12 @@ with tab_2:
                     fund_lines = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
                     fund_str = "\n".join(fund_lines) if fund_lines else "特記事項なし"
 
-                    # VCP内訳
-                    vcp_breakdown = res_q['vcp'].get('breakdown', {})
+                    # VCP内訳（再掲）
                     vcp_detail = (
-                        f"内訳: Tightness {vcp_breakdown.get('tight',0)}点, "
-                        f"Volume {vcp_breakdown.get('vol',0)}点, "
-                        f"MA {vcp_breakdown.get('ma',0)}点, "
-                        f"Pivot {vcp_breakdown.get('pivot',0)}点"
+                        f"内訳: Tightness {vcp_bd.get('tight',0)}点, "
+                        f"Volume {vcp_bd.get('vol',0)}点, "
+                        f"MA {vcp_bd.get('ma',0)}点, "
+                        f"Pivot {vcp_bd.get('pivot',0)}点"
                     )
 
                     prompt = (
@@ -320,7 +344,6 @@ with tab_2:
                         st.session_state.ai_analysis_text = ai_res.choices[0].message.content.replace("$", r"\$") + disclaimer
                     except: st.error("AI Error")
         if st.session_state.ai_analysis_text: st.markdown("---"); st.info(st.session_state.ai_analysis_text)
-
 # ------------------------------------------------------------------------------
 # TAB 3: ポートフォリオ (セクター取得強化版)
 # ------------------------------------------------------------------------------
