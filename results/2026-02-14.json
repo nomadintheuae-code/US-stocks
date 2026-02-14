@@ -1,0 +1,3365 @@
+{
+  "date": "2026-02-14",
+  "timestamp": "2026-02-14T23:58:45.717340",
+  "runtime": "168.88s",
+  "usd_jpy": 152.82,
+  "scan_count": 315,
+  "qualified_count": 24,
+  "selected_count": 16,
+  "selected": [
+    {
+      "ticker": "PH",
+      "status": "ACTION",
+      "price": 1001.75,
+      "entry": 1014.51,
+      "stop": 967.43,
+      "target": 1132.22,
+      "shares": 2,
+      "vcp": {
+        "score": 70,
+        "atr": 23.54068289919917,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1015,
+        "vol_ratio": 1.21,
+        "breakdown": {
+          "tight": 35,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 79,
+      "pf": 7.74,
+      "sector": "Industrials",
+      "analyst_target": 1017.8261,
+      "analyst_upside": 1.6,
+      "analyst_count": 23,
+      "recommendation": "buy",
+      "short_ratio": 2.09,
+      "short_pct": 0.0107,
+      "insider_pct": 0.0016300001,
+      "institution_pct": 0.89735,
+      "pe_forward": 29.46965,
+      "revenue_growth": 0.091,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Prospera Financial Services Inc Sells 1,966 Shares of Parker-Hannifin Corporation $PH - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPTDhTcGtIYWFQTnR3REo0R1VZdS1vaXh2TFhOZWNrU3RTVHlvNUJ6a19XX3V6VmZ0QnN0SXlzNXJJRG94VGZuZmpub3h4N0FOa1RuZGVIS0RidHVkaVVWZ3BFQUg1cl9QMkJSak9qQ1R5UlEyLUhaM25IaF9NZGs0Z3RmZ3hrQWlVYUZDZTJ4R3RkR295TmZfR0tpMjNiQ1dzSDNVNDM2aE5TT1lCblZZUFcwXy13UGg3R1B3ajRQa0M3U0Z6ZVc2YnB4U1BlX0dWMVlJVEtsWTVzd3pU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Parker Hannifin Insiders Quietly Unload Millions in Stock in High-Profile Moves - TipRanks",
+            "url": "https://news.google.com/rss/articles/CBMi8AFBVV95cUxQVmtidERKaEJOOUhaZDZETnZfMmFnSDUycHdBVHJuX1BMczhBMlZ2MkRsX2lTVmlPajdxSGNPNlV0R2JUaVdjWjNjOWE1NF9LWi05Z2ZMUW5sZnpPQUpNTGlJSGl6bFc2aGh0RDF3NGw5R0ZzR1M0UkRDT2ZlRUtucUU0ZlM2TkFvMkFWYTBucktTNER1QlZSemJiRENiOUVBX0xneHhBOXlQWFpicEdFYVcxekpmdGpnQ0ZnVXJfV3lDT0tYaVBHT01scVNGd0lqcnE5Qmk2WUJoVXFZZUt0MTBQODExbUpCUkVjSHhRS3Q?oc=5",
+            "body": ""
+          },
+          {
+            "title": "What Does Parker-Hannifin Corporation's (NYSE:PH) Share Price Indicate? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeW15dF84TkplLTNhV1A3LWhwTi0wWHpKRndsSWZWVDd5UGtqYy1qc1VHWTRQdTRvRHdqVWJvTC14ZUdZR0ZTR0dvTDJjNTAtQlowTl9ESFIzUEw4cHJuN1RqVlNhOV9wbkdtUW1SbDZnLTB4RW1hbG15elZrVkZKaEJWRUlFMTRlekg3Zg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Parker Hannifin Corporation to Present at Citi’s 2026 Global Industrial Tech and Mobility Conference - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPTDJzRFJpcVhDQVQzRVdoODQ3cURtVlByTXNMTkx0ZTIyMU1zMFRRcUlCTzd4R1haRVdyUzRJdE1mQ2NaOE1tVG82Y3I0V3BZTjJUTkZ2NG9Tellmck1meTFXM0tBVHM1c1pNblpRTzRkMHVUQnBnNlNzTkZMTXUtLVR0MW1NNjlfLXRENksyN1RHWVJqWGtySDNqTk5kRU8xMUxtWnRReEQ5bENPdlVJdzIxc3hIMnQwVXJpcXBOUkJqZm5EdjBSOTU3bm1pbGw0c3ItV3hLbGU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "The Zacks Analyst Blog Highlights Parker-Hannifin, Goldman Sachs, GE Aerospace, C.H. Robinson Worldwide and Carpenter Technology - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMirgJBVV95cUxPUUNDZlpELUd1MTEzNk5rTDNoWjUxZGhUTWh0dGhNZ2UxYUlhNWQ0UEdIcVRpZXpreThwX2FFUG5QRFRkdlhiLWEtSVJoQkdHa000SHYwTkV5WHozNHFTTmFIdVFjaTFCQjJ6UlpMXzMwMzZxd3ZpaGdreEM2UTA2bGpGU0RXUkpqTkNJdUpNTGdwTEx3SERFYlBTeW1FUDllRmN3d0hkWEFtXzFfMmhwSVdCbFA0YXRqRlhqMXFtMmVJV21ERWc4WURtUThEZGhsUkNjaEtGcGR6WFAzVURMZk9jaE9nOEZhN1RJTHQzU0J0djRvUzFVV0prQXhfdVppNHp1UkJIbXpNZGhOSTVfa3B6ejNTZ1FfcTc2N0JWSjVKVUxVZmpibDJtRzRQQQ?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "XLE",
+      "status": "ACTION",
+      "price": 54.35,
+      "entry": 55.35,
+      "stop": 53.05,
+      "target": 61.11,
+      "shares": 42,
+      "vcp": {
+        "score": 60,
+        "atr": 1.1521429334368025,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1403,
+        "vol_ratio": 1.76,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 72,
+      "pf": 7.5,
+      "sector": "Unknown",
+      "analyst_target": null,
+      "analyst_upside": null,
+      "analyst_count": null,
+      "recommendation": "",
+      "short_ratio": null,
+      "short_pct": null,
+      "insider_pct": null,
+      "institution_pct": null,
+      "pe_forward": null,
+      "revenue_growth": null,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "This Sector Is Unexpectedly Crushing the Rest of the Market This Year - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPUktXdFZITmJGOVhUUTNxYVVxUThFWHRybUlSTldZOEgyN19NT1VTUHVyNy00UnVPYUJ0YlRpVTNuaE93bjZsTVVfVmwtWWtFb24tWkZPNjNxTV93eDRpQk9rTUt4cVF3YW90Y1NrTC1WU25SUmpwN0RnT0lYa3JwRzdyUTBlVWF4YUE0MmxlRkFENHdYaFE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Goldman sees further upside in energy rally, flags 10 buy-rated stocks (XLE:NYSEARCA) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQUUk0X3FyOXRjajVrekxqRXpvbDQ3T2dWbEs0YVB2cGdxdVBrWFJKYVl3ZEJwbkFWNzlaSkZaYTZfckVMTU1xUUlfUEwyV19YX2RmUFI5alBLYnRYOUttd3ExMmFOT3JlMFVjcHdmeVRGZkNUWENaZUxab2RCelotREtCckxLbkl0SmU5Y3ZGNDJiXzAtZ3JXQTlMZGc0alE4ZU1JbVJCRHRwdXM?oc=5",
+            "body": ""
+          },
+          {
+            "title": "This Sector Is Unexpectedly Crushing the Rest of the Market This Year - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxPS0g1aGliYkpRcF9FZEtfUXkxcURyY3BjY1RBVzVqOENTbm5qbUdVMjBCaVNYVHJhdVBfdHBxcVZuRXNFeTVwejF1LVpVeEVjVGVtYjJ6UzhLSWpkNG5iY2JzZTF6MF91bFVnbFdJVHpycTJUN295UVQ4bHhQcjJZM091WG5Vc3dEMGJVRUctaFpianR2YVJTRGhKb1BxSHprUlQybk5DUmI4V2ppcVp3M0R3aGlPNi0zU3NuQWRiM21XWkhFSnBmV2hPVFlaX0drdkJaUW9yTFlLS3plZ0dCZ2lhVmQ5d0tn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Energy stocks face a holiday-week test as OPEC+ eyes April output hikes, Venezuela curbs ease - TechStock²",
+            "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQMVZUWER3SzN5Z1lPcFptOXVab0p1SVJzRU5HNTV5NWJJODk1T0NoNGVYR1p4djZqeF9hQkpKMkQ2NFlnbVVvakpaRFRDYXZ2NXR3VERpNy1rNGZZN21UbTlqNWx4Y2UyNnlqRHp5QVhXeGxXUWRHZVNfeFZqQWMySTJLamIzQW9nNzQwa2djTl9XbFI3X19NeDN3U2tZT3lRa1UtNDZPMjFlUVJlc0NRNWNR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Solaris Energy most shorted energy stock in January, Cheniere Energy sees least interest - MSN",
+            "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNd0xZXzNtWms5V2hNMGtYVUF4aGpQSUdRWHlaY3VHOGFEY1hObmU0WUlsRlcwZ0N4Zk1MZG13aURDM20xcVZJUjd6WlpaaTlsUGIzVlUxU0N3SDVSWTNLRzRuRV93T3JsOW0xWFJjek5ZVEFiYkgwdGxiVXpwcENpX0UxNXFsLWVKWjhrRW42c3NmZWZMUUNNR2xPaS1ZZDNyUWhZSDZOM0s0RjN1NjUzZUp5ZjJpbWFXYU5WUkdPSEFPWkoxTGQ2dUVfdTVPemdod3pVWl9B?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "ROST",
+      "status": "ACTION",
+      "price": 196.54,
+      "entry": 197.63,
+      "stop": 190.51,
+      "target": 215.45,
+      "shares": 13,
+      "vcp": {
+        "score": 90,
+        "atr": 3.5621425083705356,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Volume Dry-up Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": true,
+        "range_pct": 0.0636,
+        "vol_ratio": 0.75,
+        "breakdown": {
+          "tight": 40,
+          "vol": 15,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 78,
+      "pf": 2.5,
+      "sector": "Consumer Cyclical",
+      "analyst_target": 199.8125,
+      "analyst_upside": 1.7,
+      "analyst_count": 16,
+      "recommendation": "buy",
+      "short_ratio": 3.29,
+      "short_pct": 0.0239,
+      "insider_pct": 0.02224,
+      "institution_pct": 0.93195,
+      "pe_forward": 27.4752,
+      "revenue_growth": 0.104,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Does Ross Stores’ Off-Price Expansion and Same-Store Sales Momentum Reframe Its Growth Story for ROST? - Yahoo Finance Singapore",
+            "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNU201bGhJTTYtWmhWRWFyM0hrSl8wUUt3OWM4WTVzZVpIMmlXUFcyTUlOMkpUTUhCc2tKR2dqOWRkbUFvNzdQcWRNWnZkQ0FYR0NlbXRydXJvV1BWcXdabnFZOXpPalphLUtrLUZCZXQzNE9HV0RHTzFGR0kxLV94Mw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is It Too Late To Consider Ross Stores (ROST) After Strong Multi Year Share Gains? - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOQnBhLUg3dUttdGNOR1ZycVVmYXgzbmNSTTJoNnE5VnBNNUx5bTQ4Y2dPX2hUMHN6Zm5nLXBDRTBJUlpkWFljVVpjc1NOcGJ1aTYyakZFdVhjbnZBSzlaRGhEcTRwbjFuSmpqV1lVcFdhZFpVa1RVX1F5aFdwWW9JQ05HclZ0c20wLUFlRkhDd21yMW5INmc0alBub19YWllQT2pUcHRSa0VmSE1aSk5QODlhRTFNSml0cDM0TnJGOERDM21wX0ZRb3VDNmo?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Ross Stores (ROST) Is Considered a Good Investment by Brokers: Is That True? - Finviz",
+            "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOdS1ESTdaUE5INXNHUmoxcnN0Ry1tcWJBYVRQWV9HTnZmZG9jWGI1enVIUHdMM2VsSzBYaFMyS3dTc0t6a1ZjM3VnMWZmeFJFUURpOGpjdWtJN3JWblVCVnR2emc5TkhQNW1EWEpwdWxjNGpObEF6MlJ5dDVSQ204cmJtcXNRN3R0WjNJdXE0VnZDd0pkMjlwSWVHbzFUTWdnd2h2SXhB?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Cibc World Market Inc. Raises Stock Position in Ross Stores, Inc. $ROST - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxOQ0gzdzhjSk44UmVqU1RBaDlvQkhXOVpjNjJFWTFDQkJFUFVsVUdMTkc2aE1RQnV6X29INk5qTUlhV1ZnajRSUVoyQ21NVW51cXhKeXFMdmljZlJScV9nUXNNcHBXZV9Uc0dBM2l4S2hCLTRoQXVMSW1tQndXMXpHWFRfRnNETm9KemIwZmdQOHU1dFpLd09ESzltYkEtel9KM21UUDNhYmxvUnZwOENtZkduN09kcW9nNEdRWWtXcmw2Ul9yNjJB?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is Costco Stock a Buy Now or Still Too Expensive to Touch? - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPVjZnX1N0NW5Oc040aUN0UGNjeVFNbWRsQk9EeExtelpqQ3BqTXNpc0lQcEVOeEJZSWQtNklpb0VXNU5PQVQ2TldNRmo3VnhtR3V5TW50RThoQWlCN1FTSWgxbVFpMkxjTUNuSFJoVFNFMFNxOURuSnBGbV9SSm44dzJBeV9kT0t5TkhwYS16N0JCS1FRQV9BQWN1dFJYV1dmWS1qQnNpaFNFUGlzSUtUWk9RQlBfa3NwaWlaWE1Qa29sQWdsR2RpYmlQZDNQYnhiek1aTm1n?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "RTX",
+      "status": "ACTION",
+      "price": 200.06,
+      "entry": 206.89,
+      "stop": 195.94,
+      "target": 234.27,
+      "shares": 8,
+      "vcp": {
+        "score": 70,
+        "atr": 5.475713457380023,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0649,
+        "vol_ratio": 1.37,
+        "breakdown": {
+          "tight": 35,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 81,
+      "pf": 3.82,
+      "sector": "Industrials",
+      "analyst_target": 215.01952,
+      "analyst_upside": 7.5,
+      "analyst_count": 21,
+      "recommendation": "buy",
+      "short_ratio": 1.79,
+      "short_pct": 0.0078,
+      "insider_pct": 0.00090000004,
+      "institution_pct": 0.80825996,
+      "pe_forward": 26.638794,
+      "revenue_growth": 0.121,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Public Sector Pension Investment Board Has $19.49 Million Holdings in RTX Corporation $RTX - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxPWE1CSE1oSWFqalZXaHlIekN5Z0FXOUN6dDc2WjFEX0JCaFcwQW9BY21odXhOeTlVWnlqcmtVMTNoS24xUGwtVG4tekI2NGZ5dExwalRrWUxublVqYVB1VjlvWW9xbkYtYW5oTzVnOVN3cXZaV2VjeFpzSm43UHZ5MXhwN3NUSGxTenZyWmZnc1RZc0tGQWY4NVhfdm1kc2ZFUEJzSWhidnl4ZU9zdHBJS3JsS2k1aVpjeUVZNXJBMzJDNzJyYjh6RjVKM0pYc0g4M1N6TjJERXVqLWh2OXo1MVZ3?oc=5",
+            "body": ""
+          },
+          {
+            "title": "How RTX Stock Gained 60% - Trefis",
+            "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxOckh6NVFBMGhXOGdILUNwdnBPM3I3Mk1MblR1bXcyMmpTbi1CVVJ6SllRd0lOVVh2bDllbERMZWdoVnJVbnA2TVZ6YUhBdmhkekc0enlkYTJadENLM0hiSk54YnpaQXJtY244aG0teDRGWnBETVhqWk5wNVBDQXJTQURZSXpRcEVISmItXw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Top RTX Executives Quietly Cash In With Major Insider Stock Moves - TipRanks",
+            "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPeVl6OGRJQ0pVS0k4YWd3dXlRMzRCcnp1NVpEOXpOMjFtV05LelNuMU45ZEI4UzB6bU5SQm14LURqbmluTkxiSTZSTnpOMTJZaUc0eGgwZFdmRjJ1LVptN2drdEZ2THYzVGRBYzZFOVhQR2NUTFNnYmpTNC1pVlVIaW5SbndULXNISG41cmg0czU1dDctTDVpbHVtT3p6RWRlc202MkZFTllTNnRGN2hYYXhfV3A0cmVFSlpSeUxfN0Y4RVNhRUE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Improved Revenue and Earnings Growth Powered RTX Corporation’s (RTX) Performance - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQVVQtYS1OM1FSNEEwY3FBQWlNZnkwamczZEtsWXEyQ3lIZFFxS0Z0djB1anFsUFk4OXhzYmM0V25WMFFhZFJzVkpUZS1HUElfTm1XZmNVU1Q1b0pYekx5eF9NMDdqa2t5b3BQcF9OYUg5b2dEOWNGNUp2c0pQTkJUR2JsUUwyX3lLNzMxSEx4cw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "RTX Corp Executives Sell Shares Worth Over $5 Million - TradingView",
+            "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNQzN4cWh1d0otLVdHUUlsdF9pV0s4ZGFPcUZMY2t6M3EwTjBjOUtQREpiempNNkxFT29DcDZtVllaaDlWaTkzOXA0TUdBci1UXzRDR283Y0ZIMjZmbkVITzE0aTVubGdVa1FqRVZ1Zy14TDFSYk5rTjBrazZTWWJ1Mk5hSHYyVkF5eVhpVHBVTVF3aWNqemdUaGZCeWU1aElFR1IyWmFzaldSYk1oZUQtd19lRFU?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "WMT",
+      "status": "ACTION",
+      "price": 133.89,
+      "entry": 134.92,
+      "stop": 128.3,
+      "target": 151.46,
+      "shares": 14,
+      "vcp": {
+        "score": 55,
+        "atr": 3.3085714067731584,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1424,
+        "vol_ratio": 1.9,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 77,
+      "pf": 5.0,
+      "sector": "Consumer Defensive",
+      "analyst_target": 128.775,
+      "analyst_upside": -3.8,
+      "analyst_count": 40,
+      "recommendation": "strong_buy",
+      "short_ratio": 2.26,
+      "short_pct": 0.012,
+      "insider_pct": 0.45119998,
+      "institution_pct": 0.38532,
+      "pe_forward": 45.201496,
+      "revenue_growth": 0.058,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Why Walmart Stock Is Rising—And Rob Walton Breaks Into Top 10 Richest - Forbes",
+            "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQZVNFRXZVZ3NLQUxrdUw3Wm8zR2NVeFdwc1hXS1FoWE5Qb2JaR0c0RjI3TFdjNGhSd2tETUJtY3lkSUFtUzBUdkx5X1BUU3puMnliUlF6bTRYajRkWDMtaV9uUXA1bXplczMwd3pLbDlpRVBadXdiRW9qaXRIZFNjYnJTbUpZMUh0T0gxWjFMbndZMkdoU1FBb0h1VVd6R09paGlYb19oQno1cFo4QXk1QldPMGdNMUR2Yk1sNm9MS0JpT19TczFQQjludw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Walmart: Defensive Compounder With Omnichannel Margin Upside - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNTGtWQ0tabGFlRDZjaUdXZWFoZldaellSZlNSTWE5a05fMktSNTJ6NnRjVG9tWUhvY0hNN3BaVTI4MFlOQ0JzYWlNc1pUdHNjd2YzS1J6Rlh3SHMybUowbUJhQWt4WV9iLTczVUVxaGZlZC04NzhwQi1za0RTYjJlR2ZYYnY1YVl3NmdzbkJyU0JXcVhVSGZ2Nlg1bGxUMkdwUHc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Walmart Stock, Parade Of Gold Leaders Headline Another Busy Earnings Calendar - Investor's Business Daily",
+            "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPWTBWNENBTnRBU0ctUWRxQVRSRHFCa3hfTWlwVjA5N1ROV0t0SFdzb0hZQ0pET2dmdDNQdUVwVVdwdVcyRzE4S2plV0FIYzY2UGlYT01VZUxGNWVTcVg0SFk5NktxTDBIc2EyNUN0Z0lYaU5MM2tjZzdjS241NEIyNHJLbFBidENBVy1QbmR0bTlxT3lzVVVieGcwbmJiMWw4Tjh2MC1BRjFjaWN1R2F5RElGOHVKRm1xeVh4em1YTVc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Should You Buy Walmart Stock Before Feb. 19? - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPX3FMYmNlWmFZSVZ1VjFtdnZqNnpqZjFldGZHTkZNMFhsd0pzT0Y5S0h6dFJZSGFyNm9mbjFyaENTNXFtSm5ocHN4ZXZJcDktT195N0F0TDVsdkZId3BMYlZQRG8yVDRybDdIQ3RneHY4Q1l6RHA5S19fR2g0eWZMWk52Y2s3V2ZvZ2NzTnln?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Walmart (WMT) Is a Great American Company, Says Jim Cramer - Insider Monkey",
+            "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPaV9FSUdwTVYwS2ZXSmxGclpGb21vYVBIOExSNHgxejMydTloWmJIQV94bDc3UG51MFN0M2VEalJ3c0d4bWFLT1hQeWNVZkU2SkJ1ZFJfZEJqaEdaNHRsOGRiVmY0Yzl3cks4ajBReFJqSGVhVklyWVp6NEZXdURtRk5iZGtoTV9Kbld4T3ZJWW1xaEw5UlFOUGsxXzB4N1ljTW9GYWVocTPSAagBQVVfeXFMT2lfRUlHcE1WMEtmV0psRnJaRm9tb2FQSDhMUjR4MXozMnU5aFpiSEFfeGw3N1BudTBTdDNlRGpSd3NHeG1hS09YUHljVWZFNkpCdWRSX2RCamhHWjR0bDhkYlZmNGM5d3JLOGowUXhSakhlYVZJcllaejRGV3VEbUZOYmRraE1fSm5XeE92SVltcWhMOVJRTlBrMV8weDdZY01vRmFlaHEz?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "MAR",
+      "status": "ACTION",
+      "price": 353.89,
+      "entry": 370.74,
+      "stop": 350.59,
+      "target": 421.12,
+      "shares": 4,
+      "vcp": {
+        "score": 58,
+        "atr": 10.076424734933036,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1579,
+        "vol_ratio": 1.04,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 71,
+      "pf": 5.0,
+      "sector": "Consumer Cyclical",
+      "analyst_target": 351.28,
+      "analyst_upside": -0.7,
+      "analyst_count": 25,
+      "recommendation": "buy",
+      "short_ratio": 5.03,
+      "short_pct": 0.0343,
+      "insider_pct": 0.18129998,
+      "institution_pct": 0.66132003,
+      "pe_forward": 27.245028,
+      "revenue_growth": 0.042,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Marriott to pay shareholders $0.67 a share on Mar. 31, 2026 - Stock Titan",
+            "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPRjBfX3I4Yk9zV1MxMWd5X1FiNEVsNG03WkdzZjNRUHZWcUhQSjFLVTcyZGs2bmM2akdzMkdkdEhuTFM3SmpwbXN4LV96U0ZOVWVSaUZucTBlenRNYUZoSENoUVByQlRfMFloQWFNR3VhZ3BfZHFRczEyR09iUnRHSy1rZFlnXzlqQ1N6bXpGLVQwMVBqWW41bE1QdHp2Z3ptMnc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "These Industry Leaders Stand Out After Q4 Earnings: MAR, MCD, TMUS - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNV1hqS25JUXo4WGFYZmNwR05sSERDZHQzU0xjOWFUSmo5Mjh2QlVKdTY2dFhMdnJJSXdNTFlsdTdiWEhpZ2ZLX21ZeHF3YXNNd1d5aDR5UXFjdURKRTJBVEE3bGoxZV9YMmN5aU83azVkczFnSWdxTGVidlRIWDVid1NYWVJyczBCYjQwb2ViMGF6T2lkTmI1ZUt4QQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Marriott International Has Already Overstayed In The Buy Zone (NASDAQ:MAR) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNNGZLUzFoZHBDc1JFS3REU2h0LXdrSVBZcTlCeHkwNzc2NnpBcThhQWZvRXo4YWh5RV9lRnBfekx4b2JBUmFSSXdua0tOSkZZbC1MODVXLW9jUTNTRTdmYzhxZmpyT01WN0RXQkkzb2dxdlNjd1Zfam5OSDJCN0ZKdGd1Sk51dmFudVZBQ1hnRm1nNFVaMGhObkNTck9CX1RDUjV2ZA?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Marriott (MAR) Upgraded to Buy: Here's Why - Yahoo Finance Singapore",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQc0JSNWhxUHROemhacE1fRXBkczhhNWNBbkllX0ZDMkVVZ3RBVGZfLVdRb1RtSGFxZHZHaW9GSmk0S3h5UndSMVBmMGRlSGpVeUF6ZHhHZm1nN0xTTHFVa1hGdVpLTkQ4WldkS2ZHM1lJQ1pwcDBnVXJqVF9BY3pFcGx1NjZPRmc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Marriott International, Inc. (NASDAQ:MAR) Plans $0.67 Quarterly Dividend - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNS1Zaa2ItSGtQeXdDZXI5WHY1LWtWNXZyTTB1T0dqbG9VX2dMT3FWd2I1OWlHWmk5d2JXMHh3LVA2Y29ROV9VM2NQODJrQkF0WDRIandyTzBrYkFQdDlLWjBDWDJWN3plRW80SkpxQW5nWmJfMk8zUlc2ZTdpcHVzX29ZUG1RUU4yZENfajNlczZxVTYxYndDQmhpaGtTY1BVaEJSOUZ0MV9HMURWUGZudmNDNjJESnFwS3dv?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "SMH",
+      "status": "ACTION",
+      "price": 407.72,
+      "entry": 421.44,
+      "stop": 391.85,
+      "target": 495.42,
+      "shares": 3,
+      "vcp": {
+        "score": 70,
+        "atr": 14.795713152204241,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1102,
+        "vol_ratio": 1.05,
+        "breakdown": {
+          "tight": 35,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 83,
+      "pf": 2.5,
+      "sector": "Unknown",
+      "analyst_target": null,
+      "analyst_upside": null,
+      "analyst_count": null,
+      "recommendation": "",
+      "short_ratio": null,
+      "short_pct": null,
+      "insider_pct": null,
+      "institution_pct": null,
+      "pe_forward": null,
+      "revenue_growth": null,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Small And Mid-Cap Semiconductor Stocks With Elevated P/S Ratios And Negative Ratings (RGTI:NASDAQ) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQbEpSWUkwaXl5cWhIRFpCVDE5dVladGlrRzdJbVBDUTlZS2toODQ4dWRJRW52ZzZnLTBzSVlIcGRuS3JiS2dkcmhZekNjdE13U183c3IyUWdfVFJqSjJQczh2SlVFSlNGSjRMSHh1Ql8tWDJ0VnpjWnJMckcyY21Ga3Uxc2cwcXNmVFpzSldqdjF2S0tRcVJGX1VGaFpySHhFaUk3M0E1TEduejMzRUk5TGxscDdDYUxaVlprakJR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Bullish chip stocks: A focus on small and mid caps ranked by price-to-sales multiple (NVTS:NASDAQ) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQbHdvTVNmbHQtc0VkLW5aWHp6Ykd2WWdFSEVRb1lPSTZhMVZZQlN5Y1gxcGhCem9oWXFTbnZTdHNLZVE5OUpKRUEwNk1WbWx5QU43U3V1TXRnRlBBVDZrX2lZTHdEdkpJVkZtNWxpbmd2NEhVVzl0bWphdUJEaTBXNzhJeDRNc1lHMmRYbzhPMnJkMXB0cHgwX0tibGtqSTh4eDBndTcwWHlhalBURFlfOGZQdkVpdGk2aWhuZExn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "1 Tech ETF to Buy Hand Over Fist and 1 to Avoid - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxObDNWQ0pDNnlXVjZyNl95eE9nNWtfUGhrQTZoN0RQTGNNcmJKaDJHRGVldVpwZ05ZZkMwLUlrbElZdUtqcDRoTU01LXdjdDBXd3hFVmh1UTV0RTY4MjZBTWNtOXFLWjM2ZkFmV0JaSTRlU21BOEtSV1FhSTd6Yjd3WmdTMzBvZHBSajk2bl9yTkRycmgtRVlSQjZTNUZZakVUNWFtUjRjRUpwMURYQnFtNTBuTDJVcXF3YU1qLUNoU1J5M3daR0NtNVBjcFc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Clubhouse legends: Why a share in this golf club recently sold for $74,000 - SMH.com.au",
+            "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQMTdSMnp4YlBjamx3WmtNb09fOXphVlhmS3NuNWQza1FWajQ1NXJLRW1qaWY4cjNNMjFvTGc0dk9NdmxhbFluSGpNMklfODA3WnZOWjFBdHJYZ0VhS3dWU3NDLVNMWWdZOGQ1U0o4c2ZtNVNPNS1wSFhCMWQyNEQ0TnRXN1I5dDhqVDFteHNLenFhNkVHSXltSVdvVmJ5WnpPQ28zdG9aaW5xVXhSaHFEa1A1TEtZMl82WHNrdmJhM3dydEs0aGc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "The world knows how they died. Their families share how they lived - SMH.com.au",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQVkdxT3NLazBkbUNwLU9TZmlDODlsM3BFTm1xdkhfcVdONWR1NXVYbEtFcTFsNUZiLTd5cGtjTFp2TncxUm5uNTJnTXk0blk3bm45Qm9NTVJrUVVNcWZxRWpvdDhmbEk3RVliLTJkbUhTcXhHblVIdXdXZDJwX3J1YUdXclZYeXdTQkdVV1Y1dTdBdlY4R2l3cnN1Q0lCYVU0eklfUS1KUm5WMjhZMTdQR3phcnc2NEotUHJtMnRGRQ?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "TEL",
+      "status": "ACTION",
+      "price": 236.19,
+      "entry": 243.48,
+      "stop": 226.77,
+      "target": 285.24,
+      "shares": 5,
+      "vcp": {
+        "score": 63,
+        "atr": 8.352142333984375,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1488,
+        "vol_ratio": 1.21,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 75,
+      "pf": 3.75,
+      "sector": "Technology",
+      "analyst_target": 275.3684,
+      "analyst_upside": 16.6,
+      "analyst_count": 19,
+      "recommendation": "buy",
+      "short_ratio": 2.89,
+      "short_pct": 0.0225,
+      "insider_pct": 0.00121,
+      "institution_pct": 0.92584,
+      "pe_forward": 19.089579,
+      "revenue_growth": 0.217,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Palo Alto Networks becomes TASE most valued company - The Jerusalem Post",
+            "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQcmZuY2gwdXk3ZUpqLXd3eWRCLWEyOGF5Tkphc2JCaDZ4LTEyLXlyM0xHSG9YaGpqNE81V1QtSnduTW1LVzhWOFFLbXRZb1lYY1pIanlnQmVTY3RzNkVUYVd0V2wxanE4MkE0Qmdpc1Zwb0w1LVAtTF9KOVNmWXFVazkzUmFNdw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "TE Connectivity Stock Outlook: Is Wall Street Bullish or Bearish? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNYWlILUNnb3g0X1pxZzQwWHZRZ1RRTXVCaUUxTlJRdHBDbTFrLWZwS1JKOVc2SU1KSHM2eVFJZlhoTEFMc0JQZ3RuZTJ6MDhoM3JpQllSWTFNVm52ajRSdXo2U1Zwc3NQazFGOWdTRW01MzZELWpXSHZJSnJ3RTQ4c3FCSDBvVUU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Palo Alto plans dual listing in Tel Aviv after closing $25 billion CyberArk deal - Reuters",
+            "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQemlQaUltc1JUYk1zT25WTDZ1YWZIQ08wbWdIZUx3QnNCb010dTZRZUVaM0MzbmYtQjI0WE4ybzZQTTF1eGxwN3JqeUhWTlVaeWdtcHRYTmhwTVVOYmo2RlRIcHBWdVVsRnpERUVETEpaRzk3RzZKUWZ5QVdhVlY5Y00zQ2M5dl9JWE9yZUxnRjZUWlZlWlRwUG85bVp5ald3RHBPd1JLN0h6bWVJcUhZZk5LcjI3RWRmaE9jRWdB?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Palo Alto Networks to dual list on Tel Aviv Stock Exchange - Investing.com",
+            "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxOT2lpdVRUNFJBbEhlMkFUSldoOE80QUNnemhYc2U0UUtKTUs5YjY4RW9LRW9jSDlNN2FSdTNhVERkVVAyMHJDNm9ZS2t2TGNQdm92VjJpQ0lDNlFZMFRYdGlnZG5kRWtnOHUtUDRVVXZlUDZDUDYyY3JKTTJYd1VuY0s4Y3pfdVRhWmJQVEZTRUZ3UFJaRGFnQUxvVmk0TExnRFV2ZmhlU1I1TGF5bm9JaW9DdS1NR2VsMFRjNg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "TE Connectivity (TEL) Is Up 8.0% After AI-Linked Revenue Surge And $750 Million Debt Issue - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPN09iNjhwOFhJaXhGREg3UFgwaUtHSVRKX3BmLTlsMVdLT0ljbGNhaVhKZzB4S1NfUjFDYnpDd2x5NU9Ed3Y2YUJDVy1IRXl2UmdGVlVrSC1uOTM0VEZrY3dRWmhLMTZmNVlDa0tCYVVFUDJzWFpJdkhkb2ZSR0Q5M2djd1FHQ3BGR3RmSkNueEUwbWlmUHE2SU10R2Z3U0dYWEFNUXpQTEN5SndYUEVmVW5keW9iMGZ0WUt1czUtOW1vUkhEQ3c?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "ADI",
+      "status": "ACTION",
+      "price": 337.1,
+      "entry": 344.65,
+      "stop": 323.3,
+      "target": 398.01,
+      "shares": 4,
+      "vcp": {
+        "score": 60,
+        "atr": 10.672145298549108,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1458,
+        "vol_ratio": 0.93,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 87,
+      "pf": 2.5,
+      "sector": "Technology",
+      "analyst_target": 317.6875,
+      "analyst_upside": -5.8,
+      "analyst_count": 32,
+      "recommendation": "buy",
+      "short_ratio": 2.52,
+      "short_pct": 0.0199,
+      "insider_pct": 0.00239,
+      "institution_pct": 0.9346,
+      "pe_forward": 29.330336,
+      "revenue_growth": 0.259,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Analog Devices stock closes near a 52-week high after Barclays upgrade, with earnings next week - TechStock²",
+            "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNQTR2cWJkRmdMWkk3TThSUVdUTDB3MzhNM0RWcTd0azFlYnpzZGNOeG5TakJYVm81ZmZ5TlRrTGVOaXVnQWlPSEJpeGZYUkF3Y0xjU2tQSDduMmFhcVVQSHZvdUJnaDRieTZfNHM4OXU0ajFvdDk5MXFlbE9fTkNnM2w0c3FzS2xFR1FHb1BDMTUtWmVNMXp5V2FvMno5djBncWl1YUNhQm1JRlJIZDJLVF9ZVlFfZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Analog Devices, Inc. $ADI Shares Sold by Alps Advisors Inc. - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQQ1dCX3pzdTFkNVltUjlCSnFpd3FpX1FOdUhBYjg1SDZqcDR0VWJlclNVU1o2TFNNdXpnS3FCbWo4TGZDX1BnX0lrYjM4WG1pMGM0aE5POWVDVDh3VWJuWUpjVmt0V01VSDloNEtjcWN0ZFlFcDdtcmVDc3gwTWl1TDc2ZlRhY3pGTzRUbC1mbjJwbmprNW1SMThKRThnb0FmQ2gxakMwVHVueUNPQmtLaTBTNFZnLXc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is It Worth Investing in Analog Devices (ADI) Based on Wall Street's Bullish Views? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNRnpfTzJjZlU4cHJOekRxV3prWUxuRFZDYWtjVVkwbXJVWldzOGhIUksxcnc2X2M2RWpWeUtTY0EzSDZVWEU3VHFpSDVyWHBCQllQYzN0eEp0dkVUNW10V3FsbjNBblpuWUJ1eGxDcjktbXZMV3Y5blR1VDI4Z2hBWVJRYWViUU0?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Barclays upgrades Analog Devices stock to Overweight on industrial exposure - Investing.com",
+            "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPU1VwR2ZkMjJWbzJua05JYTdCMlB5RlhPWGg2OWdOTTNLWFdPdm9ySHBzQ1BZb0l4Vi1lVVVMS2licGNFbV85cWhFbXFpaHAwcU9MM2RwQ2pCX3QydDEybzg1anZsNWl5Y3BmT01tU2Rhem1ONEZGUmREQjdSblNPdGUtZEJaTHpoNEJwR2VsbjhMWmo1TWd2aHlEQmdka1FRc3hadXRXd01CY2R3RXdDdlNRTGNmZ2hmSHdPYk1wNDh3Wm8zcXN3NjNVSkVLR0dR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Barclays Upgrades Analog Devices (ADI) with Increased Price Targ - GuruFocus",
+            "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOSGtJQXM1TU1jWG9iYjdOUUxzWFZuXzkwUzRyY1BuMnhadW85NnIwUzZiV1ptMjU0SzE1a3FoaXlLUlFQRkx5UWtuWkhfU0Q3QjNUd0dodndJQzRndmxGS0J0UGc1eldFR2IxLXlFQlJUVnhWd1pXdDJ2ZGxwVVdPanhmTHZHTUZhOUVocEtwUUlkVWtKeFBHb1hHNVVybGxkekd6Z1lTd3lmLWVDWVpJN0pXNV9RdUVudGc?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "MNST",
+      "status": "ACTION",
+      "price": 81.48,
+      "entry": 83.41,
+      "stop": 80.56,
+      "target": 90.52,
+      "shares": 31,
+      "vcp": {
+        "score": 75,
+        "atr": 1.4221420288085938,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0686,
+        "vol_ratio": 1.25,
+        "breakdown": {
+          "tight": 40,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 82,
+      "pf": 1.37,
+      "sector": "Consumer Defensive",
+      "analyst_target": 80.76696,
+      "analyst_upside": -0.9,
+      "analyst_count": 23,
+      "recommendation": "buy",
+      "short_ratio": 3.49,
+      "short_pct": 0.026700001,
+      "insider_pct": 0.28585,
+      "institution_pct": 0.7069,
+      "pe_forward": 35.859993,
+      "revenue_growth": 0.168,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Assetmark Inc. Boosts Stock Position in Monster Beverage Corporation $MNST - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxOS19ieWhibUVfa1pIMG1RWTlrNnc2a0VZMlBkZ0hqZkkwaWtjQmVxYlV1MlBaRDBvSWhLbmhrT283R1BmWk8wVmJmSWFsZm1sOXhzWWJRNV9Tb1Q1dTF1THIwYkhkU1VPX0ViMklhRGpveEg0UjktTW5zemllT19SeGFSaXRhd1JzZ25FdVMySGVScC1GS2NXZVg0UnQxOVdZSWhRbWtJUWluM2VFblV5aVlNcGE1cU94OUNlZ0NILVgyMEhfaE9femQ5UkxwZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "What Makes Monster Beverage (MNST) a Strong Momentum Stock: Buy Now? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQQ1AtM1FfOHJLek9ocnc5b1pYcy1GNHpOWlJHbzlicnRQcFdjT2xwaktLb1RQTjVHc21hc0dBQjZlQ3IxZXVpaVN0UFRpc3pRLWV2aWNTc1JpRWw4cE1GZWpoZFBpZmNFUU5HWTY5dWlibGlSRXAzOHR2TWNsY2wySGRXRFE5c0k?oc=5",
+            "body": ""
+          },
+          {
+            "title": "What’s next for MNST stock - Trade Entry Report & Community Supported Trade Ideas - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFA3VkJXdjdENDllZ1RSWGhtU1Q2ZlJ5UzVubXlrM21kV21VTC0zM3hLZGl2MEI0YkxndzZPcnZlSmpCTHVENWZnXzAwc0k5NkU3a2hVdmZ1SkFxVldxODRad0s0WVJXdHRJNmdGSDhPN19GQQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "A Look Into Monster Beverage Inc's Price Over Earnings - Benzinga",
+            "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPZ25MbWlwODd5aG5ReFNON2I4UnVXNjdnTUJwUUhxUzlQVV9kdmlfZ3ItZHdIS3YtQmpwalRXV3JlREhNcXFhTWZsYWh0TVU2SU02Z0QxM3JudjRFY3NWMHhLWnpGRFF6YWZFWURyNlVzSVBfYm9OSUtib2c2ZGU1UFlyV21kcWQwYkdBc1cxelJRZ3ZhcUNWcndXSUtUU19jZEJQanFFbF8wN2c?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Tech Rally: What is the target price for MNST stock - July 2025 Decliners & Low Risk Growth Stock Ideas - baoquankhu1.vn",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPUnJ0dUM3enN3MnlaY3VwZVpkSEtSa2pfSnVTNFl0R1IxN1ZYdDJCanpTSWFxVnM2cHhmdVgtZ3lvQzBlM3NHNEVkSDg4UlkzaVdVQ25JMjlXeXZhb1FUeDBla0pyY0w1WFdsdkoyaHlxTmZrUmdRSHlUY3ZYUEVLeVpaRjJxbkE?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "TTE",
+      "status": "ACTION",
+      "price": 76.79,
+      "entry": 77.93,
+      "stop": 74.63,
+      "target": 86.18,
+      "shares": 29,
+      "vcp": {
+        "score": 55,
+        "atr": 1.6499998910086495,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1548,
+        "vol_ratio": 1.59,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 74,
+      "pf": 4.09,
+      "sector": "Energy",
+      "analyst_target": 72.9375,
+      "analyst_upside": -5.0,
+      "analyst_count": 8,
+      "recommendation": "buy",
+      "short_ratio": 3.77,
+      "short_pct": 0.0025,
+      "insider_pct": 0.055430003,
+      "institution_pct": 0.50646996,
+      "pe_forward": 10.281699,
+      "revenue_growth": -0.025,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Here are 3 factors that drove the big swings in the stock market last week - CNBC",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOSGNFc1NBbV9hWTdJc09DeHBsU2UyejFRNURUZHNHRFNtX1J4QUpnX2liMlF0T1RkNjZxT19wRENxdVU5dFgzN00yRTlDSDNhdWFQT3JvNmszVzljV0NLUWZvWmdwOEh1aHlTXzQwdWpYRlZBQ2NWdVlnVkt5TFE4a05OekNhanpiUm5NSEFRX2hVblQtX3pTNEF6dXZUYmhBSUwtWXBwSUZUYkVmR0RuVQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Stock Market Week: The SCOTUS Tariffs Wildcard, Lunar New Year - Investor's Business Daily",
+            "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPTWQyTlVxV25UcnNBaURMUTBDa3pVclphaDIwdGx1N0hnR0FKelc4WHB1REhCSzVIUWNZWUNJWkpQdDBrZXhIaE1MZ29YQ0REdTI1ZUhEU1lFeUdWZ2s0UktJcXRtQ0s2Wlh4OUdGUTlkSkJ1SzcwNzlibWdWbnVhUTJaWHVlbUoteUppM0dNc1IzVG1YOXNHOTVWMXI0NjBCTHdtZW9fMkRqbEQ4MFE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Prediction: Sandisk's Stock Price Will Hit This Level by the End of 2026 - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxPUklUeHl6dkRXWk5TaFNIc1ZkMHhkYlpBSmFxcDRnb3FGT2liWXBhS3AxN1BIZnlkMjE2el9veEM0ZDgySXRLU2pOcGFFZWNyYUk1RGJkNHBNNW1NMzM4R29lRFZZeHJDUWtTRWw5d3NSQVVoZnJ1SzRuX19NMVlrVjhROGh0VWlVd3lkVWV2RGZ6MVdW?oc=5",
+            "body": ""
+          },
+          {
+            "title": "The stock market is reflecting fears of an AI apocalypse for white-collar jobs - MarketWatch",
+            "url": "https://news.google.com/rss/articles/CBMiwwNBVV95cUxQOXZ0c3FUcVF5OS1HTllaSU1wNnNvMU9JbXd0dmtIWHJNbWxIZmdVVEJZbmxTamFZVkZCZU9nRXhSVi00Y0RjbDNuV09rTWctX1JNZHRqT1lrblFiRzJGYk5xQlcyVnF1N0lVXzhQT0FYdWtkUXowTlp2MF9PaTRwZUJQYThzZ2taUmxYNHVPMS1zX1diSWZ2Zl9vSzJGYTNJcUQtQ1owbThZMk9fTTYwMlRoa0dCNnVjOUx4cDZ2YnF0SWpKaHF6b1JnWl9XdXVpNjVlQTlHbnc2TzVndVk1X05PWjlyLThwcnIzOWFnYk90QUxOWk95aklIQk1UNmtPMFFiaVdldE9DV19SMXBwTnNKaURuUU9RdlFmTlRQMHdlUGpFYzk0UE9TUFZvdVdIVlNmbEVvUXVTeFB3NWY1Z2hqVWpiNGdVOTBjX3cxSjM0ODBxLUhwSXZCdzFaMkJxMExHZkhIbU5HNzhkWmpFVS00NlgxZVIwcURHMndmUW5SMGY5UXhXMmtWb1NaZ01rSkR2amVvYzRQS1JTVHFNUzhWaGV1dDh5aGFPMTEyeXVWbG9vdWFwN3JQZm81cUNtdlNz?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Howmet Aerospace: I Was Wrong, But The Stock Remains Expensive - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQYk5WV0ZIZUdFZ3pRYnBwR0lIZXdZLVdrRnIzZFhWSUhPUExPUmQwZkc1WHYtTFB6cE14cUVXTGRCLUpEUlRGbEVSbzFweHVxOVBCSnBlSzF4VFNId0h0bnlrNWZSQm1hLWpVak5RdS1vQU5jOGxPOXBiNHQwVVBTSzBEVXhVU3lMZUZrcDF4a01GNmRTemRKM0s1OEhVVFVSQUNIU2EwS2FfWjFrbEhXUF9tOGJSbkk?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "EIX",
+      "status": "ACTION",
+      "price": 71.46,
+      "entry": 71.75,
+      "stop": 68.35,
+      "target": 80.26,
+      "shares": 28,
+      "vcp": {
+        "score": 60,
+        "atr": 1.7021418980189733,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1684,
+        "vol_ratio": 1.0,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 80,
+      "pf": 2.17,
+      "sector": "Utilities",
+      "analyst_target": 67.80769,
+      "analyst_upside": -5.1,
+      "analyst_count": 13,
+      "recommendation": "buy",
+      "short_ratio": 3.59,
+      "short_pct": 0.0326,
+      "insider_pct": 0.00245,
+      "institution_pct": 0.91628,
+      "pe_forward": 11.625259,
+      "revenue_growth": 0.106,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Edison International Stock: Analyst Estimates & Ratings - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOeDMwNmZpaVEyUGdhZmlmWHV0NDlZZV9udXpVdHlXWXBZTEM3Y3JxdXo2MXI0Z29ab0lOUmMxcDl0SDRjYkFqc3hEUXRiWHp0NEx6QzRQeUs0WFd5SjZZMTBKNThXWUkxQXFObVIxYUh1dUQ3Z2RBNG1nS2x2TmxnT1IwRHNScElTdjVqNmNtUjYwZmZr?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Edison International (EIX) Valuation Check After Preferred Redemptions And Better Than Expected Q3 2025 Earnings - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxQeWIyUTlYZnl5SUdLRnVqZThYMGxuWVdUOWNrSS0tMEdjTzI4REkyWUVKQUZSS1hTYkg0bDg0US02SlFTY3U1RGdXOHF3QkFjeXM4bHBDYjZFMTFINjNndlpvdGF2NTB5LURsbEFtOVZldEs2RUdhOWJXTzQ4anhxZUtyQkNmeGphQmNBYVN4UGN1cmJzcGtnUGRyTjZ2YlphZUpRVGpFZWxVWGItdVNhQzBNb2c1S2V5NGk0emtieDJ2S1hvNmJSWUtFVFJZYmo1cGlj?oc=5",
+            "body": ""
+          },
+          {
+            "title": "EIX Downgraded by UBS with New Price Target of $78 | EIX Stock N - GuruFocus",
+            "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQMzhPbHNoQkRIZjFlc1ZjRy04Rmx1TWs3ZlhZeDRSSmNSaFNNUnhlUUhLd2Rpb3I4bjBOQk00Mll6OFJfVDgwM2hhempkYkhUVHRVYUdsVXFnX1oyZzlZcDNseFE2bTZ2VWlidV81dklTdTNVYW9ESEEyWVpvSFV5aGJhMTB6aGRhX2QyMjFHb3ltbGxOTlRQeUZ6b1BJb1hRQ0xwTkhR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "New Analyst Forecast: $EIX Given $78 Price Target - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPZEJSTGJ2UjZ2WlB3UDZXZVh3OTJZNllNZUhyaHdCMkhKcUZhNzZhVEs3VmdMMVVyVFhIOVVPR3lSWFMxUXBTanRFaTdnZTJwcDZSOUZINjZ6MUFad1o4azU0OV9MdDJra1V4OGRYNm9HbVJwRElTTnFlcFRnejBxajFxX0ZNTFhEOVk4SkVZdjBCZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Edison International $EIX Shares Purchased by Advisors Asset Management Inc. - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPN3RKQnNPYXFEVWpQbVlDbmxZdXdScjU4M3BkUXM1ZlRjeXZ3QUZ3dnpDVGNhZzdJSDVCQXdYX0YyU3ViUUt3d0VTR3ZLVDNJb3dEeFFxLVoxTGlZaGRtdFRwYUNnMEJWaDhrQjdRT0pTbzlkcE1ZWGRkTGctenJ5YllJVU5LbnFWQ2FZWFA0aXVEYkxlODM3cGVsTTJZWi1wVlJGUVQyVnZwTzEzSjZjVmhzb1lEcTh2YVA0Nl9iQ0xYRzRuX1RXVGxyTmk3ZFFT?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "WELL",
+      "status": "ACTION",
+      "price": 210.72,
+      "entry": 213.05,
+      "stop": 203.48,
+      "target": 236.97,
+      "shares": 10,
+      "vcp": {
+        "score": 65,
+        "atr": 4.785000392368862,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1465,
+        "vol_ratio": 1.0,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 78,
+      "pf": 1.58,
+      "sector": "Real Estate",
+      "analyst_target": 218.8,
+      "analyst_upside": 3.8,
+      "analyst_count": 20,
+      "recommendation": "buy",
+      "short_ratio": 4.4,
+      "short_pct": 0.0219,
+      "insider_pct": 0.00064000004,
+      "institution_pct": 1.00288,
+      "pe_forward": 63.661633,
+      "revenue_growth": 0.413,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Why good financial news didn't fuel a broad stock market rally - Detroit Free Press",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQUEU5cDlhS01oS013OGs0cUdQT2ZUczZneEdOdXdFUGY1aWd1SXgtOUdFc1I0bE9rYl9mZk05MVgzeHBDSzZ4bE9yQWtJc2RvMG5VQ0FUWng0VmhIOVNQSlQ3Yk1tNzZNZ2o1NDViNi1zVzgxMTdhR0RyOEl0aUdGcjFhbWpiY3RLZzZKWXF5d20wX3RsbjQtd201b0liWTM1b29vbDlkZHNFem00VzFYcQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Welltower (NYSE:WELL) Stock Rating Lowered by Wall Street Zen - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPZ2VhMmdtWGJ4MGl5YWJxLW5IYXBiMjBtbzNHZVBwSXE0WWd0SXdJcFlLcW1uNnJOWjVUZ2hycXZlTjdHWWcyV09aVXRUMXc1YXI0TWIzVzQyUkdiZjhwVHFYbUdRS1BVa0FBZWN6dG5aeWVtdmFoSFFCTGhxNWE4bWFaSURCalltSnJ3X3RoRkJuWDBZWlZXN0xycVFXUHlmcW54WG1rbHpkQ1U5b2ItQUZR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is Amazon Stock a Good Buy? - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9feHpZVDBHcmotdGNMLXllNE9NWkVPMlp2ckdXVThYcG5ra01lNkZhTDV6VnU3aVh4YzVBYk9RQnZNYWtsdWl4eE1YTzRxcnJueWlwaGxmWlJOSVFhMFJsMUJGLVd3NHZybHJDUTI4SXlwbWFabmZQUg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "(WELL) Equity Market Report (WELL:CA) - Stock Traders Daily",
+            "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxON1FVRW9rVWtka0hYT3ZXX0lyNG9IVzE2WDBNdVdyOEhaY1U5dllTZDlvVnZ0X0xMZHZYTUhITUJXdGRMUktJTnhQLUR0VDRRZ0dEeWJJXzFSRmN3eGNCNFhHMXNzSTE5Z00tTVl4ZWw2S25HT3A5Q0dBOC1nNzFjU2NSQVQ4OWhPeGVR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "WELL Stock Surges 12% With A 6-day Winning Spree On Strategic Acquisition - Trefis",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOOW8tUVVYZW9IRTAxclBjTHcxdFF1blF1RFRsSlMwZjdaN1ZqaWJySlI5RERlYlRVWGJoWFVILW9jVG9VTHQ2YnZjOWozcHpXMUU1SHpJOHF5TWtfZjJFMF9rRm1qMTVjRnpBYU8tN2dHNGdFUFB2WmI3emRRd2N0UjBtbDNIQ29xdkhlVUhjOG5SSEpFajlkWFMyREtuQTY5RW8ybThILVhKZHVTQWZFZWhjY24tdFg0M0RiR3NFbw?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "MCK",
+      "status": "ACTION",
+      "price": 934.75,
+      "entry": 973.87,
+      "stop": 899.38,
+      "target": 1160.1,
+      "shares": 1,
+      "vcp": {
+        "score": 55,
+        "atr": 37.24571010044643,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1697,
+        "vol_ratio": 1.03,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 81,
+      "pf": 1.88,
+      "sector": "Healthcare",
+      "analyst_target": 974.4,
+      "analyst_upside": 4.2,
+      "analyst_count": 15,
+      "recommendation": "buy",
+      "short_ratio": 3.25,
+      "short_pct": 0.0150999995,
+      "insider_pct": 0.00037,
+      "institution_pct": 0.92654,
+      "pe_forward": 21.153833,
+      "revenue_growth": 0.114,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "McKesson (MCK) Valuation Check After AI Logistics Fears Drive Sector Selloff - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQWHlLX3lLa1RnQUREd0xnbldScXpyRzFzSGNNTGtEdmRTWFFJMmQ2QXluUW5rSmpUSXlvaHdIc0lkdGNRT2dsZlpRa21jS1h6bHRKNzEzV2JQanFqWEhRYkoxMzZLbUNXcnZjb0UzcGNJQVlMeGR2V0NkTk1HLWdMRFloQzZkNVJPWldkdEJDNVlmUEhadEZsay10aUhIRnZVWFdueWo3dUVjbWs5VjRFdXZpOWxNbENGdlY2RVRVQ29pQ28?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insider Sale: EVP and Chief Legal Officer of $MCK Sells 303 Shares - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPY0pJd2tiS09oRkttbkZMTnVuRnhELWx3TE9JdWpXUGhnT3MxLVdfdkd1NHhuZXY1R2RKQkloY3EtUTZtUHAtRUlhOEhrYmllREtlVTlNNkFULUZqZW9GdHAyWi1zWE1pSlA2UFo3T242bmxaeUtOdVlzekVWVmNOaUNsR0psRHMwMmhhRjBvdjVoZHdVbW1TcU05OFh4aDgtaWhYeW9B?oc=5",
+            "body": ""
+          },
+          {
+            "title": "McKesson Corporation $MCK Shares Purchased by Varma Mutual Pension Insurance Co - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPa19OYlFiY1lNQWxaN2trdlRtSDctcUFUZjZjaV9SakhuMVJ5Tlh0N1kwWWNOZU8xSFIza2JIcmw5UlZldFRsTE9mS0Z0MnhGTkl2bUxSYXQzS0M2LXVQeDhUa1FTODg5a3hSQjZGX1BUN0xaWXFqeWEtREExekxJTndTYURNOUVXSEg0NElLUWl2T2l6TjBINkdjdXJFX2FEbE03clJkUXJoRkJpLWZqOEVWMGlNUEYzVnhDQU84dktYc1FkWWpHc0pBRUR3U1FjeTR6WjVn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Lau Michele, McKesson EVP, sells $282k in MCK stock By Investing.com - Investing.com UK",
+            "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPVnFqNk1qUmhaU1B6MmFJTlk0eW1fdUIta0J4MUp3TmQ1OER0c3d2UUd6OGk0MGxkTDd0ZHhyOGpMQkprNmtYdTlpa1JzM3psd0lRdzRicmJvZUZaalRweVlFTkN3MDRnVDBGUG1KV19icW1QOVZHV2Q1a0tkbV9vcEJKNHExRDNWN2xUbXA5aE8yUFBRVjhPVTdxQTN3TUxxNDRndEFRU1JVaVpUQVM2Sk42c1FHOTRBUHhoT0g2eTdUQQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Notable Thursday Option Activity: BURL, CHWY, MCK - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNc3JScGVFZ083S0pRX3JMdjJ4OWIxZG5BRGdGQXh1MFVkUS1EM09ZbTU5WF9lMC1VLTE2Q2lPSVdCdmRRYjh1ZEpkNTBndDVFSEUzMldCQkVlUXdmRXo5S1FrdjdnYW5RTF9haXEzUHREZEE0UWY1ZkhhVXFFb1pkSTlEMU4?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "HCA",
+      "status": "ACTION",
+      "price": 540.29,
+      "entry": 554.01,
+      "stop": 515.82,
+      "target": 649.46,
+      "shares": 2,
+      "vcp": {
+        "score": 55,
+        "atr": 19.091437203543528,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1654,
+        "vol_ratio": 0.92,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 85,
+      "pf": 1.26,
+      "sector": "Healthcare",
+      "analyst_target": 530.3333,
+      "analyst_upside": -1.8,
+      "analyst_count": 21,
+      "recommendation": "buy",
+      "short_ratio": 3.78,
+      "short_pct": 0.026300002,
+      "insider_pct": 0.15868,
+      "institution_pct": 0.78458,
+      "pe_forward": 16.22916,
+      "revenue_growth": 0.067,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Understanding Momentum Shifts in (HCA) - Stock Traders Daily",
+            "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPTEJaTXh3WFdjOXpDZ01lZ20wWXRIUkFnZkx3TEFzX09VcVhjWWg5SW9PMkp0TEJfQUIzOWNoSEpia0FUWXZBbXFSUmFMdFlONXY5S2JZWTU1ZGMyM2FaanhPWVFIZnY2QnQ2Rnd2WHNFWUV0QVJxYUdycnhlLTJld0NXWGJ0ZjhGblVWVHl2V1dXcGdaT0daR2dka0pmbE5vWDk4QUtFaTcxbmtXTGVEWFVfdkNOLXM?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Pay Less, Gain More: UHS Tops HCA Healthcare Stock - Trefis",
+            "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNcFIyeTZobGJCSnRhaF8zSVlxQ29DUXNOWExPOGdjS2FjV3hOaFI4Zll1TFNMRE50OHU1UUpmMmlyMnZwQkMyYV9UTTU5U2NKdzJtTXpPOG9lbjNoSjJVV0NkNDI4dWdHa0MtUUk5WDNSQldwVlc1MEx5M211S1I5QnBaS0w0S2JDSng0bl95SUItTmJubFNidnZRdHRmcDVZTkFlcDNyVTNmRWpkeVE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Krilogy Financial LLC Purchases Shares of 1,881 HCA Healthcare, Inc. $HCA - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxQV0tmUGpOWEpJbkNVbk9DRE8yZExIX1NYM05RTjhTZnhjc29WYnhQLVBZaWpuZ1VMSVloVDdNNkJsQTRib0xPRUpXYmlwaGl4R0ZkWHhneDRRSVpUOW5LbzU3MGg0UXRQTUlteC04WkF6eXpOdDQ4Um9IVlR1MkZ3TGNPMXY5dVZ2QVQ0VVR2dmI5Rk1CbDVkdmdtT2Vma3lJcTRrSVZNMHFMZVN1aC1FUy1wRlhxTDhPTzZLRjZZcy0tSHhBd082Skdn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insider Sale: SVP & Controller of $HCA Sells 4,000 Shares - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxQeUdtRkIzR0pndU1lbXFPMjEzX0pTVFlVSGJjQjV4cFdycjhoeXRIU3N2S2FoLS1NWjBZTVZDT243ZVdnWDVQNUd1cFVtNEdfc0lSOVhPTjF1bkVSWmRGNXhEWXZmT0dtSENwRjRRMTdkN09JNGNhNWo2QlVkdHZtNWRrNDAwYkF5STVrVU51QV9rNkVmNFZZZ2JtZloyRms?oc=5",
+            "body": ""
+          },
+          {
+            "title": "1 Unstoppable Healthcare Stock to Buy and Hold - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxOaExnM0VnUkFMb3ppQVZhd1doOWZzRENXZS0zSVlBOTQwcTRBMWI2Q0RZdkhHNDFHUEtKalRqbmg0T1d1bVIyNkpFcGgxM0tsT1JrN3d6bUZ2WDV5QUx0bkNkNXJDUExGRUR4cXFaV09sbFYwOTFOR2dDYXNiaEFyMXc0Z3EtYnVoYkVBODA1TVpSeGs?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "WMB",
+      "status": "ACTION",
+      "price": 72.28,
+      "entry": 72.78,
+      "stop": 68.58,
+      "target": 83.28,
+      "shares": 23,
+      "vcp": {
+        "score": 60,
+        "atr": 2.099999019077846,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1689,
+        "vol_ratio": 1.27,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 76,
+      "pf": 1.25,
+      "sector": "Energy",
+      "analyst_target": 73.80409,
+      "analyst_upside": 2.1,
+      "analyst_count": 22,
+      "recommendation": "buy",
+      "short_ratio": 2.33,
+      "short_pct": 0.0149,
+      "insider_pct": 0.00453,
+      "institution_pct": 0.8972,
+      "pe_forward": 28.543785,
+      "revenue_growth": 0.087,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Williams Companies (WMB) Receives Analyst Boost with Raised Pric - GuruFocus",
+            "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxOS3RLY2l2ZG9WWk84Qm5PYXhGcWtoWWMwQjdwTGo5ZEFPbTZBR181Z0p0U0pZUVpGaEYwcGRhZE5fdXIyOGFZSGg0U21OSkJzQWdKYTB6UkVPMjVReXozQThGOVVWQy1sU3BvdHo3MnUwUzFwUmgtX0pJZ2pLekFuaDBxQVRfejA5LXFpUGZvVWNaSlhydjVfaFBabEM5ZU1MM3FPUVRiQ3BTc2hZdDJsbVJ0OS1GOXZqbjAzaXpITUdOY2J6TFJKVGxqY0VCS256SFE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "New Analyst Forecast: $WMB Given $78 Price Target - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQa0xIQVBUTng3MlVrVWlKWjRId1VsRTV0cm1rNHNCb2hXQUdDNWV1bTdQbEhhRDF6SFZnUUtkN2haa2ZlamUtUy1aaktsQkhiTU9iR1NOY0VtWm5uR1dBcGs5aGpQdW1zYlk4Qkx0eUtxUGlONU5xT0RIS3RGSVdxQTZjV0JMekk5d25oUUE2OXRvQQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "How analysts revise price targets for WMB stock - July 2025 Sentiment & High Conviction Investment Ideas - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxNMGI0OUZlSUdqU3hYdWx2ZkNsR0R0eThIbF9jY1FDNUJPQjlLUEJOaTZHZnkwSkd3NTlvRURhNElLTC1oUkRkYUdDbTRqLUR1UGxqVUNkYUVBYmlEeTlfYjVtWmh2cmxwNkdqcWxqZU1yVjBfWGtiVy1uUkY4N19GbWs1TQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Analysts Conflicted on These Energy Names: Solaris Energy Infrastructure (SEI), PBF Energy (PBF) and Williams Co (WMB) - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMingJBVV95cUxQUllFRExqZWxiRlBCT3JxUkloY1pFbktPRHlZWllOU3RvaUJsc21wV0FIR3cxTWd2TzFwWmZPR2tvOXM5T3AyVTUtSWJBSWFkT0Z2YXBlb1R0R0tqdHRjam1TZGtmeG9HZmFvSU1kZzlBazh3TXQ0VmF3UVA0b1k5UTZ6cTZsMmZkLTZCaW5YLWluWUllbDJuY3pXQzJJbHZDcGZ0VHdUR0ZJWEg2ZjJoTkJhZnhlNXV5WVpMMEFyY0xqX21ENU1YcmVCVlVUb210aHVyNi11WGZwQ0dyU1BEelVIakdUMy04MFJvSGV1OG5VVWpEZWJ3eEdsNnVsTmxiTDlmZUk1OHJMYXNyZGRpYTRPOHNuT0FUR2hHMVlR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Williams Companies (NYSE:WMB) Raised to \"Sector Outperform\" at Scotiabank - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPNGxCNlFGdVpEcG1SaElhSnZMZVNqMFlzY2RyVk1ZeVZrNmdMczhObnA4ZHFhM3ZhelI3bU5RZFpPY3FTbVVhZ0VKR2VWaUVENlU5THZaR3Fpd0hJSmppTEJHTmpMMXZPaUNXTGJfaFV6ME9lMEdfTTZ2eXJEREw2eUNtUG5sS1h3R01VWlI0cGNKQ2hHOW5YVlpwalM0alM5SWQwU29JWno3cmM5eUdmRTFyNUJ1elZqWEhGTkMzTQ?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    }
+  ],
+  "watchlist_wait": [
+    {
+      "ticker": "USB",
+      "status": "WAIT",
+      "price": 57.69,
+      "entry": 61.31,
+      "stop": 58.41,
+      "target": 68.56,
+      "shares": 33,
+      "vcp": {
+        "score": 63,
+        "atr": 1.4499999455043249,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1216,
+        "vol_ratio": 1.45,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 71,
+      "pf": 7.65,
+      "sector": "Financial Services",
+      "analyst_target": 63.40909,
+      "analyst_upside": 9.9,
+      "analyst_count": 22,
+      "recommendation": "buy",
+      "short_ratio": 2.45,
+      "short_pct": 0.0182,
+      "insider_pct": 0.00126,
+      "institution_pct": 0.83185995,
+      "pe_forward": 10.429246,
+      "revenue_growth": 0.053,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "A Look At U.S. Bancorp (USB) Valuation After Recent Insider Selling By Senior Executives - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQdGZXR2hzQzN2b0wtOTlfWDFJVzFRUmZESTNxY1pOT1VLTm9iclhCa29qb20yOWtGdnBqcDNUbDlFb3ZyTFJhWFNtQUpKazRzZGctS2RRNXF6SF80VEFvdlB4UzdCcUMtbVdUbEFWWHcyWUg1elVYeGRJd2JvNHFBQlpEU2FTdHkwQkJzenBwSU5HX21qUU9LSjJXbHdVMHp6aUNLczJYNGFZVkRaLVZTNl9sN3VqVDlsRVc0ZkFMZ0c?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Cibc World Market Inc. Raises Stock Holdings in U.S. Bancorp $USB - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxNUFUtc2lkdElsSEFkdTc2VkZpR2lmeFp1bXcwanFwSzU1VU9pQlZVcGNBdkh3eWlyVEJUWWE4MzFLWjdoejJDdTlTem8xNnB3YmZpd1VyV055RHFJdHdLNXdTVDE5YmZacnZlVzVGTXItendyaDNnc2RnS1g1TVhpSHd2eE1uSW5WZFFHWVFGOU96ZHFQTkdVTWdhX0pmWnNHYlN6cVlSaHpmUllWQldEdlRkbmFfZTRrZzNGNzF0WQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insiders At U.S. Bancorp Sold US$4.1m In Stock, Alluding To Potential Weakness - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE1IRFFJOHlIVjNoNGJWTTh3ZGhrY3dFN05aUzcxT3IzamdfT1E0TS00QzRrQTRlWnNyRThSQnFmNjlmT3pxS3pjczJNblhoMnJNY19XSV9QWGNEVlRfN1Rmb3AybFN4OXdzRmhhdTF2MTE0UFpNZHZOYUpfdFM?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is USB.PRR stock a dividend growth opportunity - Weekly Trade Review & Precise Trade Entry Recommendations - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5WNEp4b0VHNGQ3V2VSUjR0U0diazVPTGQyczFMekdYZ1Rkb1A2WFpGNTRLWTEtYnF5Sm9Tblp2aEFLNndlekctdzMzN1lkLWFJZmlaX3hhbVJHRmFWVEJqWWRwQmJmNWd6T0d4SnBvTTVhNDlFU0hSTGdSV1Y?oc=5",
+            "body": ""
+          },
+          {
+            "title": "USB May 15th Options Begin Trading - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTFA1alRpUU5NcnFEWVZqaEtQQWo4aEhtMXJMdFg1T0tRUDJ4V2RCZWp3VW1GR09mVTdRNFdyTWtvQkdTM3VZWElzRFVMTUZVQ1lhMThURXBqTTRDVjBBS18yZGdBZGprXzVFNzROSjdWMjJoZjY3?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "LHX",
+      "status": "WAIT",
+      "price": 345.5,
+      "entry": 370.33,
+      "stop": 349.17,
+      "target": 423.24,
+      "shares": 4,
+      "vcp": {
+        "score": 58,
+        "atr": 10.581429617745536,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0919,
+        "vol_ratio": 1.29,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 85,
+      "pf": 5.15,
+      "sector": "Industrials",
+      "analyst_target": 382.3684,
+      "analyst_upside": 10.7,
+      "analyst_count": 19,
+      "recommendation": "buy",
+      "short_ratio": 1.49,
+      "short_pct": 0.0163,
+      "insider_pct": 0.0033399998,
+      "institution_pct": 0.89848,
+      "pe_forward": 25.485197,
+      "revenue_growth": 0.023,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "L3Harris Missile Spin Off And DoD Backing Test Current Valuation - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxQR3c0aUZUdDhQNlp6OTV5MEVCS1hfVVdETDdSbDVuc3R4anN1Zk9nSU1ER0Q1a0ROV0ZndU1xZU5kSXQ1YWE1TjVtank5OGc5XzJfYWxXdTljWG5CeEVBTWNDM19MTGdLLWVqbC1zYXd2czdiaDFfNEpuX1NualIycng0MlpEZ0VNdHpOLWhTSFhhcEpPdm9IeFI3NDBWS0o4TUtYcnY2STIxQVBEcWN4STY3YUFjVVdTbkExUEhLaFNmUThzSld2d0VXWWZabzhHenBnSlp2SVBDZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "L3Harris Technologies (LHX) Releases Q4 2025 Earnings: Revenue Growth but EPS Falls Amid Strong Cash Generation - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxPM0p0WTB2eFhoR2IxbXJWcGliRTY4S3I5VExCQzFhUmxqenhUd3FZSElHa1BuTHFPd29keTJJRV84YzZDYnVRMHpxcHNVY0xVWXo2RlZESFljQUVxVjY3ZHVQTFVhSmh0UVhabjQ5WC1LYjdEQlVhdHRqT0xZT1UyVnBZREtTYmtxbDdhSFdaQmQ2MmtScTZ3VFI1bVBKZGY2dWFvX1pFSFZwdUFhYzVPYS1nOGszYi1xbkl6dzU3OC1HN1paLVVGR3MtTlZFTm1TUWZ2TjhFcUhrRFFwSC1adUo3X2U?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Freemont Management S.A. Sells 35,300 Shares of L3Harris Technologies Inc $LHX - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPN042ZHhuNkM4RTh6UFdUbjNmQXZxYmF4MGswbXgyOHFlZnZMaVFBR2VzUWRFajF4azV0M0lkdmFvdjJfOVhuWUt6S0dMdEg0UEtFTk1OdG1NXy12akJ5VHVuNWNxeTFhb1h3WjQ0a19PV0JPWW1kNkkteXl4bF9nMjI1blUzalg3YlhxRUVsZ2RLazdqMHRlWGl4VDc2RTh2V1dsQjZmNFd6dDNEcHg4ajcwQnBpQlRFNTlwWDRONC1yZWVibS1nNk52bDdQRHhu?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Why LHX stock remains top rated - July 2025 Patterns & Growth Oriented Trade Recommendations - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5wT0RraGwtWDFEMm1WWTBPUEJhUTBXR2x0bmtVZE5iTU9xSGgzSzZlWXp2YTI5Vkt4T2NYelkwZ2dUTWtjM0dGQ0RLWHdCWWJhWEhzNllnZDJXNWtSSEV4UWh3?oc=5",
+            "body": ""
+          },
+          {
+            "title": "This Defense Giant’s Upcoming IPO Could Be a Massive Windfall for Investors - Security Clearance Jobs",
+            "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxOZXJjSmRJNmdaS25WeTVpVjkxd0gxd253dThfQWZ0bXdfWDItQy05dlcyQkVTeFNGX1Y0aGFwOU1TdmdsSDVtYTlqd0NjZkxBX2dkWmNoNV9hTVljaUdOcWtQR3BsUXZUMFo1V29zQzc3N2ZuWW43UXA2RVJQZWhVU1YxVWRhYmNhVmxFTVpQd3hDdVdZYXEtUG5SUWI1ZmN1cUhsU3dENjB0MndzWDB4ZUZYXzYySmJk?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "STLD",
+      "status": "WAIT",
+      "price": 191.68,
+      "entry": 208.89,
+      "stop": 192.68,
+      "target": 249.42,
+      "shares": 6,
+      "vcp": {
+        "score": 55,
+        "atr": 8.105711800711495,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1836,
+        "vol_ratio": 1.28,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 0
+        }
+      },
+      "rs": 83,
+      "pf": 5.44,
+      "sector": "Basic Materials",
+      "analyst_target": 193.09909,
+      "analyst_upside": 0.7,
+      "analyst_count": 11,
+      "recommendation": "none",
+      "short_ratio": 2.81,
+      "short_pct": 0.0312,
+      "insider_pct": 0.06445,
+      "institution_pct": 0.85282,
+      "pe_forward": 12.247743,
+      "revenue_growth": 0.14,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Assessing Steel Dynamics (STLD) Valuation After Strong Multi‑Period Share Price Momentum - Yahoo! Finance Canada",
+            "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOWXc3YnZOUkNkTk9vMW1qdElrTHdiT2xLXzdlNGhhTXlqdWZjSkNyOFpQYUVzdndRZWV5d1NRYkVsU2lNMS1MRE9NeHk1WFJvaUJxTm8wMFZSRGNWRkVBMXJGZVdnbmROVXpja1Itb1ZNc3pON2FXZmN6M2J1eWdqM2NYbkdvckhVQU5uOWZHODgwUQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Illinois Municipal Retirement Fund Sells 13,665 Shares of Steel Dynamics, Inc. $STLD - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxQZDUtZlRTTHpRbU5IUE90X2JCV193WkdsX0NZTWNVSG9qU2wyMVZzWE1lWGpsQUMyc1JydER1a3N0elUzWmQwb2dsN3RSMGoxakVYN1U2UkZpS3gwZUpPYXJsRFY0dmczRFlnMWYzbmZpUHFKdG5MZUg4QmtWQ05tV2REdHdvMzdINldQdlA0SVVEUnBnTHpZZzZUbmlyU0RxMTVBRlFQSERVVGxvWDkzMFFlOXVjb0NfS19uUW81WlJTam5GWWhEbEN2QnR3TW5oQk9QVDBuRFA?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Why Steel Dynamics (STLD) Is Down 5.3% After Upbeat 2026 Earnings Revisions Amid Weak Q4 Results - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQTXU1VnUxNHVPd3dENHIxaTNZWlNKOF9fTGdVN00wc2tBUDg3R3pqZXhRc2x3SVJZbXE4ZTlWdXkyczdUVVpWanF1NHFiOTZaczZqS0IyanRNYzRMN09Uc3Z0SUZnY21TRnEtOFpkckwtbU02OEtIQlJxWDFuRGxlMkFaTkFyZ01oS0lLNGY4NE1vRkowVGRURG1GdUx6YWxaVEsxTUdGWHIwdlpjTGkyQTZmVHFIRGR5OXY5b2Frd3dtVVVPektCV3A5ZC1jaUU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Why Steel Dynamics (STLD) is a Top Momentum Stock for the Long-Term - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQWEJDYnlaVDNJMmd4anpJODVEQWZ3Rm9QdU1OU21reW9lZDNBTkFNN3VqazFlSVpyZzNDeG1Dd1AyeHN0Qk5TdE84MzBkdkVWVzB2VU1VS1ZpdlF1S0cwY2pDRS1aTWIwTUNCaFBsSXlzVFlzN3UxbDQyMWI2WHNGM0M4WXBkakktZXZDQg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "How STLD stock reacts to inflationary pressures - Layoff News & Daily Chart Pattern Signals - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPcWRNVzdLbHB5TGRLTkxXeHFxWm1GMmxUSlZ5aHM1cUliMmt0UFV6MzllSnJXSVRYUkVVMFgyN09hRU4tVlpiUFl0c0VtOVFsRnY1c1VnUFpyY1FNMTB1UGMwM2Q2R1AxS1c0X01FRURKT09KVDJzWHYtWENKRFJnZ193Yw?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "NUE",
+      "status": "WAIT",
+      "price": 183.23,
+      "entry": 197.29,
+      "stop": 184.21,
+      "target": 230.0,
+      "shares": 7,
+      "vcp": {
+        "score": 58,
+        "atr": 6.5414276123046875,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1586,
+        "vol_ratio": 1.48,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 76,
+      "pf": 2.18,
+      "sector": "Basic Materials",
+      "analyst_target": 186.07692,
+      "analyst_upside": 1.6,
+      "analyst_count": 13,
+      "recommendation": "buy",
+      "short_ratio": 2.71,
+      "short_pct": 0.028800001,
+      "insider_pct": 0.03182,
+      "institution_pct": 0.77922,
+      "pe_forward": 13.393692,
+      "revenue_growth": 0.086,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Nucor Valuation In Focus As Tariff Uncertainty Meets Buffett Interest - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQZVpMZXZERXVWT0lRQlVzV3pteDJ1RDRueERvNjlFTU4yX0hVc09haDNaQ0s3bTB5V011OUJKbWtOMDZCWUVPLVh1ZUVyUktZNzdYWU5ad2EyQllHSU1KU0lua2pERGotc1YzcUtPOGRxTDVNSDlnZFVjQU84YkFfVzZGYTN2RVdfLVptejV2blphWWQtaEptR2ZtZW1peDBBRjMzVnI2X0hFbFlJUnQtWlZEUUotSVZGRnU0Unh3MA?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Nucor EVP query sells $1.46 million in NUE stock - Investing.com",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNNjY0ZTk0bnc0Q0I5ZXk2T3AxbldBaHd5SmpIZUtmbmlhSDhaUEhYRFJ2Qm1xX1ZTZm9hS0pjdGIyWXJyYVhMcmYzb0xkVDRqeG1jQk9Ibkh6d0JyRUhGdEhkWHFCUWp3czRPRmhOaEFfaTRjVGs1bFNTNmJyVDBfaWlUMnlCNkw5VmNtQjJ0VFoyZ2VleUR6MTg1anZoV0hLZTFSUjc0c0NkT1djMk9NRg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insider Sale: Executive Vice President of $NUE Sells 7,452 Shares - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOeGFfQThzbHFwa2hNMnZzb09SSFhPQ1NoWlRnazlpNkFFZkUtcF9yT3BleHJZMUlkQ1hfYUhoTEdzSDgyNnVwNm5kMkVtVlFGRDN0bWc5RU1LdUREcEtYMjNoV21aZTZuVldBTWdKalhNcE9MY0xkaGFIR3RaYVB6X3FxTV9qT29aSzZiWTlWQ3B6UWdsNllqRTNwNVEwTW82ZVc3TFZCdw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Nucor (NUE) is a Top-Ranked Value Stock: Should You Buy? - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQZVJvd29GT2Q1Rmx5LUI4SXlMeHlqdDA5anJjZ3E5cURiSDJxQmdid0FpM3NGRHFaUUwxdVZoY1FrZjA4SHZGbmV0c21CeW1HbHFuaUhmLU5ST0VZd1dHOGowNkk5SkRkM1ltSFQ1RHl1R25HVHRtQmxnNTJ6dkVVTk5SU0lsZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is It Too Late To Consider Nucor (NUE) After Strong Multi Year Share Price Gains - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPVWtON1FXNEJfTUNzZGpfOGFOaHd2WTZ5QzFlNkZ4YWlMZGtYZ3ZLTUQtMVJVVHRtejJWR19TSEdOSm5CaEQyamZjMEFZXzhUQU11WVlXa2hncUxtY0ZCbmFIalEtQWYxc1pDYXNKa2I0bEFBRVBvZ2RWX0xzcHlvdA?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    }
+  ],
+  "qualified_full": [
+    {
+      "ticker": "PH",
+      "status": "ACTION",
+      "price": 1001.75,
+      "entry": 1014.51,
+      "stop": 967.43,
+      "target": 1132.22,
+      "shares": 2,
+      "vcp": {
+        "score": 70,
+        "atr": 23.54068289919917,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1015,
+        "vol_ratio": 1.21,
+        "breakdown": {
+          "tight": 35,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 79,
+      "pf": 7.74,
+      "sector": "Industrials",
+      "analyst_target": 1017.8261,
+      "analyst_upside": 1.6,
+      "analyst_count": 23,
+      "recommendation": "buy",
+      "short_ratio": 2.09,
+      "short_pct": 0.0107,
+      "insider_pct": 0.0016300001,
+      "institution_pct": 0.89735,
+      "pe_forward": 29.46965,
+      "revenue_growth": 0.091,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Prospera Financial Services Inc Sells 1,966 Shares of Parker-Hannifin Corporation $PH - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPTDhTcGtIYWFQTnR3REo0R1VZdS1vaXh2TFhOZWNrU3RTVHlvNUJ6a19XX3V6VmZ0QnN0SXlzNXJJRG94VGZuZmpub3h4N0FOa1RuZGVIS0RidHVkaVVWZ3BFQUg1cl9QMkJSak9qQ1R5UlEyLUhaM25IaF9NZGs0Z3RmZ3hrQWlVYUZDZTJ4R3RkR295TmZfR0tpMjNiQ1dzSDNVNDM2aE5TT1lCblZZUFcwXy13UGg3R1B3ajRQa0M3U0Z6ZVc2YnB4U1BlX0dWMVlJVEtsWTVzd3pU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Parker Hannifin Insiders Quietly Unload Millions in Stock in High-Profile Moves - TipRanks",
+            "url": "https://news.google.com/rss/articles/CBMi8AFBVV95cUxQVmtidERKaEJOOUhaZDZETnZfMmFnSDUycHdBVHJuX1BMczhBMlZ2MkRsX2lTVmlPajdxSGNPNlV0R2JUaVdjWjNjOWE1NF9LWi05Z2ZMUW5sZnpPQUpNTGlJSGl6bFc2aGh0RDF3NGw5R0ZzR1M0UkRDT2ZlRUtucUU0ZlM2TkFvMkFWYTBucktTNER1QlZSemJiRENiOUVBX0xneHhBOXlQWFpicEdFYVcxekpmdGpnQ0ZnVXJfV3lDT0tYaVBHT01scVNGd0lqcnE5Qmk2WUJoVXFZZUt0MTBQODExbUpCUkVjSHhRS3Q?oc=5",
+            "body": ""
+          },
+          {
+            "title": "What Does Parker-Hannifin Corporation's (NYSE:PH) Share Price Indicate? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeW15dF84TkplLTNhV1A3LWhwTi0wWHpKRndsSWZWVDd5UGtqYy1qc1VHWTRQdTRvRHdqVWJvTC14ZUdZR0ZTR0dvTDJjNTAtQlowTl9ESFIzUEw4cHJuN1RqVlNhOV9wbkdtUW1SbDZnLTB4RW1hbG15elZrVkZKaEJWRUlFMTRlekg3Zg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Parker Hannifin Corporation to Present at Citi’s 2026 Global Industrial Tech and Mobility Conference - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPTDJzRFJpcVhDQVQzRVdoODQ3cURtVlByTXNMTkx0ZTIyMU1zMFRRcUlCTzd4R1haRVdyUzRJdE1mQ2NaOE1tVG82Y3I0V3BZTjJUTkZ2NG9Tellmck1meTFXM0tBVHM1c1pNblpRTzRkMHVUQnBnNlNzTkZMTXUtLVR0MW1NNjlfLXRENksyN1RHWVJqWGtySDNqTk5kRU8xMUxtWnRReEQ5bENPdlVJdzIxc3hIMnQwVXJpcXBOUkJqZm5EdjBSOTU3bm1pbGw0c3ItV3hLbGU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "The Zacks Analyst Blog Highlights Parker-Hannifin, Goldman Sachs, GE Aerospace, C.H. Robinson Worldwide and Carpenter Technology - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMirgJBVV95cUxPUUNDZlpELUd1MTEzNk5rTDNoWjUxZGhUTWh0dGhNZ2UxYUlhNWQ0UEdIcVRpZXpreThwX2FFUG5QRFRkdlhiLWEtSVJoQkdHa000SHYwTkV5WHozNHFTTmFIdVFjaTFCQjJ6UlpMXzMwMzZxd3ZpaGdreEM2UTA2bGpGU0RXUkpqTkNJdUpNTGdwTEx3SERFYlBTeW1FUDllRmN3d0hkWEFtXzFfMmhwSVdCbFA0YXRqRlhqMXFtMmVJV21ERWc4WURtUThEZGhsUkNjaEtGcGR6WFAzVURMZk9jaE9nOEZhN1RJTHQzU0J0djRvUzFVV0prQXhfdVppNHp1UkJIbXpNZGhOSTVfa3B6ejNTZ1FfcTc2N0JWSjVKVUxVZmpibDJtRzRQQQ?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "XLE",
+      "status": "ACTION",
+      "price": 54.35,
+      "entry": 55.35,
+      "stop": 53.05,
+      "target": 61.11,
+      "shares": 42,
+      "vcp": {
+        "score": 60,
+        "atr": 1.1521429334368025,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1403,
+        "vol_ratio": 1.76,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 72,
+      "pf": 7.5,
+      "sector": "Unknown",
+      "analyst_target": null,
+      "analyst_upside": null,
+      "analyst_count": null,
+      "recommendation": "",
+      "short_ratio": null,
+      "short_pct": null,
+      "insider_pct": null,
+      "institution_pct": null,
+      "pe_forward": null,
+      "revenue_growth": null,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "This Sector Is Unexpectedly Crushing the Rest of the Market This Year - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPUktXdFZITmJGOVhUUTNxYVVxUThFWHRybUlSTldZOEgyN19NT1VTUHVyNy00UnVPYUJ0YlRpVTNuaE93bjZsTVVfVmwtWWtFb24tWkZPNjNxTV93eDRpQk9rTUt4cVF3YW90Y1NrTC1WU25SUmpwN0RnT0lYa3JwRzdyUTBlVWF4YUE0MmxlRkFENHdYaFE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Goldman sees further upside in energy rally, flags 10 buy-rated stocks (XLE:NYSEARCA) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQUUk0X3FyOXRjajVrekxqRXpvbDQ3T2dWbEs0YVB2cGdxdVBrWFJKYVl3ZEJwbkFWNzlaSkZaYTZfckVMTU1xUUlfUEwyV19YX2RmUFI5alBLYnRYOUttd3ExMmFOT3JlMFVjcHdmeVRGZkNUWENaZUxab2RCelotREtCckxLbkl0SmU5Y3ZGNDJiXzAtZ3JXQTlMZGc0alE4ZU1JbVJCRHRwdXM?oc=5",
+            "body": ""
+          },
+          {
+            "title": "This Sector Is Unexpectedly Crushing the Rest of the Market This Year - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxPS0g1aGliYkpRcF9FZEtfUXkxcURyY3BjY1RBVzVqOENTbm5qbUdVMjBCaVNYVHJhdVBfdHBxcVZuRXNFeTVwejF1LVpVeEVjVGVtYjJ6UzhLSWpkNG5iY2JzZTF6MF91bFVnbFdJVHpycTJUN295UVQ4bHhQcjJZM091WG5Vc3dEMGJVRUctaFpianR2YVJTRGhKb1BxSHprUlQybk5DUmI4V2ppcVp3M0R3aGlPNi0zU3NuQWRiM21XWkhFSnBmV2hPVFlaX0drdkJaUW9yTFlLS3plZ0dCZ2lhVmQ5d0tn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Energy stocks face a holiday-week test as OPEC+ eyes April output hikes, Venezuela curbs ease - TechStock²",
+            "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQMVZUWER3SzN5Z1lPcFptOXVab0p1SVJzRU5HNTV5NWJJODk1T0NoNGVYR1p4djZqeF9hQkpKMkQ2NFlnbVVvakpaRFRDYXZ2NXR3VERpNy1rNGZZN21UbTlqNWx4Y2UyNnlqRHp5QVhXeGxXUWRHZVNfeFZqQWMySTJLamIzQW9nNzQwa2djTl9XbFI3X19NeDN3U2tZT3lRa1UtNDZPMjFlUVJlc0NRNWNR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Solaris Energy most shorted energy stock in January, Cheniere Energy sees least interest - MSN",
+            "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNd0xZXzNtWms5V2hNMGtYVUF4aGpQSUdRWHlaY3VHOGFEY1hObmU0WUlsRlcwZ0N4Zk1MZG13aURDM20xcVZJUjd6WlpaaTlsUGIzVlUxU0N3SDVSWTNLRzRuRV93T3JsOW0xWFJjek5ZVEFiYkgwdGxiVXpwcENpX0UxNXFsLWVKWjhrRW42c3NmZWZMUUNNR2xPaS1ZZDNyUWhZSDZOM0s0RjN1NjUzZUp5ZjJpbWFXYU5WUkdPSEFPWkoxTGQ2dUVfdTVPemdod3pVWl9B?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "ROST",
+      "status": "ACTION",
+      "price": 196.54,
+      "entry": 197.63,
+      "stop": 190.51,
+      "target": 215.45,
+      "shares": 13,
+      "vcp": {
+        "score": 90,
+        "atr": 3.5621425083705356,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Volume Dry-up Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": true,
+        "range_pct": 0.0636,
+        "vol_ratio": 0.75,
+        "breakdown": {
+          "tight": 40,
+          "vol": 15,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 78,
+      "pf": 2.5,
+      "sector": "Consumer Cyclical",
+      "analyst_target": 199.8125,
+      "analyst_upside": 1.7,
+      "analyst_count": 16,
+      "recommendation": "buy",
+      "short_ratio": 3.29,
+      "short_pct": 0.0239,
+      "insider_pct": 0.02224,
+      "institution_pct": 0.93195,
+      "pe_forward": 27.4752,
+      "revenue_growth": 0.104,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Does Ross Stores’ Off-Price Expansion and Same-Store Sales Momentum Reframe Its Growth Story for ROST? - Yahoo Finance Singapore",
+            "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNU201bGhJTTYtWmhWRWFyM0hrSl8wUUt3OWM4WTVzZVpIMmlXUFcyTUlOMkpUTUhCc2tKR2dqOWRkbUFvNzdQcWRNWnZkQ0FYR0NlbXRydXJvV1BWcXdabnFZOXpPalphLUtrLUZCZXQzNE9HV0RHTzFGR0kxLV94Mw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is It Too Late To Consider Ross Stores (ROST) After Strong Multi Year Share Gains? - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOQnBhLUg3dUttdGNOR1ZycVVmYXgzbmNSTTJoNnE5VnBNNUx5bTQ4Y2dPX2hUMHN6Zm5nLXBDRTBJUlpkWFljVVpjc1NOcGJ1aTYyakZFdVhjbnZBSzlaRGhEcTRwbjFuSmpqV1lVcFdhZFpVa1RVX1F5aFdwWW9JQ05HclZ0c20wLUFlRkhDd21yMW5INmc0alBub19YWllQT2pUcHRSa0VmSE1aSk5QODlhRTFNSml0cDM0TnJGOERDM21wX0ZRb3VDNmo?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Ross Stores (ROST) Is Considered a Good Investment by Brokers: Is That True? - Finviz",
+            "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOdS1ESTdaUE5INXNHUmoxcnN0Ry1tcWJBYVRQWV9HTnZmZG9jWGI1enVIUHdMM2VsSzBYaFMyS3dTc0t6a1ZjM3VnMWZmeFJFUURpOGpjdWtJN3JWblVCVnR2emc5TkhQNW1EWEpwdWxjNGpObEF6MlJ5dDVSQ204cmJtcXNRN3R0WjNJdXE0VnZDd0pkMjlwSWVHbzFUTWdnd2h2SXhB?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Cibc World Market Inc. Raises Stock Position in Ross Stores, Inc. $ROST - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxOQ0gzdzhjSk44UmVqU1RBaDlvQkhXOVpjNjJFWTFDQkJFUFVsVUdMTkc2aE1RQnV6X29INk5qTUlhV1ZnajRSUVoyQ21NVW51cXhKeXFMdmljZlJScV9nUXNNcHBXZV9Uc0dBM2l4S2hCLTRoQXVMSW1tQndXMXpHWFRfRnNETm9KemIwZmdQOHU1dFpLd09ESzltYkEtel9KM21UUDNhYmxvUnZwOENtZkduN09kcW9nNEdRWWtXcmw2Ul9yNjJB?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is Costco Stock a Buy Now or Still Too Expensive to Touch? - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPVjZnX1N0NW5Oc040aUN0UGNjeVFNbWRsQk9EeExtelpqQ3BqTXNpc0lQcEVOeEJZSWQtNklpb0VXNU5PQVQ2TldNRmo3VnhtR3V5TW50RThoQWlCN1FTSWgxbVFpMkxjTUNuSFJoVFNFMFNxOURuSnBGbV9SSm44dzJBeV9kT0t5TkhwYS16N0JCS1FRQV9BQWN1dFJYV1dmWS1qQnNpaFNFUGlzSUtUWk9RQlBfa3NwaWlaWE1Qa29sQWdsR2RpYmlQZDNQYnhiek1aTm1n?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "RTX",
+      "status": "ACTION",
+      "price": 200.06,
+      "entry": 206.89,
+      "stop": 195.94,
+      "target": 234.27,
+      "shares": 8,
+      "vcp": {
+        "score": 70,
+        "atr": 5.475713457380023,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0649,
+        "vol_ratio": 1.37,
+        "breakdown": {
+          "tight": 35,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 81,
+      "pf": 3.82,
+      "sector": "Industrials",
+      "analyst_target": 215.01952,
+      "analyst_upside": 7.5,
+      "analyst_count": 21,
+      "recommendation": "buy",
+      "short_ratio": 1.79,
+      "short_pct": 0.0078,
+      "insider_pct": 0.00090000004,
+      "institution_pct": 0.80825996,
+      "pe_forward": 26.638794,
+      "revenue_growth": 0.121,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Public Sector Pension Investment Board Has $19.49 Million Holdings in RTX Corporation $RTX - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxPWE1CSE1oSWFqalZXaHlIekN5Z0FXOUN6dDc2WjFEX0JCaFcwQW9BY21odXhOeTlVWnlqcmtVMTNoS24xUGwtVG4tekI2NGZ5dExwalRrWUxublVqYVB1VjlvWW9xbkYtYW5oTzVnOVN3cXZaV2VjeFpzSm43UHZ5MXhwN3NUSGxTenZyWmZnc1RZc0tGQWY4NVhfdm1kc2ZFUEJzSWhidnl4ZU9zdHBJS3JsS2k1aVpjeUVZNXJBMzJDNzJyYjh6RjVKM0pYc0g4M1N6TjJERXVqLWh2OXo1MVZ3?oc=5",
+            "body": ""
+          },
+          {
+            "title": "How RTX Stock Gained 60% - Trefis",
+            "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxOckh6NVFBMGhXOGdILUNwdnBPM3I3Mk1MblR1bXcyMmpTbi1CVVJ6SllRd0lOVVh2bDllbERMZWdoVnJVbnA2TVZ6YUhBdmhkekc0enlkYTJadENLM0hiSk54YnpaQXJtY244aG0teDRGWnBETVhqWk5wNVBDQXJTQURZSXpRcEVISmItXw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Top RTX Executives Quietly Cash In With Major Insider Stock Moves - TipRanks",
+            "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPeVl6OGRJQ0pVS0k4YWd3dXlRMzRCcnp1NVpEOXpOMjFtV05LelNuMU45ZEI4UzB6bU5SQm14LURqbmluTkxiSTZSTnpOMTJZaUc0eGgwZFdmRjJ1LVptN2drdEZ2THYzVGRBYzZFOVhQR2NUTFNnYmpTNC1pVlVIaW5SbndULXNISG41cmg0czU1dDctTDVpbHVtT3p6RWRlc202MkZFTllTNnRGN2hYYXhfV3A0cmVFSlpSeUxfN0Y4RVNhRUE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Improved Revenue and Earnings Growth Powered RTX Corporation’s (RTX) Performance - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQVVQtYS1OM1FSNEEwY3FBQWlNZnkwamczZEtsWXEyQ3lIZFFxS0Z0djB1anFsUFk4OXhzYmM0V25WMFFhZFJzVkpUZS1HUElfTm1XZmNVU1Q1b0pYekx5eF9NMDdqa2t5b3BQcF9OYUg5b2dEOWNGNUp2c0pQTkJUR2JsUUwyX3lLNzMxSEx4cw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "RTX Corp Executives Sell Shares Worth Over $5 Million - TradingView",
+            "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNQzN4cWh1d0otLVdHUUlsdF9pV0s4ZGFPcUZMY2t6M3EwTjBjOUtQREpiempNNkxFT29DcDZtVllaaDlWaTkzOXA0TUdBci1UXzRDR283Y0ZIMjZmbkVITzE0aTVubGdVa1FqRVZ1Zy14TDFSYk5rTjBrazZTWWJ1Mk5hSHYyVkF5eVhpVHBVTVF3aWNqemdUaGZCeWU1aElFR1IyWmFzaldSYk1oZUQtd19lRFU?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "WMT",
+      "status": "ACTION",
+      "price": 133.89,
+      "entry": 134.92,
+      "stop": 128.3,
+      "target": 151.46,
+      "shares": 14,
+      "vcp": {
+        "score": 55,
+        "atr": 3.3085714067731584,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1424,
+        "vol_ratio": 1.9,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 77,
+      "pf": 5.0,
+      "sector": "Consumer Defensive",
+      "analyst_target": 128.775,
+      "analyst_upside": -3.8,
+      "analyst_count": 40,
+      "recommendation": "strong_buy",
+      "short_ratio": 2.26,
+      "short_pct": 0.012,
+      "insider_pct": 0.45119998,
+      "institution_pct": 0.38532,
+      "pe_forward": 45.201496,
+      "revenue_growth": 0.058,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Why Walmart Stock Is Rising—And Rob Walton Breaks Into Top 10 Richest - Forbes",
+            "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQZVNFRXZVZ3NLQUxrdUw3Wm8zR2NVeFdwc1hXS1FoWE5Qb2JaR0c0RjI3TFdjNGhSd2tETUJtY3lkSUFtUzBUdkx5X1BUU3puMnliUlF6bTRYajRkWDMtaV9uUXA1bXplczMwd3pLbDlpRVBadXdiRW9qaXRIZFNjYnJTbUpZMUh0T0gxWjFMbndZMkdoU1FBb0h1VVd6R09paGlYb19oQno1cFo4QXk1QldPMGdNMUR2Yk1sNm9MS0JpT19TczFQQjludw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Walmart: Defensive Compounder With Omnichannel Margin Upside - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNTGtWQ0tabGFlRDZjaUdXZWFoZldaellSZlNSTWE5a05fMktSNTJ6NnRjVG9tWUhvY0hNN3BaVTI4MFlOQ0JzYWlNc1pUdHNjd2YzS1J6Rlh3SHMybUowbUJhQWt4WV9iLTczVUVxaGZlZC04NzhwQi1za0RTYjJlR2ZYYnY1YVl3NmdzbkJyU0JXcVhVSGZ2Nlg1bGxUMkdwUHc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Walmart Stock, Parade Of Gold Leaders Headline Another Busy Earnings Calendar - Investor's Business Daily",
+            "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPWTBWNENBTnRBU0ctUWRxQVRSRHFCa3hfTWlwVjA5N1ROV0t0SFdzb0hZQ0pET2dmdDNQdUVwVVdwdVcyRzE4S2plV0FIYzY2UGlYT01VZUxGNWVTcVg0SFk5NktxTDBIc2EyNUN0Z0lYaU5MM2tjZzdjS241NEIyNHJLbFBidENBVy1QbmR0bTlxT3lzVVVieGcwbmJiMWw4Tjh2MC1BRjFjaWN1R2F5RElGOHVKRm1xeVh4em1YTVc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Should You Buy Walmart Stock Before Feb. 19? - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPX3FMYmNlWmFZSVZ1VjFtdnZqNnpqZjFldGZHTkZNMFhsd0pzT0Y5S0h6dFJZSGFyNm9mbjFyaENTNXFtSm5ocHN4ZXZJcDktT195N0F0TDVsdkZId3BMYlZQRG8yVDRybDdIQ3RneHY4Q1l6RHA5S19fR2g0eWZMWk52Y2s3V2ZvZ2NzTnln?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Walmart (WMT) Is a Great American Company, Says Jim Cramer - Insider Monkey",
+            "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPaV9FSUdwTVYwS2ZXSmxGclpGb21vYVBIOExSNHgxejMydTloWmJIQV94bDc3UG51MFN0M2VEalJ3c0d4bWFLT1hQeWNVZkU2SkJ1ZFJfZEJqaEdaNHRsOGRiVmY0Yzl3cks4ajBReFJqSGVhVklyWVp6NEZXdURtRk5iZGtoTV9Kbld4T3ZJWW1xaEw5UlFOUGsxXzB4N1ljTW9GYWVocTPSAagBQVVfeXFMT2lfRUlHcE1WMEtmV0psRnJaRm9tb2FQSDhMUjR4MXozMnU5aFpiSEFfeGw3N1BudTBTdDNlRGpSd3NHeG1hS09YUHljVWZFNkpCdWRSX2RCamhHWjR0bDhkYlZmNGM5d3JLOGowUXhSakhlYVZJcllaejRGV3VEbUZOYmRraE1fSm5XeE92SVltcWhMOVJRTlBrMV8weDdZY01vRmFlaHEz?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "MAR",
+      "status": "ACTION",
+      "price": 353.89,
+      "entry": 370.74,
+      "stop": 350.59,
+      "target": 421.12,
+      "shares": 4,
+      "vcp": {
+        "score": 58,
+        "atr": 10.076424734933036,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1579,
+        "vol_ratio": 1.04,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 71,
+      "pf": 5.0,
+      "sector": "Consumer Cyclical",
+      "analyst_target": 351.28,
+      "analyst_upside": -0.7,
+      "analyst_count": 25,
+      "recommendation": "buy",
+      "short_ratio": 5.03,
+      "short_pct": 0.0343,
+      "insider_pct": 0.18129998,
+      "institution_pct": 0.66132003,
+      "pe_forward": 27.245028,
+      "revenue_growth": 0.042,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Marriott to pay shareholders $0.67 a share on Mar. 31, 2026 - Stock Titan",
+            "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPRjBfX3I4Yk9zV1MxMWd5X1FiNEVsNG03WkdzZjNRUHZWcUhQSjFLVTcyZGs2bmM2akdzMkdkdEhuTFM3SmpwbXN4LV96U0ZOVWVSaUZucTBlenRNYUZoSENoUVByQlRfMFloQWFNR3VhZ3BfZHFRczEyR09iUnRHSy1rZFlnXzlqQ1N6bXpGLVQwMVBqWW41bE1QdHp2Z3ptMnc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "These Industry Leaders Stand Out After Q4 Earnings: MAR, MCD, TMUS - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNV1hqS25JUXo4WGFYZmNwR05sSERDZHQzU0xjOWFUSmo5Mjh2QlVKdTY2dFhMdnJJSXdNTFlsdTdiWEhpZ2ZLX21ZeHF3YXNNd1d5aDR5UXFjdURKRTJBVEE3bGoxZV9YMmN5aU83azVkczFnSWdxTGVidlRIWDVid1NYWVJyczBCYjQwb2ViMGF6T2lkTmI1ZUt4QQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Marriott International Has Already Overstayed In The Buy Zone (NASDAQ:MAR) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNNGZLUzFoZHBDc1JFS3REU2h0LXdrSVBZcTlCeHkwNzc2NnpBcThhQWZvRXo4YWh5RV9lRnBfekx4b2JBUmFSSXdua0tOSkZZbC1MODVXLW9jUTNTRTdmYzhxZmpyT01WN0RXQkkzb2dxdlNjd1Zfam5OSDJCN0ZKdGd1Sk51dmFudVZBQ1hnRm1nNFVaMGhObkNTck9CX1RDUjV2ZA?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Marriott (MAR) Upgraded to Buy: Here's Why - Yahoo Finance Singapore",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQc0JSNWhxUHROemhacE1fRXBkczhhNWNBbkllX0ZDMkVVZ3RBVGZfLVdRb1RtSGFxZHZHaW9GSmk0S3h5UndSMVBmMGRlSGpVeUF6ZHhHZm1nN0xTTHFVa1hGdVpLTkQ4WldkS2ZHM1lJQ1pwcDBnVXJqVF9BY3pFcGx1NjZPRmc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Marriott International, Inc. (NASDAQ:MAR) Plans $0.67 Quarterly Dividend - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNS1Zaa2ItSGtQeXdDZXI5WHY1LWtWNXZyTTB1T0dqbG9VX2dMT3FWd2I1OWlHWmk5d2JXMHh3LVA2Y29ROV9VM2NQODJrQkF0WDRIandyTzBrYkFQdDlLWjBDWDJWN3plRW80SkpxQW5nWmJfMk8zUlc2ZTdpcHVzX29ZUG1RUU4yZENfajNlczZxVTYxYndDQmhpaGtTY1BVaEJSOUZ0MV9HMURWUGZudmNDNjJESnFwS3dv?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "SMH",
+      "status": "ACTION",
+      "price": 407.72,
+      "entry": 421.44,
+      "stop": 391.85,
+      "target": 495.42,
+      "shares": 3,
+      "vcp": {
+        "score": 70,
+        "atr": 14.795713152204241,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1102,
+        "vol_ratio": 1.05,
+        "breakdown": {
+          "tight": 35,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 83,
+      "pf": 2.5,
+      "sector": "Unknown",
+      "analyst_target": null,
+      "analyst_upside": null,
+      "analyst_count": null,
+      "recommendation": "",
+      "short_ratio": null,
+      "short_pct": null,
+      "insider_pct": null,
+      "institution_pct": null,
+      "pe_forward": null,
+      "revenue_growth": null,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Small And Mid-Cap Semiconductor Stocks With Elevated P/S Ratios And Negative Ratings (RGTI:NASDAQ) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQbEpSWUkwaXl5cWhIRFpCVDE5dVladGlrRzdJbVBDUTlZS2toODQ4dWRJRW52ZzZnLTBzSVlIcGRuS3JiS2dkcmhZekNjdE13U183c3IyUWdfVFJqSjJQczh2SlVFSlNGSjRMSHh1Ql8tWDJ0VnpjWnJMckcyY21Ga3Uxc2cwcXNmVFpzSldqdjF2S0tRcVJGX1VGaFpySHhFaUk3M0E1TEduejMzRUk5TGxscDdDYUxaVlprakJR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Bullish chip stocks: A focus on small and mid caps ranked by price-to-sales multiple (NVTS:NASDAQ) - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQbHdvTVNmbHQtc0VkLW5aWHp6Ykd2WWdFSEVRb1lPSTZhMVZZQlN5Y1gxcGhCem9oWXFTbnZTdHNLZVE5OUpKRUEwNk1WbWx5QU43U3V1TXRnRlBBVDZrX2lZTHdEdkpJVkZtNWxpbmd2NEhVVzl0bWphdUJEaTBXNzhJeDRNc1lHMmRYbzhPMnJkMXB0cHgwX0tibGtqSTh4eDBndTcwWHlhalBURFlfOGZQdkVpdGk2aWhuZExn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "1 Tech ETF to Buy Hand Over Fist and 1 to Avoid - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxObDNWQ0pDNnlXVjZyNl95eE9nNWtfUGhrQTZoN0RQTGNNcmJKaDJHRGVldVpwZ05ZZkMwLUlrbElZdUtqcDRoTU01LXdjdDBXd3hFVmh1UTV0RTY4MjZBTWNtOXFLWjM2ZkFmV0JaSTRlU21BOEtSV1FhSTd6Yjd3WmdTMzBvZHBSajk2bl9yTkRycmgtRVlSQjZTNUZZakVUNWFtUjRjRUpwMURYQnFtNTBuTDJVcXF3YU1qLUNoU1J5M3daR0NtNVBjcFc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Clubhouse legends: Why a share in this golf club recently sold for $74,000 - SMH.com.au",
+            "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQMTdSMnp4YlBjamx3WmtNb09fOXphVlhmS3NuNWQza1FWajQ1NXJLRW1qaWY4cjNNMjFvTGc0dk9NdmxhbFluSGpNMklfODA3WnZOWjFBdHJYZ0VhS3dWU3NDLVNMWWdZOGQ1U0o4c2ZtNVNPNS1wSFhCMWQyNEQ0TnRXN1I5dDhqVDFteHNLenFhNkVHSXltSVdvVmJ5WnpPQ28zdG9aaW5xVXhSaHFEa1A1TEtZMl82WHNrdmJhM3dydEs0aGc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "The world knows how they died. Their families share how they lived - SMH.com.au",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQVkdxT3NLazBkbUNwLU9TZmlDODlsM3BFTm1xdkhfcVdONWR1NXVYbEtFcTFsNUZiLTd5cGtjTFp2TncxUm5uNTJnTXk0blk3bm45Qm9NTVJrUVVNcWZxRWpvdDhmbEk3RVliLTJkbUhTcXhHblVIdXdXZDJwX3J1YUdXclZYeXdTQkdVV1Y1dTdBdlY4R2l3cnN1Q0lCYVU0eklfUS1KUm5WMjhZMTdQR3phcnc2NEotUHJtMnRGRQ?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "TEL",
+      "status": "ACTION",
+      "price": 236.19,
+      "entry": 243.48,
+      "stop": 226.77,
+      "target": 285.24,
+      "shares": 5,
+      "vcp": {
+        "score": 63,
+        "atr": 8.352142333984375,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1488,
+        "vol_ratio": 1.21,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 75,
+      "pf": 3.75,
+      "sector": "Technology",
+      "analyst_target": 275.3684,
+      "analyst_upside": 16.6,
+      "analyst_count": 19,
+      "recommendation": "buy",
+      "short_ratio": 2.89,
+      "short_pct": 0.0225,
+      "insider_pct": 0.00121,
+      "institution_pct": 0.92584,
+      "pe_forward": 19.089579,
+      "revenue_growth": 0.217,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Palo Alto Networks becomes TASE most valued company - The Jerusalem Post",
+            "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQcmZuY2gwdXk3ZUpqLXd3eWRCLWEyOGF5Tkphc2JCaDZ4LTEyLXlyM0xHSG9YaGpqNE81V1QtSnduTW1LVzhWOFFLbXRZb1lYY1pIanlnQmVTY3RzNkVUYVd0V2wxanE4MkE0Qmdpc1Zwb0w1LVAtTF9KOVNmWXFVazkzUmFNdw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "TE Connectivity Stock Outlook: Is Wall Street Bullish or Bearish? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNYWlILUNnb3g0X1pxZzQwWHZRZ1RRTXVCaUUxTlJRdHBDbTFrLWZwS1JKOVc2SU1KSHM2eVFJZlhoTEFMc0JQZ3RuZTJ6MDhoM3JpQllSWTFNVm52ajRSdXo2U1Zwc3NQazFGOWdTRW01MzZELWpXSHZJSnJ3RTQ4c3FCSDBvVUU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Palo Alto plans dual listing in Tel Aviv after closing $25 billion CyberArk deal - Reuters",
+            "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQemlQaUltc1JUYk1zT25WTDZ1YWZIQ08wbWdIZUx3QnNCb010dTZRZUVaM0MzbmYtQjI0WE4ybzZQTTF1eGxwN3JqeUhWTlVaeWdtcHRYTmhwTVVOYmo2RlRIcHBWdVVsRnpERUVETEpaRzk3RzZKUWZ5QVdhVlY5Y00zQ2M5dl9JWE9yZUxnRjZUWlZlWlRwUG85bVp5ald3RHBPd1JLN0h6bWVJcUhZZk5LcjI3RWRmaE9jRWdB?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Palo Alto Networks to dual list on Tel Aviv Stock Exchange - Investing.com",
+            "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxOT2lpdVRUNFJBbEhlMkFUSldoOE80QUNnemhYc2U0UUtKTUs5YjY4RW9LRW9jSDlNN2FSdTNhVERkVVAyMHJDNm9ZS2t2TGNQdm92VjJpQ0lDNlFZMFRYdGlnZG5kRWtnOHUtUDRVVXZlUDZDUDYyY3JKTTJYd1VuY0s4Y3pfdVRhWmJQVEZTRUZ3UFJaRGFnQUxvVmk0TExnRFV2ZmhlU1I1TGF5bm9JaW9DdS1NR2VsMFRjNg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "TE Connectivity (TEL) Is Up 8.0% After AI-Linked Revenue Surge And $750 Million Debt Issue - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPN09iNjhwOFhJaXhGREg3UFgwaUtHSVRKX3BmLTlsMVdLT0ljbGNhaVhKZzB4S1NfUjFDYnpDd2x5NU9Ed3Y2YUJDVy1IRXl2UmdGVlVrSC1uOTM0VEZrY3dRWmhLMTZmNVlDa0tCYVVFUDJzWFpJdkhkb2ZSR0Q5M2djd1FHQ3BGR3RmSkNueEUwbWlmUHE2SU10R2Z3U0dYWEFNUXpQTEN5SndYUEVmVW5keW9iMGZ0WUt1czUtOW1vUkhEQ3c?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "ADI",
+      "status": "ACTION",
+      "price": 337.1,
+      "entry": 344.65,
+      "stop": 323.3,
+      "target": 398.01,
+      "shares": 4,
+      "vcp": {
+        "score": 60,
+        "atr": 10.672145298549108,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1458,
+        "vol_ratio": 0.93,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 87,
+      "pf": 2.5,
+      "sector": "Technology",
+      "analyst_target": 317.6875,
+      "analyst_upside": -5.8,
+      "analyst_count": 32,
+      "recommendation": "buy",
+      "short_ratio": 2.52,
+      "short_pct": 0.0199,
+      "insider_pct": 0.00239,
+      "institution_pct": 0.9346,
+      "pe_forward": 29.330336,
+      "revenue_growth": 0.259,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Analog Devices stock closes near a 52-week high after Barclays upgrade, with earnings next week - TechStock²",
+            "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNQTR2cWJkRmdMWkk3TThSUVdUTDB3MzhNM0RWcTd0azFlYnpzZGNOeG5TakJYVm81ZmZ5TlRrTGVOaXVnQWlPSEJpeGZYUkF3Y0xjU2tQSDduMmFhcVVQSHZvdUJnaDRieTZfNHM4OXU0ajFvdDk5MXFlbE9fTkNnM2w0c3FzS2xFR1FHb1BDMTUtWmVNMXp5V2FvMno5djBncWl1YUNhQm1JRlJIZDJLVF9ZVlFfZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Analog Devices, Inc. $ADI Shares Sold by Alps Advisors Inc. - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQQ1dCX3pzdTFkNVltUjlCSnFpd3FpX1FOdUhBYjg1SDZqcDR0VWJlclNVU1o2TFNNdXpnS3FCbWo4TGZDX1BnX0lrYjM4WG1pMGM0aE5POWVDVDh3VWJuWUpjVmt0V01VSDloNEtjcWN0ZFlFcDdtcmVDc3gwTWl1TDc2ZlRhY3pGTzRUbC1mbjJwbmprNW1SMThKRThnb0FmQ2gxakMwVHVueUNPQmtLaTBTNFZnLXc?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is It Worth Investing in Analog Devices (ADI) Based on Wall Street's Bullish Views? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNRnpfTzJjZlU4cHJOekRxV3prWUxuRFZDYWtjVVkwbXJVWldzOGhIUksxcnc2X2M2RWpWeUtTY0EzSDZVWEU3VHFpSDVyWHBCQllQYzN0eEp0dkVUNW10V3FsbjNBblpuWUJ1eGxDcjktbXZMV3Y5blR1VDI4Z2hBWVJRYWViUU0?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Barclays upgrades Analog Devices stock to Overweight on industrial exposure - Investing.com",
+            "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPU1VwR2ZkMjJWbzJua05JYTdCMlB5RlhPWGg2OWdOTTNLWFdPdm9ySHBzQ1BZb0l4Vi1lVVVMS2licGNFbV85cWhFbXFpaHAwcU9MM2RwQ2pCX3QydDEybzg1anZsNWl5Y3BmT01tU2Rhem1ONEZGUmREQjdSblNPdGUtZEJaTHpoNEJwR2VsbjhMWmo1TWd2aHlEQmdka1FRc3hadXRXd01CY2R3RXdDdlNRTGNmZ2hmSHdPYk1wNDh3Wm8zcXN3NjNVSkVLR0dR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Barclays Upgrades Analog Devices (ADI) with Increased Price Targ - GuruFocus",
+            "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOSGtJQXM1TU1jWG9iYjdOUUxzWFZuXzkwUzRyY1BuMnhadW85NnIwUzZiV1ptMjU0SzE1a3FoaXlLUlFQRkx5UWtuWkhfU0Q3QjNUd0dodndJQzRndmxGS0J0UGc1eldFR2IxLXlFQlJUVnhWd1pXdDJ2ZGxwVVdPanhmTHZHTUZhOUVocEtwUUlkVWtKeFBHb1hHNVVybGxkekd6Z1lTd3lmLWVDWVpJN0pXNV9RdUVudGc?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "CMI",
+      "status": "ACTION",
+      "price": 601.01,
+      "entry": 619.22,
+      "stop": 569.06,
+      "target": 744.6,
+      "shares": 1,
+      "vcp": {
+        "score": 60,
+        "atr": 25.077135358537948,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1466,
+        "vol_ratio": 1.21,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 86,
+      "pf": 2.5,
+      "sector": "Industrials",
+      "analyst_target": 607.0479,
+      "analyst_upside": 1.0,
+      "analyst_count": 19,
+      "recommendation": "buy",
+      "short_ratio": 1.73,
+      "short_pct": 0.0115,
+      "insider_pct": 0.0032300001,
+      "institution_pct": 0.86518997,
+      "pe_forward": 19.196484,
+      "revenue_growth": 0.011,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      }
+    },
+    {
+      "ticker": "MNST",
+      "status": "ACTION",
+      "price": 81.48,
+      "entry": 83.41,
+      "stop": 80.56,
+      "target": 90.52,
+      "shares": 31,
+      "vcp": {
+        "score": 75,
+        "atr": 1.4221420288085938,
+        "signals": [
+          "Tight Base (VCP)",
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0686,
+        "vol_ratio": 1.25,
+        "breakdown": {
+          "tight": 40,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 82,
+      "pf": 1.37,
+      "sector": "Consumer Defensive",
+      "analyst_target": 80.76696,
+      "analyst_upside": -0.9,
+      "analyst_count": 23,
+      "recommendation": "buy",
+      "short_ratio": 3.49,
+      "short_pct": 0.026700001,
+      "insider_pct": 0.28585,
+      "institution_pct": 0.7069,
+      "pe_forward": 35.859993,
+      "revenue_growth": 0.168,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Assetmark Inc. Boosts Stock Position in Monster Beverage Corporation $MNST - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxOS19ieWhibUVfa1pIMG1RWTlrNnc2a0VZMlBkZ0hqZkkwaWtjQmVxYlV1MlBaRDBvSWhLbmhrT283R1BmWk8wVmJmSWFsZm1sOXhzWWJRNV9Tb1Q1dTF1THIwYkhkU1VPX0ViMklhRGpveEg0UjktTW5zemllT19SeGFSaXRhd1JzZ25FdVMySGVScC1GS2NXZVg0UnQxOVdZSWhRbWtJUWluM2VFblV5aVlNcGE1cU94OUNlZ0NILVgyMEhfaE9femQ5UkxwZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "What Makes Monster Beverage (MNST) a Strong Momentum Stock: Buy Now? - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQQ1AtM1FfOHJLek9ocnc5b1pYcy1GNHpOWlJHbzlicnRQcFdjT2xwaktLb1RQTjVHc21hc0dBQjZlQ3IxZXVpaVN0UFRpc3pRLWV2aWNTc1JpRWw4cE1GZWpoZFBpZmNFUU5HWTY5dWlibGlSRXAzOHR2TWNsY2wySGRXRFE5c0k?oc=5",
+            "body": ""
+          },
+          {
+            "title": "What’s next for MNST stock - Trade Entry Report & Community Supported Trade Ideas - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFA3VkJXdjdENDllZ1RSWGhtU1Q2ZlJ5UzVubXlrM21kV21VTC0zM3hLZGl2MEI0YkxndzZPcnZlSmpCTHVENWZnXzAwc0k5NkU3a2hVdmZ1SkFxVldxODRad0s0WVJXdHRJNmdGSDhPN19GQQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "A Look Into Monster Beverage Inc's Price Over Earnings - Benzinga",
+            "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPZ25MbWlwODd5aG5ReFNON2I4UnVXNjdnTUJwUUhxUzlQVV9kdmlfZ3ItZHdIS3YtQmpwalRXV3JlREhNcXFhTWZsYWh0TVU2SU02Z0QxM3JudjRFY3NWMHhLWnpGRFF6YWZFWURyNlVzSVBfYm9OSUtib2c2ZGU1UFlyV21kcWQwYkdBc1cxelJRZ3ZhcUNWcndXSUtUU19jZEJQanFFbF8wN2c?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Tech Rally: What is the target price for MNST stock - July 2025 Decliners & Low Risk Growth Stock Ideas - baoquankhu1.vn",
+            "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPUnJ0dUM3enN3MnlaY3VwZVpkSEtSa2pfSnVTNFl0R1IxN1ZYdDJCanpTSWFxVnM2cHhmdVgtZ3lvQzBlM3NHNEVkSDg4UlkzaVdVQ25JMjlXeXZhb1FUeDBla0pyY0w1WFdsdkoyaHlxTmZrUmdRSHlUY3ZYUEVLeVpaRjJxbkE?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "TTE",
+      "status": "ACTION",
+      "price": 76.79,
+      "entry": 77.93,
+      "stop": 74.63,
+      "target": 86.18,
+      "shares": 29,
+      "vcp": {
+        "score": 55,
+        "atr": 1.6499998910086495,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1548,
+        "vol_ratio": 1.59,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 74,
+      "pf": 4.09,
+      "sector": "Energy",
+      "analyst_target": 72.9375,
+      "analyst_upside": -5.0,
+      "analyst_count": 8,
+      "recommendation": "buy",
+      "short_ratio": 3.77,
+      "short_pct": 0.0025,
+      "insider_pct": 0.055430003,
+      "institution_pct": 0.50646996,
+      "pe_forward": 10.281699,
+      "revenue_growth": -0.025,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Here are 3 factors that drove the big swings in the stock market last week - CNBC",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOSGNFc1NBbV9hWTdJc09DeHBsU2UyejFRNURUZHNHRFNtX1J4QUpnX2liMlF0T1RkNjZxT19wRENxdVU5dFgzN00yRTlDSDNhdWFQT3JvNmszVzljV0NLUWZvWmdwOEh1aHlTXzQwdWpYRlZBQ2NWdVlnVkt5TFE4a05OekNhanpiUm5NSEFRX2hVblQtX3pTNEF6dXZUYmhBSUwtWXBwSUZUYkVmR0RuVQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Stock Market Week: The SCOTUS Tariffs Wildcard, Lunar New Year - Investor's Business Daily",
+            "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPTWQyTlVxV25UcnNBaURMUTBDa3pVclphaDIwdGx1N0hnR0FKelc4WHB1REhCSzVIUWNZWUNJWkpQdDBrZXhIaE1MZ29YQ0REdTI1ZUhEU1lFeUdWZ2s0UktJcXRtQ0s2Wlh4OUdGUTlkSkJ1SzcwNzlibWdWbnVhUTJaWHVlbUoteUppM0dNc1IzVG1YOXNHOTVWMXI0NjBCTHdtZW9fMkRqbEQ4MFE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Prediction: Sandisk's Stock Price Will Hit This Level by the End of 2026 - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxPUklUeHl6dkRXWk5TaFNIc1ZkMHhkYlpBSmFxcDRnb3FGT2liWXBhS3AxN1BIZnlkMjE2el9veEM0ZDgySXRLU2pOcGFFZWNyYUk1RGJkNHBNNW1NMzM4R29lRFZZeHJDUWtTRWw5d3NSQVVoZnJ1SzRuX19NMVlrVjhROGh0VWlVd3lkVWV2RGZ6MVdW?oc=5",
+            "body": ""
+          },
+          {
+            "title": "The stock market is reflecting fears of an AI apocalypse for white-collar jobs - MarketWatch",
+            "url": "https://news.google.com/rss/articles/CBMiwwNBVV95cUxQOXZ0c3FUcVF5OS1HTllaSU1wNnNvMU9JbXd0dmtIWHJNbWxIZmdVVEJZbmxTamFZVkZCZU9nRXhSVi00Y0RjbDNuV09rTWctX1JNZHRqT1lrblFiRzJGYk5xQlcyVnF1N0lVXzhQT0FYdWtkUXowTlp2MF9PaTRwZUJQYThzZ2taUmxYNHVPMS1zX1diSWZ2Zl9vSzJGYTNJcUQtQ1owbThZMk9fTTYwMlRoa0dCNnVjOUx4cDZ2YnF0SWpKaHF6b1JnWl9XdXVpNjVlQTlHbnc2TzVndVk1X05PWjlyLThwcnIzOWFnYk90QUxOWk95aklIQk1UNmtPMFFiaVdldE9DV19SMXBwTnNKaURuUU9RdlFmTlRQMHdlUGpFYzk0UE9TUFZvdVdIVlNmbEVvUXVTeFB3NWY1Z2hqVWpiNGdVOTBjX3cxSjM0ODBxLUhwSXZCdzFaMkJxMExHZkhIbU5HNzhkWmpFVS00NlgxZVIwcURHMndmUW5SMGY5UXhXMmtWb1NaZ01rSkR2amVvYzRQS1JTVHFNUzhWaGV1dDh5aGFPMTEyeXVWbG9vdWFwN3JQZm81cUNtdlNz?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Howmet Aerospace: I Was Wrong, But The Stock Remains Expensive - Seeking Alpha",
+            "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQYk5WV0ZIZUdFZ3pRYnBwR0lIZXdZLVdrRnIzZFhWSUhPUExPUmQwZkc1WHYtTFB6cE14cUVXTGRCLUpEUlRGbEVSbzFweHVxOVBCSnBlSzF4VFNId0h0bnlrNWZSQm1hLWpVak5RdS1vQU5jOGxPOXBiNHQwVVBTSzBEVXhVU3lMZUZrcDF4a01GNmRTemRKM0s1OEhVVFVSQUNIU2EwS2FfWjFrbEhXUF9tOGJSbkk?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "F",
+      "status": "ACTION",
+      "price": 14.12,
+      "entry": 14.37,
+      "stop": 13.75,
+      "target": 15.91,
+      "shares": 158,
+      "vcp": {
+        "score": 75,
+        "atr": 0.3091734616887751,
+        "signals": [
+          "Tight Base (VCP)",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0873,
+        "vol_ratio": 1.31,
+        "breakdown": {
+          "tight": 40,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 80,
+      "pf": 1.25,
+      "sector": "Consumer Cyclical",
+      "analyst_target": 13.86684,
+      "analyst_upside": -1.8,
+      "analyst_count": 19,
+      "recommendation": "hold",
+      "short_ratio": 2.81,
+      "short_pct": 0.049200002,
+      "insider_pct": 0.0025600002,
+      "institution_pct": 0.66253,
+      "pe_forward": 7.724162,
+      "revenue_growth": -0.048,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      }
+    },
+    {
+      "ticker": "GE",
+      "status": "ACTION",
+      "price": 315.41,
+      "entry": 327.33,
+      "stop": 308.63,
+      "target": 374.09,
+      "shares": 5,
+      "vcp": {
+        "score": 63,
+        "atr": 9.352140154157366,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1121,
+        "vol_ratio": 1.34,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 74,
+      "pf": 2.5,
+      "sector": "Industrials",
+      "analyst_target": 357.35294,
+      "analyst_upside": 13.3,
+      "analyst_count": 17,
+      "recommendation": "strong_buy",
+      "short_ratio": 2.64,
+      "short_pct": 0.015,
+      "insider_pct": 0.00201,
+      "institution_pct": 0.81242996,
+      "pe_forward": 37.096542,
+      "revenue_growth": 0.176,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      }
+    },
+    {
+      "ticker": "EIX",
+      "status": "ACTION",
+      "price": 71.46,
+      "entry": 71.75,
+      "stop": 68.35,
+      "target": 80.26,
+      "shares": 28,
+      "vcp": {
+        "score": 60,
+        "atr": 1.7021418980189733,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1684,
+        "vol_ratio": 1.0,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 80,
+      "pf": 2.17,
+      "sector": "Utilities",
+      "analyst_target": 67.80769,
+      "analyst_upside": -5.1,
+      "analyst_count": 13,
+      "recommendation": "buy",
+      "short_ratio": 3.59,
+      "short_pct": 0.0326,
+      "insider_pct": 0.00245,
+      "institution_pct": 0.91628,
+      "pe_forward": 11.625259,
+      "revenue_growth": 0.106,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Edison International Stock: Analyst Estimates & Ratings - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOeDMwNmZpaVEyUGdhZmlmWHV0NDlZZV9udXpVdHlXWXBZTEM3Y3JxdXo2MXI0Z29ab0lOUmMxcDl0SDRjYkFqc3hEUXRiWHp0NEx6QzRQeUs0WFd5SjZZMTBKNThXWUkxQXFObVIxYUh1dUQ3Z2RBNG1nS2x2TmxnT1IwRHNScElTdjVqNmNtUjYwZmZr?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Edison International (EIX) Valuation Check After Preferred Redemptions And Better Than Expected Q3 2025 Earnings - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxQeWIyUTlYZnl5SUdLRnVqZThYMGxuWVdUOWNrSS0tMEdjTzI4REkyWUVKQUZSS1hTYkg0bDg0US02SlFTY3U1RGdXOHF3QkFjeXM4bHBDYjZFMTFINjNndlpvdGF2NTB5LURsbEFtOVZldEs2RUdhOWJXTzQ4anhxZUtyQkNmeGphQmNBYVN4UGN1cmJzcGtnUGRyTjZ2YlphZUpRVGpFZWxVWGItdVNhQzBNb2c1S2V5NGk0emtieDJ2S1hvNmJSWUtFVFJZYmo1cGlj?oc=5",
+            "body": ""
+          },
+          {
+            "title": "EIX Downgraded by UBS with New Price Target of $78 | EIX Stock N - GuruFocus",
+            "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQMzhPbHNoQkRIZjFlc1ZjRy04Rmx1TWs3ZlhZeDRSSmNSaFNNUnhlUUhLd2Rpb3I4bjBOQk00Mll6OFJfVDgwM2hhempkYkhUVHRVYUdsVXFnX1oyZzlZcDNseFE2bTZ2VWlidV81dklTdTNVYW9ESEEyWVpvSFV5aGJhMTB6aGRhX2QyMjFHb3ltbGxOTlRQeUZ6b1BJb1hRQ0xwTkhR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "New Analyst Forecast: $EIX Given $78 Price Target - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPZEJSTGJ2UjZ2WlB3UDZXZVh3OTJZNllNZUhyaHdCMkhKcUZhNzZhVEs3VmdMMVVyVFhIOVVPR3lSWFMxUXBTanRFaTdnZTJwcDZSOUZINjZ6MUFad1o4azU0OV9MdDJra1V4OGRYNm9HbVJwRElTTnFlcFRnejBxajFxX0ZNTFhEOVk4SkVZdjBCZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Edison International $EIX Shares Purchased by Advisors Asset Management Inc. - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPN3RKQnNPYXFEVWpQbVlDbmxZdXdScjU4M3BkUXM1ZlRjeXZ3QUZ3dnpDVGNhZzdJSDVCQXdYX0YyU3ViUUt3d0VTR3ZLVDNJb3dEeFFxLVoxTGlZaGRtdFRwYUNnMEJWaDhrQjdRT0pTbzlkcE1ZWGRkTGctenJ5YllJVU5LbnFWQ2FZWFA0aXVEYkxlODM3cGVsTTJZWi1wVlJGUVQyVnZwTzEzSjZjVmhzb1lEcTh2YVA0Nl9iQ0xYRzRuX1RXVGxyTmk3ZFFT?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "WELL",
+      "status": "ACTION",
+      "price": 210.72,
+      "entry": 213.05,
+      "stop": 203.48,
+      "target": 236.97,
+      "shares": 10,
+      "vcp": {
+        "score": 65,
+        "atr": 4.785000392368862,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1465,
+        "vol_ratio": 1.0,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 78,
+      "pf": 1.58,
+      "sector": "Real Estate",
+      "analyst_target": 218.8,
+      "analyst_upside": 3.8,
+      "analyst_count": 20,
+      "recommendation": "buy",
+      "short_ratio": 4.4,
+      "short_pct": 0.0219,
+      "insider_pct": 0.00064000004,
+      "institution_pct": 1.00288,
+      "pe_forward": 63.661633,
+      "revenue_growth": 0.413,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Why good financial news didn't fuel a broad stock market rally - Detroit Free Press",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQUEU5cDlhS01oS013OGs0cUdQT2ZUczZneEdOdXdFUGY1aWd1SXgtOUdFc1I0bE9rYl9mZk05MVgzeHBDSzZ4bE9yQWtJc2RvMG5VQ0FUWng0VmhIOVNQSlQ3Yk1tNzZNZ2o1NDViNi1zVzgxMTdhR0RyOEl0aUdGcjFhbWpiY3RLZzZKWXF5d20wX3RsbjQtd201b0liWTM1b29vbDlkZHNFem00VzFYcQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Welltower (NYSE:WELL) Stock Rating Lowered by Wall Street Zen - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPZ2VhMmdtWGJ4MGl5YWJxLW5IYXBiMjBtbzNHZVBwSXE0WWd0SXdJcFlLcW1uNnJOWjVUZ2hycXZlTjdHWWcyV09aVXRUMXc1YXI0TWIzVzQyUkdiZjhwVHFYbUdRS1BVa0FBZWN6dG5aeWVtdmFoSFFCTGhxNWE4bWFaSURCalltSnJ3X3RoRkJuWDBZWlZXN0xycVFXUHlmcW54WG1rbHpkQ1U5b2ItQUZR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is Amazon Stock a Good Buy? - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9feHpZVDBHcmotdGNMLXllNE9NWkVPMlp2ckdXVThYcG5ra01lNkZhTDV6VnU3aVh4YzVBYk9RQnZNYWtsdWl4eE1YTzRxcnJueWlwaGxmWlJOSVFhMFJsMUJGLVd3NHZybHJDUTI4SXlwbWFabmZQUg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "(WELL) Equity Market Report (WELL:CA) - Stock Traders Daily",
+            "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxON1FVRW9rVWtka0hYT3ZXX0lyNG9IVzE2WDBNdVdyOEhaY1U5dllTZDlvVnZ0X0xMZHZYTUhITUJXdGRMUktJTnhQLUR0VDRRZ0dEeWJJXzFSRmN3eGNCNFhHMXNzSTE5Z00tTVl4ZWw2S25HT3A5Q0dBOC1nNzFjU2NSQVQ4OWhPeGVR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "WELL Stock Surges 12% With A 6-day Winning Spree On Strategic Acquisition - Trefis",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOOW8tUVVYZW9IRTAxclBjTHcxdFF1blF1RFRsSlMwZjdaN1ZqaWJySlI5RERlYlRVWGJoWFVILW9jVG9VTHQ2YnZjOWozcHpXMUU1SHpJOHF5TWtfZjJFMF9rRm1qMTVjRnpBYU8tN2dHNGdFUFB2WmI3emRRd2N0UjBtbDNIQ29xdkhlVUhjOG5SSEpFajlkWFMyREtuQTY5RW8ybThILVhKZHVTQWZFZWhjY24tdFg0M0RiR3NFbw?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "MCK",
+      "status": "ACTION",
+      "price": 934.75,
+      "entry": 973.87,
+      "stop": 899.38,
+      "target": 1160.1,
+      "shares": 1,
+      "vcp": {
+        "score": 55,
+        "atr": 37.24571010044643,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1697,
+        "vol_ratio": 1.03,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 81,
+      "pf": 1.88,
+      "sector": "Healthcare",
+      "analyst_target": 974.4,
+      "analyst_upside": 4.2,
+      "analyst_count": 15,
+      "recommendation": "buy",
+      "short_ratio": 3.25,
+      "short_pct": 0.0150999995,
+      "insider_pct": 0.00037,
+      "institution_pct": 0.92654,
+      "pe_forward": 21.153833,
+      "revenue_growth": 0.114,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "McKesson (MCK) Valuation Check After AI Logistics Fears Drive Sector Selloff - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQWHlLX3lLa1RnQUREd0xnbldScXpyRzFzSGNNTGtEdmRTWFFJMmQ2QXluUW5rSmpUSXlvaHdIc0lkdGNRT2dsZlpRa21jS1h6bHRKNzEzV2JQanFqWEhRYkoxMzZLbUNXcnZjb0UzcGNJQVlMeGR2V0NkTk1HLWdMRFloQzZkNVJPWldkdEJDNVlmUEhadEZsay10aUhIRnZVWFdueWo3dUVjbWs5VjRFdXZpOWxNbENGdlY2RVRVQ29pQ28?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insider Sale: EVP and Chief Legal Officer of $MCK Sells 303 Shares - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPY0pJd2tiS09oRkttbkZMTnVuRnhELWx3TE9JdWpXUGhnT3MxLVdfdkd1NHhuZXY1R2RKQkloY3EtUTZtUHAtRUlhOEhrYmllREtlVTlNNkFULUZqZW9GdHAyWi1zWE1pSlA2UFo3T242bmxaeUtOdVlzekVWVmNOaUNsR0psRHMwMmhhRjBvdjVoZHdVbW1TcU05OFh4aDgtaWhYeW9B?oc=5",
+            "body": ""
+          },
+          {
+            "title": "McKesson Corporation $MCK Shares Purchased by Varma Mutual Pension Insurance Co - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPa19OYlFiY1lNQWxaN2trdlRtSDctcUFUZjZjaV9SakhuMVJ5Tlh0N1kwWWNOZU8xSFIza2JIcmw5UlZldFRsTE9mS0Z0MnhGTkl2bUxSYXQzS0M2LXVQeDhUa1FTODg5a3hSQjZGX1BUN0xaWXFqeWEtREExekxJTndTYURNOUVXSEg0NElLUWl2T2l6TjBINkdjdXJFX2FEbE03clJkUXJoRkJpLWZqOEVWMGlNUEYzVnhDQU84dktYc1FkWWpHc0pBRUR3U1FjeTR6WjVn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Lau Michele, McKesson EVP, sells $282k in MCK stock By Investing.com - Investing.com UK",
+            "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPVnFqNk1qUmhaU1B6MmFJTlk0eW1fdUIta0J4MUp3TmQ1OER0c3d2UUd6OGk0MGxkTDd0ZHhyOGpMQkprNmtYdTlpa1JzM3psd0lRdzRicmJvZUZaalRweVlFTkN3MDRnVDBGUG1KV19icW1QOVZHV2Q1a0tkbV9vcEJKNHExRDNWN2xUbXA5aE8yUFBRVjhPVTdxQTN3TUxxNDRndEFRU1JVaVpUQVM2Sk42c1FHOTRBUHhoT0g2eTdUQQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Notable Thursday Option Activity: BURL, CHWY, MCK - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNc3JScGVFZ083S0pRX3JMdjJ4OWIxZG5BRGdGQXh1MFVkUS1EM09ZbTU5WF9lMC1VLTE2Q2lPSVdCdmRRYjh1ZEpkNTBndDVFSEUzMldCQkVlUXdmRXo5S1FrdjdnYW5RTF9haXEzUHREZEE0UWY1ZkhhVXFFb1pkSTlEMU4?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "HCA",
+      "status": "ACTION",
+      "price": 540.29,
+      "entry": 554.01,
+      "stop": 515.82,
+      "target": 649.46,
+      "shares": 2,
+      "vcp": {
+        "score": 55,
+        "atr": 19.091437203543528,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1654,
+        "vol_ratio": 0.92,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 85,
+      "pf": 1.26,
+      "sector": "Healthcare",
+      "analyst_target": 530.3333,
+      "analyst_upside": -1.8,
+      "analyst_count": 21,
+      "recommendation": "buy",
+      "short_ratio": 3.78,
+      "short_pct": 0.026300002,
+      "insider_pct": 0.15868,
+      "institution_pct": 0.78458,
+      "pe_forward": 16.22916,
+      "revenue_growth": 0.067,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Understanding Momentum Shifts in (HCA) - Stock Traders Daily",
+            "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPTEJaTXh3WFdjOXpDZ01lZ20wWXRIUkFnZkx3TEFzX09VcVhjWWg5SW9PMkp0TEJfQUIzOWNoSEpia0FUWXZBbXFSUmFMdFlONXY5S2JZWTU1ZGMyM2FaanhPWVFIZnY2QnQ2Rnd2WHNFWUV0QVJxYUdycnhlLTJld0NXWGJ0ZjhGblVWVHl2V1dXcGdaT0daR2dka0pmbE5vWDk4QUtFaTcxbmtXTGVEWFVfdkNOLXM?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Pay Less, Gain More: UHS Tops HCA Healthcare Stock - Trefis",
+            "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNcFIyeTZobGJCSnRhaF8zSVlxQ29DUXNOWExPOGdjS2FjV3hOaFI4Zll1TFNMRE50OHU1UUpmMmlyMnZwQkMyYV9UTTU5U2NKdzJtTXpPOG9lbjNoSjJVV0NkNDI4dWdHa0MtUUk5WDNSQldwVlc1MEx5M211S1I5QnBaS0w0S2JDSng0bl95SUItTmJubFNidnZRdHRmcDVZTkFlcDNyVTNmRWpkeVE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Krilogy Financial LLC Purchases Shares of 1,881 HCA Healthcare, Inc. $HCA - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxQV0tmUGpOWEpJbkNVbk9DRE8yZExIX1NYM05RTjhTZnhjc29WYnhQLVBZaWpuZ1VMSVloVDdNNkJsQTRib0xPRUpXYmlwaGl4R0ZkWHhneDRRSVpUOW5LbzU3MGg0UXRQTUlteC04WkF6eXpOdDQ4Um9IVlR1MkZ3TGNPMXY5dVZ2QVQ0VVR2dmI5Rk1CbDVkdmdtT2Vma3lJcTRrSVZNMHFMZVN1aC1FUy1wRlhxTDhPTzZLRjZZcy0tSHhBd082Skdn?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insider Sale: SVP & Controller of $HCA Sells 4,000 Shares - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxQeUdtRkIzR0pndU1lbXFPMjEzX0pTVFlVSGJjQjV4cFdycjhoeXRIU3N2S2FoLS1NWjBZTVZDT243ZVdnWDVQNUd1cFVtNEdfc0lSOVhPTjF1bkVSWmRGNXhEWXZmT0dtSENwRjRRMTdkN09JNGNhNWo2QlVkdHZtNWRrNDAwYkF5STVrVU51QV9rNkVmNFZZZ2JtZloyRms?oc=5",
+            "body": ""
+          },
+          {
+            "title": "1 Unstoppable Healthcare Stock to Buy and Hold - The Motley Fool",
+            "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxOaExnM0VnUkFMb3ppQVZhd1doOWZzRENXZS0zSVlBOTQwcTRBMWI2Q0RZdkhHNDFHUEtKalRqbmg0T1d1bVIyNkpFcGgxM0tsT1JrN3d6bUZ2WDV5QUx0bkNkNXJDUExGRUR4cXFaV09sbFYwOTFOR2dDYXNiaEFyMXc0Z3EtYnVoYkVBODA1TVpSeGs?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "PCAR",
+      "status": "ACTION",
+      "price": 127.0,
+      "entry": 131.8,
+      "stop": 125.04,
+      "target": 148.7,
+      "shares": 14,
+      "vcp": {
+        "score": 55,
+        "atr": 3.3807183180210094,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1166,
+        "vol_ratio": 0.96,
+        "breakdown": {
+          "tight": 20,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 72,
+      "pf": 2.39,
+      "sector": "Industrials",
+      "analyst_target": 123.32882,
+      "analyst_upside": -2.9,
+      "analyst_count": 17,
+      "recommendation": "buy",
+      "short_ratio": 4.2,
+      "short_pct": 0.0294,
+      "insider_pct": 0.01926,
+      "institution_pct": 0.73569,
+      "pe_forward": 18.85322,
+      "revenue_growth": -0.137,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      }
+    },
+    {
+      "ticker": "WMB",
+      "status": "ACTION",
+      "price": 72.28,
+      "entry": 72.78,
+      "stop": 68.58,
+      "target": 83.28,
+      "shares": 23,
+      "vcp": {
+        "score": 60,
+        "atr": 2.099999019077846,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1689,
+        "vol_ratio": 1.27,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 5
+        }
+      },
+      "rs": 76,
+      "pf": 1.25,
+      "sector": "Energy",
+      "analyst_target": 73.80409,
+      "analyst_upside": 2.1,
+      "analyst_count": 22,
+      "recommendation": "buy",
+      "short_ratio": 2.33,
+      "short_pct": 0.0149,
+      "insider_pct": 0.00453,
+      "institution_pct": 0.8972,
+      "pe_forward": 28.543785,
+      "revenue_growth": 0.087,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Williams Companies (WMB) Receives Analyst Boost with Raised Pric - GuruFocus",
+            "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxOS3RLY2l2ZG9WWk84Qm5PYXhGcWtoWWMwQjdwTGo5ZEFPbTZBR181Z0p0U0pZUVpGaEYwcGRhZE5fdXIyOGFZSGg0U21OSkJzQWdKYTB6UkVPMjVReXozQThGOVVWQy1sU3BvdHo3MnUwUzFwUmgtX0pJZ2pLekFuaDBxQVRfejA5LXFpUGZvVWNaSlhydjVfaFBabEM5ZU1MM3FPUVRiQ3BTc2hZdDJsbVJ0OS1GOXZqbjAzaXpITUdOY2J6TFJKVGxqY0VCS256SFE?oc=5",
+            "body": ""
+          },
+          {
+            "title": "New Analyst Forecast: $WMB Given $78 Price Target - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQa0xIQVBUTng3MlVrVWlKWjRId1VsRTV0cm1rNHNCb2hXQUdDNWV1bTdQbEhhRDF6SFZnUUtkN2haa2ZlamUtUy1aaktsQkhiTU9iR1NOY0VtWm5uR1dBcGs5aGpQdW1zYlk4Qkx0eUtxUGlONU5xT0RIS3RGSVdxQTZjV0JMekk5d25oUUE2OXRvQQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "How analysts revise price targets for WMB stock - July 2025 Sentiment & High Conviction Investment Ideas - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxNMGI0OUZlSUdqU3hYdWx2ZkNsR0R0eThIbF9jY1FDNUJPQjlLUEJOaTZHZnkwSkd3NTlvRURhNElLTC1oUkRkYUdDbTRqLUR1UGxqVUNkYUVBYmlEeTlfYjVtWmh2cmxwNkdqcWxqZU1yVjBfWGtiVy1uUkY4N19GbWs1TQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Analysts Conflicted on These Energy Names: Solaris Energy Infrastructure (SEI), PBF Energy (PBF) and Williams Co (WMB) - The Globe and Mail",
+            "url": "https://news.google.com/rss/articles/CBMingJBVV95cUxQUllFRExqZWxiRlBCT3JxUkloY1pFbktPRHlZWllOU3RvaUJsc21wV0FIR3cxTWd2TzFwWmZPR2tvOXM5T3AyVTUtSWJBSWFkT0Z2YXBlb1R0R0tqdHRjam1TZGtmeG9HZmFvSU1kZzlBazh3TXQ0VmF3UVA0b1k5UTZ6cTZsMmZkLTZCaW5YLWluWUllbDJuY3pXQzJJbHZDcGZ0VHdUR0ZJWEg2ZjJoTkJhZnhlNXV5WVpMMEFyY0xqX21ENU1YcmVCVlVUb210aHVyNi11WGZwQ0dyU1BEelVIakdUMy04MFJvSGV1OG5VVWpEZWJ3eEdsNnVsTmxiTDlmZUk1OHJMYXNyZGRpYTRPOHNuT0FUR2hHMVlR?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Williams Companies (NYSE:WMB) Raised to \"Sector Outperform\" at Scotiabank - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPNGxCNlFGdVpEcG1SaElhSnZMZVNqMFlzY2RyVk1ZeVZrNmdMczhObnA4ZHFhM3ZhelI3bU5RZFpPY3FTbVVhZ0VKR2VWaUVENlU5THZaR3Fpd0hJSmppTEJHTmpMMXZPaUNXTGJfaFV6ME9lMEdfTTZ2eXJEREw2eUNtUG5sS1h3R01VWlI0cGNKQ2hHOW5YVlpwalM0alM5SWQwU29JWno3cmM5eUdmRTFyNUJ1elZqWEhGTkMzTQ?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "USB",
+      "status": "WAIT",
+      "price": 57.69,
+      "entry": 61.31,
+      "stop": 58.41,
+      "target": 68.56,
+      "shares": 33,
+      "vcp": {
+        "score": 63,
+        "atr": 1.4499999455043249,
+        "signals": [
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1216,
+        "vol_ratio": 1.45,
+        "breakdown": {
+          "tight": 30,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 71,
+      "pf": 7.65,
+      "sector": "Financial Services",
+      "analyst_target": 63.40909,
+      "analyst_upside": 9.9,
+      "analyst_count": 22,
+      "recommendation": "buy",
+      "short_ratio": 2.45,
+      "short_pct": 0.0182,
+      "insider_pct": 0.00126,
+      "institution_pct": 0.83185995,
+      "pe_forward": 10.429246,
+      "revenue_growth": 0.053,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "A Look At U.S. Bancorp (USB) Valuation After Recent Insider Selling By Senior Executives - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQdGZXR2hzQzN2b0wtOTlfWDFJVzFRUmZESTNxY1pOT1VLTm9iclhCa29qb20yOWtGdnBqcDNUbDlFb3ZyTFJhWFNtQUpKazRzZGctS2RRNXF6SF80VEFvdlB4UzdCcUMtbVdUbEFWWHcyWUg1elVYeGRJd2JvNHFBQlpEU2FTdHkwQkJzenBwSU5HX21qUU9LSjJXbHdVMHp6aUNLczJYNGFZVkRaLVZTNl9sN3VqVDlsRVc0ZkFMZ0c?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Cibc World Market Inc. Raises Stock Holdings in U.S. Bancorp $USB - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxNUFUtc2lkdElsSEFkdTc2VkZpR2lmeFp1bXcwanFwSzU1VU9pQlZVcGNBdkh3eWlyVEJUWWE4MzFLWjdoejJDdTlTem8xNnB3YmZpd1VyV055RHFJdHdLNXdTVDE5YmZacnZlVzVGTXItendyaDNnc2RnS1g1TVhpSHd2eE1uSW5WZFFHWVFGOU96ZHFQTkdVTWdhX0pmWnNHYlN6cVlSaHpmUllWQldEdlRkbmFfZTRrZzNGNzF0WQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insiders At U.S. Bancorp Sold US$4.1m In Stock, Alluding To Potential Weakness - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE1IRFFJOHlIVjNoNGJWTTh3ZGhrY3dFN05aUzcxT3IzamdfT1E0TS00QzRrQTRlWnNyRThSQnFmNjlmT3pxS3pjczJNblhoMnJNY19XSV9QWGNEVlRfN1Rmb3AybFN4OXdzRmhhdTF2MTE0UFpNZHZOYUpfdFM?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is USB.PRR stock a dividend growth opportunity - Weekly Trade Review & Precise Trade Entry Recommendations - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5WNEp4b0VHNGQ3V2VSUjR0U0diazVPTGQyczFMekdYZ1Rkb1A2WFpGNTRLWTEtYnF5Sm9Tblp2aEFLNndlekctdzMzN1lkLWFJZmlaX3hhbVJHRmFWVEJqWWRwQmJmNWd6T0d4SnBvTTVhNDlFU0hSTGdSV1Y?oc=5",
+            "body": ""
+          },
+          {
+            "title": "USB May 15th Options Begin Trading - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTFA1alRpUU5NcnFEWVZqaEtQQWo4aEhtMXJMdFg1T0tRUDJ4V2RCZWp3VW1GR09mVTdRNFdyTWtvQkdTM3VZWElzRFVMTUZVQ1lhMThURXBqTTRDVjBBS18yZGdBZGprXzVFNzROSjdWMjJoZjY3?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "LHX",
+      "status": "WAIT",
+      "price": 345.5,
+      "entry": 370.33,
+      "stop": 349.17,
+      "target": 423.24,
+      "shares": 4,
+      "vcp": {
+        "score": 58,
+        "atr": 10.581429617745536,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.0919,
+        "vol_ratio": 1.29,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 85,
+      "pf": 5.15,
+      "sector": "Industrials",
+      "analyst_target": 382.3684,
+      "analyst_upside": 10.7,
+      "analyst_count": 19,
+      "recommendation": "buy",
+      "short_ratio": 1.49,
+      "short_pct": 0.0163,
+      "insider_pct": 0.0033399998,
+      "institution_pct": 0.89848,
+      "pe_forward": 25.485197,
+      "revenue_growth": 0.023,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "L3Harris Missile Spin Off And DoD Backing Test Current Valuation - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxQR3c0aUZUdDhQNlp6OTV5MEVCS1hfVVdETDdSbDVuc3R4anN1Zk9nSU1ER0Q1a0ROV0ZndU1xZU5kSXQ1YWE1TjVtank5OGc5XzJfYWxXdTljWG5CeEVBTWNDM19MTGdLLWVqbC1zYXd2czdiaDFfNEpuX1NualIycng0MlpEZ0VNdHpOLWhTSFhhcEpPdm9IeFI3NDBWS0o4TUtYcnY2STIxQVBEcWN4STY3YUFjVVdTbkExUEhLaFNmUThzSld2d0VXWWZabzhHenBnSlp2SVBDZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "L3Harris Technologies (LHX) Releases Q4 2025 Earnings: Revenue Growth but EPS Falls Amid Strong Cash Generation - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxPM0p0WTB2eFhoR2IxbXJWcGliRTY4S3I5VExCQzFhUmxqenhUd3FZSElHa1BuTHFPd29keTJJRV84YzZDYnVRMHpxcHNVY0xVWXo2RlZESFljQUVxVjY3ZHVQTFVhSmh0UVhabjQ5WC1LYjdEQlVhdHRqT0xZT1UyVnBZREtTYmtxbDdhSFdaQmQ2MmtScTZ3VFI1bVBKZGY2dWFvX1pFSFZwdUFhYzVPYS1nOGszYi1xbkl6dzU3OC1HN1paLVVGR3MtTlZFTm1TUWZ2TjhFcUhrRFFwSC1adUo3X2U?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Freemont Management S.A. Sells 35,300 Shares of L3Harris Technologies Inc $LHX - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPN042ZHhuNkM4RTh6UFdUbjNmQXZxYmF4MGswbXgyOHFlZnZMaVFBR2VzUWRFajF4azV0M0lkdmFvdjJfOVhuWUt6S0dMdEg0UEtFTk1OdG1NXy12akJ5VHVuNWNxeTFhb1h3WjQ0a19PV0JPWW1kNkkteXl4bF9nMjI1blUzalg3YlhxRUVsZ2RLazdqMHRlWGl4VDc2RTh2V1dsQjZmNFd6dDNEcHg4ajcwQnBpQlRFNTlwWDRONC1yZWVibS1nNk52bDdQRHhu?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Why LHX stock remains top rated - July 2025 Patterns & Growth Oriented Trade Recommendations - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5wT0RraGwtWDFEMm1WWTBPUEJhUTBXR2x0bmtVZE5iTU9xSGgzSzZlWXp2YTI5Vkt4T2NYelkwZ2dUTWtjM0dGQ0RLWHdCWWJhWEhzNllnZDJXNWtSSEV4UWh3?oc=5",
+            "body": ""
+          },
+          {
+            "title": "This Defense Giant’s Upcoming IPO Could Be a Massive Windfall for Investors - Security Clearance Jobs",
+            "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxOZXJjSmRJNmdaS25WeTVpVjkxd0gxd253dThfQWZ0bXdfWDItQy05dlcyQkVTeFNGX1Y0aGFwOU1TdmdsSDVtYTlqd0NjZkxBX2dkWmNoNV9hTVljaUdOcWtQR3BsUXZUMFo1V29zQzc3N2ZuWW43UXA2RVJQZWhVU1YxVWRhYmNhVmxFTVpQd3hDdVdZYXEtUG5SUWI1ZmN1cUhsU3dENjB0MndzWDB4ZUZYXzYySmJk?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "STLD",
+      "status": "WAIT",
+      "price": 191.68,
+      "entry": 208.89,
+      "stop": 192.68,
+      "target": 249.42,
+      "shares": 6,
+      "vcp": {
+        "score": 55,
+        "atr": 8.105711800711495,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1836,
+        "vol_ratio": 1.28,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 0
+        }
+      },
+      "rs": 83,
+      "pf": 5.44,
+      "sector": "Basic Materials",
+      "analyst_target": 193.09909,
+      "analyst_upside": 0.7,
+      "analyst_count": 11,
+      "recommendation": "none",
+      "short_ratio": 2.81,
+      "short_pct": 0.0312,
+      "insider_pct": 0.06445,
+      "institution_pct": 0.85282,
+      "pe_forward": 12.247743,
+      "revenue_growth": 0.14,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Assessing Steel Dynamics (STLD) Valuation After Strong Multi‑Period Share Price Momentum - Yahoo! Finance Canada",
+            "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOWXc3YnZOUkNkTk9vMW1qdElrTHdiT2xLXzdlNGhhTXlqdWZjSkNyOFpQYUVzdndRZWV5d1NRYkVsU2lNMS1MRE9NeHk1WFJvaUJxTm8wMFZSRGNWRkVBMXJGZVdnbmROVXpja1Itb1ZNc3pON2FXZmN6M2J1eWdqM2NYbkdvckhVQU5uOWZHODgwUQ?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Illinois Municipal Retirement Fund Sells 13,665 Shares of Steel Dynamics, Inc. $STLD - MarketBeat",
+            "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxQZDUtZlRTTHpRbU5IUE90X2JCV193WkdsX0NZTWNVSG9qU2wyMVZzWE1lWGpsQUMyc1JydER1a3N0elUzWmQwb2dsN3RSMGoxakVYN1U2UkZpS3gwZUpPYXJsRFY0dmczRFlnMWYzbmZpUHFKdG5MZUg4QmtWQ05tV2REdHdvMzdINldQdlA0SVVEUnBnTHpZZzZUbmlyU0RxMTVBRlFQSERVVGxvWDkzMFFlOXVjb0NfS19uUW81WlJTam5GWWhEbEN2QnR3TW5oQk9QVDBuRFA?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Why Steel Dynamics (STLD) Is Down 5.3% After Upbeat 2026 Earnings Revisions Amid Weak Q4 Results - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQTXU1VnUxNHVPd3dENHIxaTNZWlNKOF9fTGdVN00wc2tBUDg3R3pqZXhRc2x3SVJZbXE4ZTlWdXkyczdUVVpWanF1NHFiOTZaczZqS0IyanRNYzRMN09Uc3Z0SUZnY21TRnEtOFpkckwtbU02OEtIQlJxWDFuRGxlMkFaTkFyZ01oS0lLNGY4NE1vRkowVGRURG1GdUx6YWxaVEsxTUdGWHIwdlpjTGkyQTZmVHFIRGR5OXY5b2Frd3dtVVVPektCV3A5ZC1jaUU?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Why Steel Dynamics (STLD) is a Top Momentum Stock for the Long-Term - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQWEJDYnlaVDNJMmd4anpJODVEQWZ3Rm9QdU1OU21reW9lZDNBTkFNN3VqazFlSVpyZzNDeG1Dd1AyeHN0Qk5TdE84MzBkdkVWVzB2VU1VS1ZpdlF1S0cwY2pDRS1aTWIwTUNCaFBsSXlzVFlzN3UxbDQyMWI2WHNGM0M4WXBkakktZXZDQg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "How STLD stock reacts to inflationary pressures - Layoff News & Daily Chart Pattern Signals - mfd.ru",
+            "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPcWRNVzdLbHB5TGRLTkxXeHFxWm1GMmxUSlZ5aHM1cUliMmt0UFV6MzllSnJXSVRYUkVVMFgyN09hRU4tVlpiUFl0c0VtOVFsRnY1c1VnUFpyY1FNMTB1UGMwM2Q2R1AxS1c0X01FRURKT09KVDJzWHYtWENKRFJnZ193Yw?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    },
+    {
+      "ticker": "NUE",
+      "status": "WAIT",
+      "price": 183.23,
+      "entry": 197.29,
+      "stop": 184.21,
+      "target": 230.0,
+      "shares": 7,
+      "vcp": {
+        "score": 58,
+        "atr": 6.5414276123046875,
+        "signals": [
+          "V-Contraction Detected",
+          "Trend Alignment OK",
+          "Near Pivot Point"
+        ],
+        "is_dryup": false,
+        "range_pct": 0.1586,
+        "vol_ratio": 1.48,
+        "breakdown": {
+          "tight": 25,
+          "vol": 0,
+          "ma": 30,
+          "pivot": 3
+        }
+      },
+      "rs": 76,
+      "pf": 2.18,
+      "sector": "Basic Materials",
+      "analyst_target": 186.07692,
+      "analyst_upside": 1.6,
+      "analyst_count": 13,
+      "recommendation": "buy",
+      "short_ratio": 2.71,
+      "short_pct": 0.028800001,
+      "insider_pct": 0.03182,
+      "institution_pct": 0.77922,
+      "pe_forward": 13.393692,
+      "revenue_growth": 0.086,
+      "insider_alert": false,
+      "insider_detail": {
+        "buy_count": 0,
+        "sell_count": 0,
+        "net_shares": 0,
+        "alert": false,
+        "summary": "買 0件 / 売 0件  純: +0株",
+        "recent": []
+      },
+      "news": {
+        "articles": [
+          {
+            "title": "Nucor Valuation In Focus As Tariff Uncertainty Meets Buffett Interest - simplywall.st",
+            "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQZVpMZXZERXVWT0lRQlVzV3pteDJ1RDRueERvNjlFTU4yX0hVc09haDNaQ0s3bTB5V011OUJKbWtOMDZCWUVPLVh1ZUVyUktZNzdYWU5ad2EyQllHSU1KU0lua2pERGotc1YzcUtPOGRxTDVNSDlnZFVjQU84YkFfVzZGYTN2RVdfLVptejV2blphWWQtaEptR2ZtZW1peDBBRjMzVnI2X0hFbFlJUnQtWlZEUUotSVZGRnU0Unh3MA?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Nucor EVP query sells $1.46 million in NUE stock - Investing.com",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNNjY0ZTk0bnc0Q0I5ZXk2T3AxbldBaHd5SmpIZUtmbmlhSDhaUEhYRFJ2Qm1xX1ZTZm9hS0pjdGIyWXJyYVhMcmYzb0xkVDRqeG1jQk9Ibkh6d0JyRUhGdEhkWHFCUWp3czRPRmhOaEFfaTRjVGs1bFNTNmJyVDBfaWlUMnlCNkw5VmNtQjJ0VFoyZ2VleUR6MTg1anZoV0hLZTFSUjc0c0NkT1djMk9NRg?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Insider Sale: Executive Vice President of $NUE Sells 7,452 Shares - Quiver Quantitative",
+            "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOeGFfQThzbHFwa2hNMnZzb09SSFhPQ1NoWlRnazlpNkFFZkUtcF9yT3BleHJZMUlkQ1hfYUhoTEdzSDgyNnVwNm5kMkVtVlFGRDN0bWc5RU1LdUREcEtYMjNoV21aZTZuVldBTWdKalhNcE9MY0xkaGFIR3RaYVB6X3FxTV9qT29aSzZiWTlWQ3B6UWdsNllqRTNwNVEwTW82ZVc3TFZCdw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Nucor (NUE) is a Top-Ranked Value Stock: Should You Buy? - Nasdaq",
+            "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQZVJvd29GT2Q1Rmx5LUI4SXlMeHlqdDA5anJjZ3E5cURiSDJxQmdid0FpM3NGRHFaUUwxdVZoY1FrZjA4SHZGbmV0c21CeW1HbHFuaUhmLU5ST0VZd1dHOGowNkk5SkRkM1ltSFQ1RHl1R25HVHRtQmxnNTJ6dkVVTk5SU0lsZw?oc=5",
+            "body": ""
+          },
+          {
+            "title": "Is It Too Late To Consider Nucor (NUE) After Strong Multi Year Share Price Gains - Yahoo Finance",
+            "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPVWtON1FXNEJfTUNzZGpfOGFOaHd2WTZ5QzFlNkZ4YWlMZGtYZ3ZLTUQtMVJVVHRtejJWR19TSEdOSm5CaEQyamZjMEFZXzhUQU11WVlXa2hncUxtY0ZCbmFIalEtQWYxc1pDYXNKa2I0bEFBRVBvZ2RWX0xzcHlvdA?oc=5",
+            "body": ""
+          }
+        ],
+        "fetched_at": "2026-02-14 23:58"
+      }
+    }
+  ]
+}
