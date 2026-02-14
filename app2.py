@@ -276,7 +276,7 @@ with tab_2:
         draw_sentinel_grid_ui(vcp_items)
 
         # チャート描画（直近180日）
-        df_plot = DataEngine.get_data(t_input, "180D")
+        df_plot = DataEngine.get_data(t_input, "2y")
         if df_plot is not None and not df_plot.empty:
             df_recent = df_plot.last('180D')
             candlestick = go.Figure(data=[go.Candlestick(
@@ -287,11 +287,15 @@ with tab_2:
                 close=df_recent['Close']
             )])
             candlestick.update_layout(
-                template="plotly_dark",
-                height=400,
-                margin=dict(l=0, r=0, t=20, b=0),
-                xaxis_rangeslider_visible=False,
-                title=f"{t_input} - 直近6ヶ月"
+    template="plotly_dark",
+    height=400,
+    margin=dict(l=0, r=0, t=20, b=0),
+    xaxis_rangeslider_visible=False,
+    title=f"{t_input} - 直近6ヶ月"
+)
+candlestick.update_xaxes(
+    dtick="M1",              # 1ヶ月おき
+    tickformat="%b %Y"       # 例: Feb 2026
             )
             st.plotly_chart(candlestick, use_container_width=True)
 
