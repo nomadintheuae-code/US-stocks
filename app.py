@@ -15,14 +15,13 @@ import yfinance as yf
 from openai import OpenAI
 
 # ==============================================================================
-# 1. 外部エンジンのインポート (クラスのみをインポートしてエラーを回避)
+# 1. 外部エンジンのインポート (クラスのみインポート)
 # ==============================================================================
 try:
     from config import CONFIG
 except ImportError:
     CONFIG = {"STOP_LOSS_ATR": 2.0, "TARGET_R": 2.5}
 
-# engines/data.py からはロジックを持つクラスのみをインポート
 from engines.data import CurrencyEngine, DataEngine
 from engines.fundamental import FundamentalEngine
 from engines.news import NewsEngine
@@ -31,7 +30,7 @@ from engines.analysis import VCPAnalyzer, RSAnalyzer, StrategyValidator
 warnings.filterwarnings("ignore")
 
 # ==============================================================================
-# 2. 定数・パスの定義 (app.py 側で定義)
+# 2. 定数・パスの定義
 # ==============================================================================
 NOW = datetime.datetime.now()
 TODAY_STR = NOW.strftime("%Y-%m-%d")
@@ -41,7 +40,7 @@ WATCHLIST_FILE = Path("watchlist.json")
 PORTFOLIO_FILE = Path("portfolio.json")
 
 # ==============================================================================
-# 3. ヘルパー関数 (現金 1,000,000円 設定含む)
+# 3. ヘルパー関数
 # ==============================================================================
 
 def initialize_sentinel_state():
@@ -49,6 +48,7 @@ def initialize_sentinel_state():
     if "ai_analysis_text" not in st.session_state: st.session_state.ai_analysis_text = ""
     if "ai_market_text" not in st.session_state: st.session_state.ai_market_text = ""
     if "ai_port_text" not in st.session_state: st.session_state.ai_port_text = ""
+    if "language" not in st.session_state: st.session_state.language = "ja"
     if "quant_results_stored" not in st.session_state: st.session_state.quant_results_stored = None
 
 initialize_sentinel_state()
@@ -69,8 +69,17 @@ def save_portfolio_json(data: dict):
     with open(PORTFOLIO_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def load_watchlist_data() -> list:
+    if not WATCHLIST_FILE.exists(): return []
+    try:
+        with open(WATCHLIST_FILE, "r") as f: return json.load(f)
+    except: return []
+
+def save_watchlist_data(data: list):
+    with open(WATCHLIST_FILE, "w") as f: json.dump(data, f)
+
 def get_market_overview_live():
-    """SPY最新価格を強制取得"""
+    """SPY最新価格を強制取得 (異常値 $681 を回避)"""
     try:
         spy = yf.Ticker("SPY").history(period="3d")
         vix = yf.Ticker("^VIX").history(period="1d")
@@ -128,7 +137,7 @@ html, body, [class*="css"] { font-family: 'Rajdhani', sans-serif; background-col
 """
 
 # ==============================================================================
-# 5. メイン UI 描画
+# 5. メイン UI
 # ==============================================================================
 
 st.set_page_config(page_title="SENTINEL PRO", layout="wide", initial_sidebar_state="collapsed")
@@ -142,6 +151,7 @@ with st.sidebar:
         c_n, c_d = st.columns([4, 1])
         if c_n.button(t_n, key=f"side_{t_n}", use_container_width=True):
             st.session_state.target_ticker = t_n
+            st.session_state.trigger_analysis = True
             st.rerun()
         if c_d.button("×", key=f"rm_{t_n}"):
             wl_t.remove(t_n); save_watchlist_data(wl_t); st.rerun()
@@ -165,27 +175,29 @@ with tab_scan:
 
     # AI地合い分析ボタン
     if st.button("🤖 AI市場分析 (SENTINEL MARKET EYE)", use_container_width=True, type="primary"):
-        k = st.secrets.get("DEEPSEEK_API_KEY")
-        if k:
-            with st.spinner("AI 市場分析中..."):
-                n_txt = NewsEngine.format_for_prompt(NewsEngine.get_general_market())
-                act = len(s_df[s_df["status"]=="ACTION"]) if not s_df.empty else 0
+        key = st.secrets.get("DEEPSEEK_API_KEY")
+        if not key:
+            st.error("API Key Missing")
+        else:
+            with st.spinner("Analyzing Market Conditions..."):
+                n_data = NewsEngine.get_general_market()
+                n_txt = NewsEngine.format_for_prompt(n_data)
+                act_count = len(s_df[s_df["status"]=="ACTION"]) if not s_df.empty else 0
                 prompt = (
                     f"あなたはAI投資家SENTINEL。本日の米株市場を分析せよ。\n"
                     f"SPY: ${m_ctx['spy']:.2f} ({m_ctx['spy_change']:+.2f}%), VIX: {m_ctx['vix']:.2f}\n"
-                    f"SENTINELスキャン: ACTION銘柄 {act}件\n"
+                    f"SENTINELスキャン: ACTION銘柄 {act_count}件\n"
                     f"最新ニュース:\n{n_txt}\n\n"
-                    f"指示: 市場のフェーズ、ニュースから読み取れる懸念、推奨ポジションを600字以内で述べよ。最終判断[BULL/BEAR/NEUTRAL]を明記せよ。"
+                    f"指示: 市場のフェーズ、懸念点、推奨ポジションを600字以内で述べよ。最終判断[BULL/BEAR/NEUTRAL]を明記せよ。"
                 )
-                cl = OpenAI(api_key=k, base_url="https://api.deepseek.com")
+                cl = OpenAI(api_key=key, base_url="https://api.deepseek.com")
                 try:
                     res = cl.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
                     st.session_state.ai_market_text = res.choices[0].message.content.replace("$", r"\$")
-                except: st.error("AI分析エラー")
+                except Exception as e: st.error(f"AI Error: {e}")
 
     if st.session_state.ai_market_text: st.info(st.session_state.ai_market_text)
 
-    # グリッド表示
     draw_sentinel_grid_ui([
         {"label": "S&P 500 (SPY)", "value": f"${m_ctx['spy']:.2f}", "delta": f"{m_ctx['spy_change']:+.2f}%"},
         {"label": "VIX INDEX", "value": f"{m_ctx['vix']:.2f}"},
@@ -197,7 +209,7 @@ with tab_scan:
         st.markdown(f'<div class="section-header">🗺️ セクター別RSマップ</div>', unsafe_allow_html=True)
         s_df["vcp_score"] = s_df["vcp"].apply(lambda x: x.get("score", 0))
         m_fig = px.treemap(s_df, path=["sector", "ticker"], values="vcp_score", color="rs", color_continuous_scale="RdYlGn", range_color=[70, 100])
-        m_fig.update_layout(template="plotly_dark", height=500, margin=dict(t=0, b=0, l=0, r=0))
+        m_fig.update_layout(template="plotly_dark", height=600, margin=dict(t=0, b=0, l=0, r=0))
         st.plotly_chart(m_fig, use_container_width=True)
         
         st.markdown(f'<div class="section-header">📋 スキャン銘柄詳細データ</div>', unsafe_allow_html=True)
@@ -211,14 +223,22 @@ with tab_diag:
     st.markdown(f'<div class="section-header">🔍 リアルタイム定量スキャン</div>', unsafe_allow_html=True)
     t_input = st.text_input("ティッカーシンボル", value=st.session_state.target_ticker).upper().strip()
     c1, c2 = st.columns(2)
-    if c1.button("🚀 定量スキャン実行", type="primary", use_container_width=True) and t_input:
+    start_quant = c1.button("🚀 定量スキャン実行", type="primary", use_container_width=True)
+    add_wl = c2.button("⭐ ウォッチリストに追加", use_container_width=True)
+
+    if add_wl and t_input:
+        wl = load_watchlist_data()
+        if t_input not in wl: wl.append(t_input); save_watchlist_data(wl); st.success("Added")
+
+    if (start_quant or st.session_state.pop("trigger_analysis", False)) and t_input:
         with st.spinner(f"Scanning {t_input}..."):
             df_dat = DataEngine.get_data(t_input, "2y")
-            if df_dat is not None:
-                st.session_state.quant_results_stored = {
-                    "vcp": VCPAnalyzer.calculate(df_dat), "rs": RSAnalyzer.get_raw_score(df_dat),
-                    "pf": StrategyValidator.run(df_dat), "price": DataEngine.get_current_price(t_input), "ticker": t_input
-                }
+            if df_dat is not None and not df_dat.empty:
+                vcp_res = VCPAnalyzer.calculate(df_dat)
+                rs_val = RSAnalyzer.get_raw_score(df_dat)
+                pf_val = StrategyValidator.run(df_dat)
+                p_curr = DataEngine.get_current_price(t_input)
+                st.session_state.quant_results_stored = {"vcp": vcp_res, "rs": rs_val, "pf": pf_val, "price": p_curr, "ticker": t_input}
                 st.session_state.ai_analysis_text = ""
             else: st.error(f"Failed to fetch data for {t_input}.")
 
