@@ -258,6 +258,3 @@ class StrategyValidator:
             return round(min(10.0, float(pf)), 2)
         except Exception:
             return 1.0
-
-        except Exception:
-            return 1.0
