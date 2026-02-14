@@ -3,26 +3,24 @@ import numpy as np
 
 from config import CONFIG
 
-
 # ==============================================================================
-# 🎯 VCPAnalyzer（構造維持・ロジック改良版）
+# 🎯 VCPAnalyzer（改良版・内訳付き）
 # ==============================================================================
 
 class VCPAnalyzer:
     """
-    Mark Minervini VCP スコアリング（改良版・横並び解消）
-
-    Tightness  (40pt)
-    Volume     (30pt)
-    MA Align   (30pt)
+    Mark Minervini VCP スコアリング（改良版）
+    - Tightness  (40pt)
+    - Volume     (30pt)
+    - MA Align   (30pt)
+    - Pivot Bonus (最大5pt) → 合計 105pt
     """
 
     @staticmethod
     def calculate(df: pd.DataFrame) -> dict:
-
         try:
-            if df is None or len(df) < 80:
-                return _empty_vcp()
+            if df is None or len(df) < 130:
+                return VCPAnalyzer._empty_result()
 
             close = df["Close"]
             high = df["High"]
@@ -35,133 +33,140 @@ class VCPAnalyzer:
                 (high - close.shift()).abs(),
                 (low - close.shift()).abs(),
             ], axis=1).max(axis=1)
-
             atr = float(tr.rolling(14).mean().iloc[-1])
             if pd.isna(atr) or atr <= 0:
-                return _empty_vcp()
+                return VCPAnalyzer._empty_result()
 
             # =====================================================
-            # 1️⃣ Tightness（40pt 改良版）
+            # 1️⃣ Tightness（収縮度合い）- 40pt
             # =====================================================
-            periods = [20, 30, 40]
+            periods = [20, 30, 40, 60]
             ranges = []
-
             for p in periods:
                 h = float(high.iloc[-p:].max())
                 l = float(low.iloc[-p:].min())
                 ranges.append((h - l) / h)
 
-            avg_range = float(np.mean(ranges))
+            curr_range = ranges[0]
+            avg_range = float(np.mean(ranges[:3]))  # 20,30,40 の平均
 
-            # 正しい収縮判定（短期 < 中期 < 長期）
+            # 収縮推移（短期 < 中期 < 長期）
             is_contracting = ranges[0] < ranges[1] < ranges[2]
 
-            if avg_range < 0.12:
+            if avg_range < 0.10:
                 tight_score = 40
-            elif avg_range < 0.18:
+            elif avg_range < 0.15:
                 tight_score = 30
-            elif avg_range < 0.24:
+            elif avg_range < 0.20:
                 tight_score = 20
-            elif avg_range < 0.30:
+            elif avg_range < 0.28:
                 tight_score = 10
             else:
                 tight_score = 0
 
             if is_contracting:
                 tight_score += 5
-
             tight_score = min(40, tight_score)
-            range_pct = round(ranges[0], 4)
 
             # =====================================================
-            # 2️⃣ Volume（30pt 改良版）
+            # 2️⃣ Volume（出来高ドライアップ）- 30pt
             # =====================================================
-            v20 = float(volume.iloc[-20:].mean())
-            v40 = float(volume.iloc[-40:-20].mean())
-            v60 = float(volume.iloc[-60:-40].mean())
+            v20_avg = float(volume.iloc[-20:].mean())
+            v60_avg = float(volume.iloc[-60:-40].mean())
+            if pd.isna(v20_avg) or pd.isna(v60_avg):
+                return VCPAnalyzer._empty_result()
 
-            if pd.isna(v20) or pd.isna(v40) or pd.isna(v60):
-                return _empty_vcp()
+            v_ratio = v20_avg / v60_avg if v60_avg > 0 else 1.0
 
-            ratio = v20 / v60 if v60 > 0 else 1.0
-
-            if ratio < 0.50:
+            if v_ratio < 0.45:
                 vol_score = 30
-            elif ratio < 0.65:
+            elif v_ratio < 0.60:
                 vol_score = 25
-            elif ratio < 0.80:
+            elif v_ratio < 0.75:
                 vol_score = 15
             else:
                 vol_score = 0
 
-            is_dryup = ratio < 0.80
-            vol_ratio = round(ratio, 2)
+            is_dryup = v_ratio < 0.75
 
             # =====================================================
-            # 3️⃣ MA Alignment（変更なし）
+            # 3️⃣ MA Alignment（移動平均トレンド）- 30pt
             # =====================================================
             ma50 = float(close.rolling(50).mean().iloc[-1])
+            ma150 = float(close.rolling(150).mean().iloc[-1])
             ma200 = float(close.rolling(200).mean().iloc[-1])
             price = float(close.iloc[-1])
 
-            trend_score = (
-                (10 if price > ma50 else 0) +
-                (10 if ma50 > ma200 else 0) +
-                (10 if price > ma200 else 0)
-            )
+            ma_score = 0
+            if price > ma50:
+                ma_score += 10
+            if ma50 > ma150:
+                ma_score += 10
+            if ma150 > ma200:
+                ma_score += 10
 
             # =====================================================
-            # 🔥 Pivot接近ボーナス（最大+5）
+            # 4️⃣ Pivot Bonus（ピボット接近ボーナス）- 最大5pt
             # =====================================================
-            pivot = float(high.iloc[-40:].max())
+            pivot = float(high.iloc[-50:].max())
             distance = (pivot - price) / pivot
 
             pivot_bonus = 0
-            if 0 <= distance <= 0.05:
+            if 0 <= distance <= 0.04:
                 pivot_bonus = 5
-            elif 0.05 < distance <= 0.08:
+            elif 0.04 < distance <= 0.08:
                 pivot_bonus = 3
 
+            # =====================================================
+            # シグナル生成
+            # =====================================================
             signals = []
             if tight_score >= 35:
-                signals.append("Multi-Stage Contraction")
+                signals.append("Tight Base (VCP)")
+            if is_contracting:
+                signals.append("V-Contraction Detected")
             if is_dryup:
-                signals.append("Volume Dry-Up")
-            if trend_score == 30:
-                signals.append("MA Aligned")
+                signals.append("Volume Dry-up Detected")
+            if ma_score >= 20:
+                signals.append("Trend Alignment OK")
             if pivot_bonus > 0:
-                signals.append("Near Pivot")
+                signals.append("Near Pivot Point")
 
             return {
-                "score": int(max(0, tight_score + vol_score + trend_score + pivot_bonus)),
+                "score": int(min(105, tight_score + vol_score + ma_score + pivot_bonus)),
                 "atr": atr,
                 "signals": signals,
                 "is_dryup": is_dryup,
-                "range_pct": range_pct,
-                "vol_ratio": vol_ratio,
+                "range_pct": round(curr_range, 4),
+                "vol_ratio": round(v_ratio, 2),
+                "breakdown": {
+                    "tight": tight_score,
+                    "vol": vol_score,
+                    "ma": ma_score,
+                    "pivot": pivot_bonus
+                }
             }
 
         except Exception:
-            return _empty_vcp()
+            return VCPAnalyzer._empty_result()
 
-
-def _empty_vcp() -> dict:
-    return {
-        "score": 0,
-        "atr": 0.0,
-        "signals": [],
-        "is_dryup": False,
-        "range_pct": 0.0,
-        "vol_ratio": 1.0
-    }
-
+    @staticmethod
+    def _empty_result() -> dict:
+        return {
+            "score": 0,
+            "atr": 0.0,
+            "signals": [],
+            "is_dryup": False,
+            "range_pct": 0.0,
+            "vol_ratio": 1.0,
+            "breakdown": {"tight": 0, "vol": 0, "ma": 0, "pivot": 0}
+        }
 
 # ==============================================================================
 # 📈 RSAnalyzer（変更なし）
 # ==============================================================================
 
 class RSAnalyzer:
-
     @staticmethod
     def get_raw_score(df: pd.DataFrame) -> float:
         try:
@@ -182,22 +187,17 @@ class RSAnalyzer:
     def assign_percentiles(raw_list: list[dict]) -> list[dict]:
         if not raw_list:
             return raw_list
-
         raw_list.sort(key=lambda x: x["raw_rs"])
         total = len(raw_list)
-
         for i, item in enumerate(raw_list):
             item["rs_rating"] = int(((i + 1) / total) * 99) + 1
-
         return raw_list
-
 
 # ==============================================================================
 # 🔬 StrategyValidator（変更なし）
 # ==============================================================================
 
 class StrategyValidator:
-
     @staticmethod
     def run(df: pd.DataFrame) -> float:
         try:
@@ -226,33 +226,25 @@ class StrategyValidator:
             start = max(50, len(df) - 250)
 
             for i in range(start, len(df)):
-
                 if in_pos:
                     if float(low.iloc[i]) <= stop_p:
                         trades.append(-1.0)
                         in_pos = False
-
                     elif float(high.iloc[i]) >= entry_p + (entry_p - stop_p) * target_mult:
                         trades.append(target_mult)
                         in_pos = False
-
                     elif i == len(df) - 1:
                         risk = entry_p - stop_p
                         if risk > 0:
                             r = (float(close.iloc[i]) - entry_p) / risk
                             trades.append(r)
                         in_pos = False
-
                 else:
                     if i < 20:
                         continue
-
-                    pivot = float(high.iloc[i - 20:i].max())
+                    pivot = float(high.iloc[i-20:i].max())
                     ma50 = float(close.rolling(50).mean().iloc[i])
-
-                    if (float(close.iloc[i]) > pivot and
-                        float(close.iloc[i]) > ma50):
-
+                    if float(close.iloc[i]) > pivot and float(close.iloc[i]) > ma50:
                         in_pos = True
                         entry_p = float(close.iloc[i])
                         stop_p = entry_p - float(atr.iloc[i]) * stop_mult
@@ -263,8 +255,9 @@ class StrategyValidator:
             pos = sum(t for t in trades if t > 0)
             neg = abs(sum(t for t in trades if t < 0))
             pf = pos / neg if neg > 0 else (5.0 if pos > 0 else 1.0)
-
             return round(min(10.0, float(pf)), 2)
+        except Exception:
+            return 1.0
 
         except Exception:
             return 1.0
