@@ -31,7 +31,7 @@ from engines.analysis import VCPAnalyzer, RSAnalyzer, StrategyValidator
 warnings.filterwarnings("ignore")
 
 # ==============================================================================
-# 2. 定数・パスの定義 (ImportError 回避のため app.py 内に集約)
+# 2. 定数・パスの定義
 # ==============================================================================
 NOW = datetime.datetime.now()
 TODAY_STR = NOW.strftime("%Y-%m-%d")
@@ -82,7 +82,7 @@ def save_watchlist_data(data: list):
     with open(WATCHLIST_FILE, "w") as f: json.dump(data, f)
 
 def get_market_overview_live():
-    """SPY最新価格を強制取得（ローカルキャッシュの異常値を回避）"""
+    """SPY最新価格を強制取得（古い異常値を回避）"""
     try:
         spy_ticker = yf.Ticker("SPY")
         spy_hist = spy_ticker.history(period="3d")
@@ -102,7 +102,7 @@ def get_market_overview_live():
         return {"spy": 0, "spy_change": 0, "vix": 0}
 
 def draw_sentinel_grid_ui(metrics: List[Dict[str, Any]]):
-    """Sentinel Pro スタイルの 4カラムグリッド UI"""
+    """4カラムグリッド UI"""
     html_out = '<div class="sentinel-grid">'
     for m in metrics:
         delta_s = ""
@@ -183,30 +183,26 @@ with tab_scan:
                 s_df = pd.DataFrame(s_data.get("qualified_full", []))
             except: pass
 
-    # --- AI市場分析ボタン ---
+    # AI地合い分析
     if st.button("🤖 AI市場分析 (SENTINEL MARKET EYE)", use_container_width=True, type="primary"):
         key = st.secrets.get("DEEPSEEK_API_KEY")
         if not key:
             st.error("DeepSeek API Key が Secrets に設定されていません。")
         else:
             with st.spinner("AI が市場の深層を解析中..."):
-                # 市場ニュース収集
                 news_data = NewsEngine.get_general_market()
                 news_txt = NewsEngine.format_for_prompt(news_data)
-                
-                # スキャン統計
                 act_cnt = len(s_df[s_df["status"]=="ACTION"]) if not s_df.empty else 0
-                wait_cnt = len(s_df[s_df["status"]=="WAIT"]) if not s_df.empty else 0
                 top_sectors = list(s_df["sector"].value_counts().keys())[:3] if not s_df.empty else ["Unknown"]
 
                 prompt = (
                     f"あなたは「ウォール街のAI投資家SENTINEL」です。提供されたデータに基づき、本日の市場環境を冷徹に分析せよ。\n"
                     f"【現在日時】: {TODAY_STR}\n"
                     f"【指数状況】SPY: ${m_ctx['spy']:.2f} ({m_ctx['spy_change']:+.2f}%), VIX: {m_ctx['vix']:.2f}\n"
-                    f"【SENTINEL統計】買いシグナル(ACTION): {act_cnt}件, 待機(WAIT): {wait_cnt}件\n"
+                    f"【SENTINEL統計】買いシグナル(ACTION): {act_cnt}件\n"
                     f"【主導セクター】: {', '.join(top_sectors)}\n"
                     f"【最新ニュース】\n{news_txt}\n\n"
-                    f"指示: 市場フェーズ（上昇/調整/警戒）を定義し、ニュースから読み取れる材料を抽出せよ。600字以内。文末に「最終判断: [BULL/BEAR/NEUTRAL]」を明記せよ。"
+                    f"指示: 市場フェーズ（上昇/調整/警戒）を定義し、600字以内で分析せよ。文末に「最終判断: [BULL/BEAR/NEUTRAL]」を明記せよ。"
                 )
                 
                 cl = OpenAI(api_key=key, base_url="https://api.deepseek.com")
@@ -216,10 +212,8 @@ with tab_scan:
                 except Exception as e:
                     st.error(f"AI Error: {e}")
 
-    if st.session_state.ai_market_text:
-        st.info(st.session_state.ai_market_text)
+    if st.session_state.ai_market_text: st.info(st.session_state.ai_market_text)
 
-    # グリッド
     draw_sentinel_grid_ui([
         {"label": "S&P 500 (SPY)", "value": f"${m_ctx['spy']:.2f}", "delta": f"{m_ctx['spy_change']:+.2f}%"},
         {"label": "VIX INDEX", "value": f"{m_ctx['vix']:.2f}"},
@@ -234,16 +228,12 @@ with tab_scan:
         m_fig.update_layout(template="plotly_dark", height=600, margin=dict(t=0, b=0, l=0, r=0))
         st.plotly_chart(m_fig, use_container_width=True)
         
-        # --- スキャン詳細データテーブル (KeyError対策済み) ---
         st.markdown(f'<div class="section-header">📋 スキャン銘柄詳細リスト</div>', unsafe_allow_html=True)
         target_cols = ["ticker", "status", "vcp_score", "rs", "sector", "industry"]
         available_cols = [c for c in target_cols if c in s_df.columns]
-        st.dataframe(
-            s_df[available_cols].sort_values("vcp_score", ascending=False),
-            use_container_width=True, height=400
-        )
+        st.dataframe(s_df[available_cols].sort_values("vcp_score", ascending=False), use_container_width=True, height=400)
 
-# --- Tab 2: AI診断 (個別銘柄) ---
+# --- Tab 2: AI診断 ---
 with tab_diag:
     st.markdown(f'<div class="section-header">🔍 リアルタイム定量スキャン</div>', unsafe_allow_html=True)
     t_input = st.text_input("ティッカーシンボル", value=st.session_state.target_ticker).upper().strip()
@@ -251,11 +241,11 @@ with tab_diag:
     c1, c2 = st.columns(2)
     if c1.button("🚀 定量スキャン実行", type="primary", use_container_width=True) and t_input:
         with st.spinner(f"Analyzing {t_input}..."):
-            df_raw_fetch = DataEngine.get_data(t_input, "2y")
-            if df_raw_fetch is not None and not df_raw_fetch.empty:
-                vcp_res = VCPAnalyzer.calculate(df_raw_fetch)
-                rs_val = RSAnalyzer.get_raw_score(df_raw_fetch)
-                pf_val = StrategyValidator.run(df_raw_fetch)
+            df_raw = DataEngine.get_data(t_input, "2y")
+            if df_raw is not None and not df_raw.empty:
+                vcp_res = VCPAnalyzer.calculate(df_raw)
+                rs_val = RSAnalyzer.get_raw_score(df_raw)
+                pf_val = StrategyValidator.run(df_raw)
                 p_curr = DataEngine.get_current_price(t_input)
                 st.session_state.quant_results_stored = {"vcp": vcp_res, "rs": rs_val, "pf": pf_val, "price": p_curr, "ticker": t_input}
                 st.session_state.ai_analysis_text = ""
@@ -276,31 +266,17 @@ with tab_diag:
         # チャート
         df_chart = DataEngine.get_data(t_input, "2y")
         if df_chart is not None:
-            # 修正: df_raw を使わず直前に取得した df_chart をすべての要素に適用
-            fig = go.Figure(data=[go.Candlestick(
-                x=df_chart.index, 
-                open=df_chart['Open'], 
-                high=df_chart['High'], 
-                low=df_chart['Low'], 
-                close=df_chart['Close']
-            )])
+            fig = go.Figure(data=[go.Candlestick(x=df_chart.index, open=df_chart['Open'], high=df_chart['High'], low=df_chart['Low'], close=df_chart['Close'])])
             fig.update_layout(template="plotly_dark", height=400, margin=dict(l=0,r=0,t=20,b=0), xaxis_rangeslider_visible=False)
             st.plotly_chart(fig, use_container_width=True)
 
-        # AI診断レポートボタン
         if st.button("🤖 AI診断レポート生成", use_container_width=True):
             k = st.secrets.get("DEEPSEEK_API_KEY")
             if k:
                 with st.spinner(f"SENTINEL AI が {t_input} を深層診断中..."):
                     n_txt = NewsEngine.format_for_prompt(NewsEngine.get(t_input))
                     f_dat = FundamentalEngine.get(t_input)
-                    prompt = (
-                        f"あなたはAI投資家SENTINEL。銘柄 {t_input} を診断せよ。\n"
-                        f"【定量データ】価格: ${q['price']}, VCP: {q['vcp']['score']}, RS: {q['rs']*100:.1f}%, PF: {q['pf']}\n"
-                        f"【財務】Sector: {f_dat.get('sector')}, Industry: {f_dat.get('industry')}, RevenueGrowth: {f_dat.get('revenue_growth')}\n"
-                        f"【ニュース】\n{n_txt}\n\n"
-                        f"指示: チャートの形状、財務、ニュースから読み取れる好材料/悪材料を整理し、600字以内で投資助言せよ。最終判断[BUY/WAIT/SELL]を提示せよ。"
-                    )
+                    prompt = f"銘柄:{t_input} 価格:${q['price']} VCP:{q['vcp']['score']} RS:{q['rs']*100:.1f}%\n財務: {f_dat}\nニュース:{n_txt}\n指示:600字以内で最終判断[BUY/WAIT/SELL]を提示せよ。"
                     cl = OpenAI(api_key=k, base_url="https://api.deepseek.com")
                     try:
                         res = cl.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
@@ -313,28 +289,33 @@ with tab_port:
     st.markdown(f'<div class="section-header">💼 ポートフォリオリスク管理</div>', unsafe_allow_html=True)
     p_j = load_portfolio_json()
 
-    # 資金管理
+    # 口座残高
     with st.expander("💰 資金管理 (口座残高入力)", expanded=True):
         c1, c2, c3 = st.columns(3)
-        # 指示通り初期値を 1,000,000円
         in_jpy = c1.number_input("預り金 (JPY)", value=int(p_j["cash_jpy"]), step=1000)
         in_usd = c2.number_input("USドル (USD)", value=float(p_j["cash_usd"]), step=100.0)
         if c3.button("残高を更新して保存", use_container_width=True):
             p_j["cash_jpy"] = in_jpy; p_j["cash_usd"] = in_usd
             save_portfolio_json(p_j); st.success("残高を更新しました。"); st.rerun()
 
-    # 資産集計
+    # 資産集計とセクター自動取得
     pos_m = p_j.get("positions", {})
     total_stock_usd = 0.0
     pos_details = []
     for t, d in pos_m.items():
+        # 【自動取得】FundamentalEngineを使用してセクター情報を取得
+        fund_info = FundamentalEngine.get(t)
+        sec_name = fund_info.get("sector", "Unknown")
+        ind_name = fund_info.get("industry", "Unknown")
+        
         curr_p = DataEngine.get_current_price(t)
-        val_usd = curr_p * d['shares']; total_stock_usd += val_usd
-        fund = FundamentalEngine.get(t)
+        val_usd = curr_p * d['shares']
+        total_stock_usd += val_usd
+        pnl_pct = ((curr_p / d['avg_cost']) - 1) * 100 if d['avg_cost'] > 0 else 0
+        
         pos_details.append({
-            "ticker": t, "sector": fund.get("sector", "Unknown"), 
-            "val": val_usd, "pnl": ((curr_p / d['avg_cost']) - 1) * 100,
-            "shares": d['shares'], "cost": d['avg_cost'], "curr": curr_p
+            "ticker": t, "sector": sec_name, "industry": ind_name,
+            "val": val_usd, "pnl": pnl_pct, "shares": d['shares'], "cost": d['avg_cost'], "curr": curr_p
         })
 
     stock_val_jpy = total_stock_usd * fx_rate
@@ -348,23 +329,20 @@ with tab_port:
         {"label": "USドル (USD)", "value": f"¥{usd_cash_jpy:,.0f}", "delta": f"(${p_j['cash_usd']:.2f})"}
     ])
 
-    # --- AIポートフォリオ診断機能 ---
+    # AIポートフォリオ診断
     if st.button("🛡️ AIポートフォリオ診断 (SENTINEL GUARD)", use_container_width=True, type="primary"):
         key = st.secrets.get("DEEPSEEK_API_KEY")
-        if not key:
-            st.error("API Key Missing")
-        else:
+        if key:
             with st.spinner("ポートフォリオのリスクを診断中..."):
                 m_ctx = get_market_overview_live()
-                p_text = "\n".join([f"- {x['ticker']} [{x['sector']}]: ${x['val']:.2f} ({x['pnl']:+.1f}%)" for x in pos_details])
-                
+                # セクター情報を含めた詳細リストをプロンプトに渡す
+                p_text = "\n".join([f"- {x['ticker']} [{x['sector']} / {x['industry']}]: ${x['val']:.2f} (PnL: {x['pnl']:+.1f}%)" for x in pos_details])
                 prompt = (
                     f"あなたは「AI投資家SENTINEL」です。現在の保有資産のリスクを診断せよ。\n"
-                    f"【現在日時】: {TODAY_STR}\n"
                     f"【資産状況】総資産: ¥{total_equity_jpy:,.0f}, 現金比率: {(p_j['cash_jpy']+usd_cash_jpy)/total_equity_jpy*100:.1f}%\n"
                     f"【市場環境】SPY: ${m_ctx['spy']:.2f}, VIX: {m_ctx['vix']:.2f}\n"
                     f"【保有ポートフォリオ】\n{p_text}\n\n"
-                    f"指示: セクター集中リスクの有無、現金比率の妥当性、現在のボラティリティへの対策を600字以内で論理的に述べよ。"
+                    f"指示: セクター集中リスクの有無、現金比率の妥当性、現在のボラティリティへの対策を600字以内で助言せよ。"
                 )
                 cl = OpenAI(api_key=key, base_url="https://api.deepseek.com")
                 try:
@@ -372,8 +350,7 @@ with tab_port:
                     st.session_state.ai_port_text = res_p.choices[0].message.content.replace("$", r"\$")
                 except: st.error("AI分析エラー")
 
-    if st.session_state.ai_port_text:
-        st.info(st.session_state.ai_port_text)
+    if st.session_state.ai_port_text: st.info(st.session_state.ai_port_text)
 
     # ポジション詳細
     if pos_m:
@@ -382,8 +359,9 @@ with tab_port:
             cls = "profit" if p["pnl"] >= 0 else "urgent"
             pnl_c = "pnl-pos" if p["pnl"] >= 0 else "pnl-neg"
             st.markdown(f'''<div class="pos-card {cls}">
-<div style="display: flex; justify-content: space-between; align-items: center;"><b>{p['ticker']}</b> ({p['sector']}) <span class="{pnl_c}">{p['pnl']:+.2f}%</span></div>
-<div style="font-size: 0.9rem; margin-top: 5px;">{p['shares']} shares @ ${p['cost']:.2f} (Live: ${p['curr']:.2f})</div>
+<div style="display: flex; justify-content: space-between; align-items: center;"><b>{p['ticker']}</b> <span class="{pnl_c}">{p['pnl']:+.2f}%</span></div>
+<div style="font-size: 0.9rem; color: #58a6ff; margin-top: 2px;">{p['sector']} / {p['industry']}</div>
+<div style="font-size: 0.9rem; margin-top: 8px;">{p['shares']} shares @ ${p['cost']:.2f} (Live: ${p['curr']:.2f})</div>
 <div style="font-size: 0.9rem; color: #8b949e; margin-top: 5px;">評価額: ¥{p['val']*fx_rate:,.0f} (${p['val']:.2f})</div>
 </div>''', unsafe_allow_html=True)
             if st.button(f"決済/削除 {p['ticker']}", key=f"cl_{p['ticker']}"):
@@ -397,5 +375,5 @@ with tab_port:
             p_j["positions"][ft] = {"shares": fs, "avg_cost": fc}; save_portfolio_json(p_j); st.rerun()
 
 st.divider()
-st.caption(f"🛡️ SENTINEL PRO SYSTEM | CORE ENGINE: MODULAR | UI: V7.4")
+st.caption(f"🛡️ SENTINEL PRO SYSTEM | CORE ENGINE: MODULAR | UI: V7.5")
 
