@@ -175,7 +175,7 @@ tab_1, tab_2, tab_3 = st.tabs(["📊 マーケットスキャン", "🔍 AI診�
 with tab_1:
     st.markdown(f'<div class="section-header">📊 マーケットスキャン (地合い分析)</div>', unsafe_allow_html=True)
     m_info = get_market_overview_live() 
-    
+
     scan_df = pd.DataFrame()
     if RESULTS_DIR.exists():
         files = sorted(RESULTS_DIR.glob("*.json"), reverse=True)
@@ -195,19 +195,12 @@ with tab_1:
                 m_news = NewsEngine.format_for_prompt(NewsEngine.get_general_market())
                 act_n = len(scan_df[scan_df["status"]=="ACTION"]) if not scan_df.empty else 0
                 prompt = (
-                    f"あなたは金融アシスタントです。以下の情報を基に、投資家が知るべき最重要ポイントを"
-    f"**簡潔に箇条書き（3〜5項目）** でまとめてください。\n"
-    f"・全体で400文字程度に収めてください。\n"
-    f"・専門用語は平易に言い換えてください。\n\n"
-    f"【データ】\n"
-    f"銘柄: {t_input}\n"
-    f"現在値: ${res_q['price']}\n"
-    f"VCPスコア: {res_q['vcp']['score']}/105\n"
-    f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
-    f"財務情報: {fund_t}\n"
-    f"直近ニュース: {news_t}\n\n"
-    f"※注意：売買推奨は行わず、あくまでデータの客観的な読み解き方を示してください。"
-)"
+                    f"あなたは金融データのアシスタントです。以下の市場データに基づき、"
+                    f"投資家が考慮すべき客観的なポイントを教育目的で列挙してください。\n"
+                    f"SPY: ${m_info['spy']:.2f} ({m_info['spy_change']:+.2f}%), VIX: {m_info['vix']:.2f}\n"
+                    f"シグナル銘柄数: {act_n}\n"
+                    f"最新ニュース:\n{m_news}\n\n"
+                    f"注意：投資判断は行わず、あくまでデータの解説に留めてください。"
                 )
                 cl = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
                 try:
@@ -225,14 +218,14 @@ with tab_1:
         {"label": "アクション銘柄", "value": len(scan_df[scan_df["status"]=="ACTION"]) if not scan_df.empty else 0},
         {"label": "ウォッチ銘柄", "value": len(scan_df[scan_df["status"]=="WAIT"]) if not scan_df.empty else 0}
     ])
-    
+
     if not scan_df.empty:
         st.markdown(f'<div class="section-header">🗺️ セクター別RSマップ</div>', unsafe_allow_html=True)
         scan_df["vcp_score"] = scan_df["vcp"].apply(lambda x: x.get("score", 0))
         treemap_fig = px.treemap(scan_df, path=["sector", "ticker"], values="vcp_score", color="rs", color_continuous_scale="RdYlGn", range_color=[70, 100])
         treemap_fig.update_layout(template="plotly_dark", height=600, margin=dict(t=0, b=0, l=0, r=0))
         st.plotly_chart(treemap_fig, use_container_width=True)
-        
+
         st.markdown(f'<div class="section-header">📋 スキャン銘柄詳細リスト</div>', unsafe_allow_html=True)
         t_cols = ["ticker", "status", "vcp_score", "rs", "sector", "industry"]
         a_cols = [c for c in t_cols if c in scan_df.columns]
@@ -244,7 +237,7 @@ with tab_1:
 with tab_2:
     st.markdown(f'<div class="section-header">🔍 リアルタイム定量スキャン</div>', unsafe_allow_html=True)
     t_input = st.text_input("ティッカーシンボル", value=st.session_state.target_ticker).upper().strip()
-    
+
     col_a, col_b = st.columns(2)
     if col_a.button("🚀 定量スキャン実行", type="primary", use_container_width=True) and t_input:
         with st.spinner(f"Scanning {t_input}..."):
@@ -257,7 +250,7 @@ with tab_2:
                 st.session_state.quant_results_stored = {"vcp": v_res, "rs": rs_v, "pf": pf_v, "price": p_c, "ticker": t_input}
                 st.session_state.ai_analysis_text = ""
             else: st.error(f"{t_input} データ取得不可")
-    
+
     if col_b.button("⭐ ウォッチリスト追加", use_container_width=True) and t_input:
         wl_list = load_watchlist_data()
         if t_input not in wl_list: wl_list.append(t_input); save_watchlist_data(wl_list); st.success(f"Added {t_input}")
@@ -270,7 +263,7 @@ with tab_2:
             {"label": "📈 PF", "value": f"x{res_q['pf']:.2f}"},
             {"label": "📏 RSモメンタム", "value": f"{res_q['rs']*100:+.1f}%" if res_q['rs'] != -999 else "N/A"}
         ])
-        
+
         # チャート描画
         df_plot = DataEngine.get_data(t_input, "2y")
         if df_plot is not None:
@@ -285,12 +278,19 @@ with tab_2:
                     news_t = NewsEngine.format_for_prompt(NewsEngine.get(t_input))
                     fund_t = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
                     p_text = (
-                        f"あなたは金融アシスタントです。以下の情報をもとに、"
-                        f"投資判断の参考となる客観的な解説を提供してください。\n"
-                        f"銘柄:{t_input} 現在値:${res_q['price']} VCPスコア:{res_q['vcp']['score']} RS:{res_q['rs']*100:.1f}%\n"
-                        f"財務情報: {fund_t}\n"
-                        f"ニュース: {news_t}\n\n"
-                        f"注意：売買推奨は行わず、データの読み解き方や注目点を説明してください。"
+                        f"あなたは金融アシスタントです。以下の情報を基に、投資家が投資判断において知るべき最重要ポイントを"
+    f"**簡潔に箇条書き（3〜5項目）** でまとめてください。\n"
+    f"・全体で400文字程度に収めてください。\n"
+    f"・専門用語は平易に言い換えてください。\n\n"
+    f"【データ】\n"
+    f"銘柄: {t_input}\n"
+    f"現在値: ${res_q['price']}\n"
+    f"VCPスコア: {res_q['vcp']['score']}/105\n"
+    f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
+    f"財務情報: {fund_t}\n"
+    f"直近ニュース: {news_t}\n\n"
+    f"※注意：売買推奨は行わず、あくまでデータの客観的な読み解き方を示してください。"
+)
                     )
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
                     try:
@@ -327,7 +327,7 @@ with tab_3:
         f_info = FundamentalEngine.get(tkr)
         s_name = f_info.get("sector", "Unknown")
         i_name = f_info.get("industry", "Unknown")
-        
+
         # フォールバック
         if s_name == "Unknown":
             try:
@@ -340,11 +340,11 @@ with tab_3:
         if not c_price:
             try: c_price = yf.Ticker(tkr).fast_info.get('lastPrice')
             except: c_price = data.get('avg_cost', 0)
-        
+
         v_usd = c_price * data['shares']
         agg_stock_usd += v_usd
         p_pct = ((c_price / data['avg_cost']) - 1) * 100 if data['avg_cost'] > 0 else 0
-        
+
         detailed_positions.append({
             "ticker": tkr, "sector": s_name, "industry": i_name,
             "val": v_usd, "pnl": p_pct, "shares": data['shares'], "cost": data['avg_cost'], "curr": c_price
@@ -381,7 +381,7 @@ with tab_3:
                     disclaimer = "\n\n※この解説はAIによる参考情報であり、投資助言ではありません。"
                     st.session_state.ai_port_text = res_guard.choices[0].message.content.replace("$", r"\$") + disclaimer
                 except: st.error("AI Error")
-    
+
     if st.session_state.ai_port_text: st.info(st.session_state.ai_port_text)
 
     # 保有ポジション詳細表示
