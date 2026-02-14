@@ -60,7 +60,7 @@ class DataEngine:
                 period=period,
                 progress=False,
                 auto_adjust=True,
-                repair=True  # 最近のyfinanceで便利なオプション
+                repair=True
             )
             if df is None or df.empty or len(df) < 150:
                 return None
@@ -107,6 +107,63 @@ class DataEngine:
 
         except Exception:
             return None
+
+    @staticmethod
+    def get_atr(ticker: str, period: int = 14) -> float:
+        """
+        ATR(14) を算出して返す。
+        ポートフォリオのダイナミックストップ計算に使用。
+        失敗時は 1.5 を返す（フォールバック値）。
+        """
+        try:
+            # まずキャッシュ済みデータを優先利用（余分なAPI呼び出しを避ける）
+            cache_file = CACHE_DIR / f"{ticker}.pkl"
+            df = None
+
+            if cache_file.exists():
+                try:
+                    with open(cache_file, "rb") as f:
+                        df = pickle.load(f)
+                except Exception:
+                    pass
+
+            # キャッシュがなければ90日分だけ取得（軽量）
+            if df is None or df.empty:
+                try:
+                    df = yf.download(
+                        ticker,
+                        period="90d",
+                        progress=False,
+                        auto_adjust=True,
+                    )
+                    if isinstance(df.columns, pd.MultiIndex):
+                        df.columns = df.columns.get_level_values(0)
+                except Exception:
+                    return 1.5
+
+            if df is None or df.empty or len(df) < period + 1:
+                return 1.5
+
+            # ATR 計算
+            high  = df["High"]
+            low   = df["Low"]
+            close = df["Close"]
+
+            tr = pd.concat([
+                high - low,
+                (high - close.shift(1)).abs(),
+                (low  - close.shift(1)).abs(),
+            ], axis=1).max(axis=1)
+
+            atr_val = float(tr.rolling(period).mean().iloc[-1])
+
+            if pd.isna(atr_val) or atr_val <= 0:
+                return 1.5
+
+            return round(atr_val, 4)
+
+        except Exception:
+            return 1.5
 
     @staticmethod
     def get_sector(ticker: str) -> str:
