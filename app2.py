@@ -26,6 +26,8 @@ from engines.data import CurrencyEngine, DataEngine
 from engines.fundamental import FundamentalEngine
 from engines.news import NewsEngine
 from engines.analysis import VCPAnalyzer, RSAnalyzer, StrategyValidator
+# 追加: 新戦略エンジン
+from engines.ecr_strategy import ECRStrategyEngine
 
 warnings.filterwarnings("ignore")
 
@@ -149,9 +151,7 @@ st.markdown(GLOBAL_STYLE, unsafe_allow_html=True)
 # --- グローバル免責事項 ---
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "⚠️ 本アプリは投資助言を提供するものではありません。"
-    "全ての投資判断は自己責任で行ってください。"
-    "データは情報提供のみを目的としています。"
+    "⚠️ 本アプリは投資助言ではありません。BYOKモデルによる個人用分析ツールです。"
 )
 
 # --- サイドバー ---
@@ -167,7 +167,7 @@ with st.sidebar:
             wl_data.remove(ticker_name); save_watchlist_data(wl_data); st.rerun()
 
 fx_val = CurrencyEngine.get_usd_jpy()
-tab_1, tab_2, tab_3 = st.tabs(["📊 マーケットスキャン", "🔍 AI診断", "💼 ポートフォリオ"])
+tab_1, tab_2, tab_3 = st.tabs(["📊 マーケットスキャン", "🔍 戦略診断(ECR)", "💼 ポートフォリオ"])
 
 # ------------------------------------------------------------------------------
 # TAB 1: マーケットスキャン
@@ -231,22 +231,30 @@ with tab_1:
         st.dataframe(scan_df[a_cols].sort_values("vcp_score", ascending=False), use_container_width=True, height=400)
 
 # ------------------------------------------------------------------------------
-# TAB 2: AI診断 (個別分析)
+# TAB 2: AI診断 (ECR戦略統合版)
 # ------------------------------------------------------------------------------
 with tab_2:
-    st.markdown(f'<div class="section-header">🔍 リアルタイム定量スキャン</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header">🔍 ECR戦略スキャン (V3.0)</div>', unsafe_allow_html=True)
     t_input = st.text_input("ティッカーシンボル", value=st.session_state.target_ticker).upper().strip()
 
     col_a, col_b = st.columns(2)
-    if col_a.button("🚀 定量スキャン実行", type="primary", use_container_width=True) and t_input:
-        with st.spinner(f"Scanning {t_input}..."):
+    if col_a.button("🚀 戦略スキャン実行", type="primary", use_container_width=True) and t_input:
+        with st.spinner(f"ECR Analyzing {t_input}..."):
             df_full = DataEngine.get_data(t_input, "2y")
             if df_full is not None and not df_full.empty:
+                # 従来のスキャン
                 v_res = VCPAnalyzer.calculate(df_full)
                 rs_v = RSAnalyzer.get_raw_score(df_full)
                 pf_v = StrategyValidator.run(df_full)
                 p_c = DataEngine.get_current_price(t_input)
-                st.session_state.quant_results_stored = {"vcp": v_res, "rs": rs_v, "pf": pf_v, "price": p_c, "ticker": t_input}
+                
+                # 新しいECR戦略スキャン
+                ecr_res = ECRStrategyEngine.analyze_single(t_input, df_full)
+                
+                st.session_state.quant_results_stored = {
+                    "vcp": v_res, "rs": rs_v, "pf": pf_v, "price": p_c, "ticker": t_input,
+                    "ecr": ecr_res # 新ロジック結果を追加
+                }
                 st.session_state.ai_analysis_text = ""
             else: st.error(f"{t_input} データ取得不可")
 
@@ -256,16 +264,29 @@ with tab_2:
 
     if st.session_state.quant_results_stored and st.session_state.quant_results_stored["ticker"] == t_input:
         res_q = st.session_state.quant_results_stored
+        ecr = res_q.get("ecr", {})
 
-        # 1行目：主要4指標
+        # フェーズ表示
+        if ecr:
+            phase_color = "#238636" if ecr["phase"] == "ACCUMULATION" else "#d29922" if ecr["phase"] == "IGNITION" else "#f85149"
+            st.markdown(f'''
+            <div style="background:{phase_color}; padding:5px 10px; border-radius:5px; display:inline-block; font-weight:bold; margin-bottom:10px;">
+                PHASE: {ecr["phase"]}
+            </div>
+            <div style="display:inline-block; margin-left:10px; font-weight:bold; color:#58a6ff;">
+                STRATEGY: {ecr["strategy"]}
+            </div>
+            ''', unsafe_allow_html=True)
+
+        # 1行目：ECRランクと主要指標 (新指標メイン)
         draw_sentinel_grid_ui([
-            {"label": "💰 現在値", "value": f"${res_q['price']:.2f}" if res_q['price'] else "N/A"},
-            {"label": "🎯 VCPスコア", "value": f"{res_q['vcp']['score']}/105"},
-            {"label": "📈 PF", "value": f"x{res_q['pf']:.2f}"},
-            {"label": "📏 RSモメンタム", "value": f"{res_q['rs']*100:+.1f}%" if res_q['rs'] != -999 else "N/A"}
+            {"label": "🛡️ SENTINEL RANK", "value": f"{ecr.get('sentinel_rank', 0)}/100"},
+            {"label": "⚡ ENERGY (VCP)", "value": f"{ecr.get('components', {}).get('vcp', 0)}/105"},
+            {"label": "💎 QUALITY (SES)", "value": f"{ecr.get('components', {}).get('ses', 0)}/100"},
+            {"label": "📈 PROFIT FACTOR", "value": f"x{res_q['pf']:.2f}"}
         ])
 
-        # 2行目：VCP内訳（4つのカード）
+        # 2行目：VCP内訳（既存）
         vcp_bd = res_q['vcp'].get('breakdown', {})
         vcp_items = [
             {"label": "📏 Tightness", "value": f"{vcp_bd.get('tight',0)}点"},
@@ -275,7 +296,7 @@ with tab_2:
         ]
         draw_sentinel_grid_ui(vcp_items)
 
-        # チャート描画（直近180日）
+        # チャート描画
         df_plot = DataEngine.get_data(t_input, "2y")
         if df_plot is not None and not df_plot.empty:
             df_recent = df_plot.last('180D')
@@ -291,13 +312,9 @@ with tab_2:
                 height=400,
                 margin=dict(l=0, r=0, t=20, b=0),
                 xaxis_rangeslider_visible=False,
-                title=f"{t_input} - 直近6ヶ月"
+                title=f"{t_input} - ECR Analysis Chart"
             )
-            # 横軸を1ヶ月おきに設定
-            candlestick.update_xaxes(
-                dtick="M1",
-                tickformat="%b %Y"
-            )
+            candlestick.update_xaxes(dtick="M1", tickformat="%b %Y")
             st.plotly_chart(candlestick, use_container_width=True)
 
         # AI解説ボタン
@@ -305,49 +322,26 @@ with tab_2:
             ak = st.secrets.get("DEEPSEEK_API_KEY")
             if ak:
                 with st.spinner(f"Analyzing {t_input}..."):
-                    # ニュース取得（タイトル＋ソースのみ）
                     news_data = NewsEngine.get(t_input)
                     news_items = news_data.get("articles", [])[:3]
-                    news_lines = []
-                    for item in news_items:
-                        title = item.get("title", "")
-                        url = item.get("url", "")
-                        source = url.split('/')[2] if url else "不明"
-                        news_lines.append(f"・{title} ({source})")
-                    news_str = "\n".join(news_lines)
-
-                    # ファンダメンタル情報
+                    news_str = "\n".join([f"・{item.get('title','')} ({item.get('url','').split('/')[2] if item.get('url') else 'Src'})" for item in news_items])
+                    
                     fund_lines = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
                     fund_str = "\n".join(fund_lines) if fund_lines else "特記事項なし"
 
-                    # VCP内訳（詳細テキスト）
-                    vcp_detail = (
-                        f"内訳: Tightness {vcp_bd.get('tight',0)}点, "
-                        f"Volume {vcp_bd.get('vol',0)}点, "
-                        f"MA {vcp_bd.get('ma',0)}点, "
-                        f"Pivot {vcp_bd.get('pivot',0)}点"
-                    )
-
                     prompt = (
-                        f"あなたは優秀なAIファンドのマネージャーです。以下の情報を基に、投資家が投資判断において知るべき最重要ポイントを"
-                        f"**簡潔に箇条書きでまとめてください。\n"
-                        f"・全体で400文字程度に収めてください。\n"
-                        f"・専門用語は平易に言い換えてください。\n\n"
-                        f"【データ】\n"
-                        f"銘柄: {t_input}\n"
-                        f"現在値: ${res_q['price']}\n"
-                        f"VCPスコア: {res_q['vcp']['score']}/105 ({vcp_detail})\n"
-                        f"RSモメンタム: {res_q['rs']*100:.1f}%\n"
+                        f"あなたは優秀なAIファンドのマネージャーです。以下のECR戦略データを基に、投資家が知るべきポイントを解説してください。\n"
+                        f"【ECRデータ】\n"
+                        f"銘柄: {t_input}, Rank: {ecr.get('sentinel_rank')}/100, Phase: {ecr.get('phase')}\n"
+                        f"Energy(VCP): {ecr.get('components',{}).get('vcp')}, Quality(SES): {ecr.get('components',{}).get('ses')}\n"
                         f"財務情報:\n{fund_str}\n"
-                        f"直近ニュース:\n{news_str}\n\n"
-                        f"※注意：売買推奨は行わないこと。ただし最後に総合評価は下すこと。"
+                        f"ニュース:\n{news_str}\n"
                     )
 
                     client = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
                     try:
                         ai_res = client.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
-                        disclaimer = "\n\n※この解説はAIによる参考情報であり、投資助言ではありません。"
-                        st.session_state.ai_analysis_text = ai_res.choices[0].message.content.replace("$", r"\$") + disclaimer
+                        st.session_state.ai_analysis_text = ai_res.choices[0].message.content.replace("$", r"\$")
                     except: st.error("AI Error")
         if st.session_state.ai_analysis_text: st.markdown("---"); st.info(st.session_state.ai_analysis_text)
 
@@ -422,7 +416,7 @@ with tab_3:
                     f"総資産: ¥{total_nav_jpy:,.0f}, 現金比率: {(portfolio_obj['cash_jpy']+total_cash_usd_jpy)/total_nav_jpy*100:.1f}%\n"
                     f"地合い: SPY ${m_stat['spy']:.2f}, VIX {m_stat['vix']:.2f}\n"
                     f"保有詳細:\n{p_report}\n\n"
-                    f"注意：売買推奨は行わず、あくまでデータの解説に留めてください。"
+                    f"注意：売買推奨は行わないこと。ただし最後に総合評価は下すこと。"
                 )
                 cl_guard = OpenAI(api_key=guard_key, base_url="https://api.deepseek.com")
                 try:
@@ -460,4 +454,4 @@ with tab_3:
             save_portfolio_json(portfolio_obj); st.success(f"{f_tkr} 登録完了"); st.rerun()
 
 st.divider()
-st.caption(f"🛡️ SENTINEL PRO SYSTEM | FULL CORE INTEGRATION | V7.6")
+st.caption(f"🛡️ SENTINEL PRO SYSTEM | ECR STRATEGY V3.0")
