@@ -31,29 +31,34 @@ from engines.ecr_strategy import ECRStrategyEngine
 warnings.filterwarnings("ignore")
 
 # ==============================================================================
-# 2. 定数・パス・初期設定
+# 2. 定数・パスの定義
 # ==============================================================================
 NOW = datetime.datetime.now()
 RESULTS_DIR = Path("./results")
 WATCHLIST_FILE = Path("watchlist.json")
 PORTFOLIO_FILE = Path("portfolio.json")
 
+# ==============================================================================
+# 3. セッションステート & 初期化
+# ==============================================================================
+
 def initialize_sentinel_state():
-    """セッションステートの初期化"""
-    if "target_ticker" not in st.session_state: st.session_state.target_ticker = "AAPL"
-    if "ai_analysis_text" not in st.session_state: st.session_state.ai_analysis_text = ""
-    if "ai_market_text" not in st.session_state: st.session_state.ai_market_text = ""
-    if "ai_port_text" not in st.session_state: st.session_state.ai_port_text = ""
-    if "quant_results_stored" not in st.session_state: st.session_state.quant_results_stored = None
+    """アプリの状態を初期化（データが消えないように管理）"""
+    if "target_ticker" not in st.session_state: 
+        st.session_state.target_ticker = "AAPL"
+    if "ai_analysis_text" not in st.session_state: 
+        st.session_state.ai_analysis_text = ""
+    if "ai_market_text" not in st.session_state: 
+        st.session_state.ai_market_text = ""
+    if "ai_port_text" not in st.session_state: 
+        st.session_state.ai_port_text = ""
+    if "quant_results_stored" not in st.session_state: 
+        st.session_state.quant_results_stored = None
 
 initialize_sentinel_state()
 
-# ==============================================================================
-# 3. データ管理ヘルパー
-# ==============================================================================
-
+# --- データストレージヘルパー ---
 def load_portfolio_json() -> dict:
-    """ポートフォリオの読み込み"""
     default = {"positions": {}, "cash_jpy": 1000000, "cash_usd": 0}
     if not PORTFOLIO_FILE.exists(): return default
     try:
@@ -65,23 +70,21 @@ def load_portfolio_json() -> dict:
     except: return default
 
 def save_portfolio_json(data: dict):
-    """ポートフォリオの保存"""
     with open(PORTFOLIO_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def load_watchlist_data() -> list:
-    """ウォッチリストの読み込み"""
     if not WATCHLIST_FILE.exists(): return ["AAPL", "NVDA", "TSLA"]
     try:
         with open(WATCHLIST_FILE, "r") as f: return json.load(f)
     except: return []
 
 def save_watchlist_data(data: list):
-    """ウォッチリストの保存"""
     with open(WATCHLIST_FILE, "w") as f: json.dump(data, f)
 
+# --- 外部データ取得ヘルパー ---
 def get_market_overview_live():
-    """SPY/VIXの最新状況をフェッチ"""
+    """SPY(S&P500)とVIX(恐怖指数)の現在値をフェッチ"""
     try:
         spy_t = yf.Ticker("SPY")
         spy_h = spy_t.history(period="3d")
@@ -99,11 +102,11 @@ def get_market_overview_live():
         return {"spy": 0, "spy_change": 0, "vix": 0}
 
 # ==============================================================================
-# 4. UIコンポーネント
+# 4. UI スタイル & コンポーネント
 # ==============================================================================
 
 def draw_sentinel_grid_ui(metrics: List[Dict[str, Any]]):
-    """Sentinel Pro スタイルの 4連カードグリッド"""
+    """Sentinel Pro スタイルの 4連カードグリッド UI"""
     html_out = '<div class="sentinel-grid">'
     for m in metrics:
         delta_s = ""
@@ -124,33 +127,33 @@ def draw_sentinel_grid_ui(metrics: List[Dict[str, Any]]):
     html_out += '</div>'
     st.markdown(html_out.strip(), unsafe_allow_html=True)
 
-# CSSスタイル定義
+# グローバル CSS
 GLOBAL_STYLE = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
 html, body, [class*="css"] { font-family: 'Rajdhani', sans-serif; background-color: #0d1117; color: #f0f6fc; }
 .block-container { padding-top: 1rem !important; }
 .stTabs [data-baseweb="tab-list"] { background-color: #161b22; padding: 10px; border-radius: 12px; border-bottom: 2px solid #30363d; gap: 8px; }
-.stTabs [data-baseweb="tab"] { color: #8b949e; border: none; font-weight: 700; min-width: 130px; border-radius: 8px; transition: 0.3s; }
+.stTabs [data-baseweb="tab"] { color: #8b949e; border: none; font-weight: 700; min-width: 140px; border-radius: 8px; }
 .stTabs [aria-selected="true"] { color: #ffffff !important; background-color: #238636 !important; }
 .sentinel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 20px 0; }
 @media (min-width: 900px) { .sentinel-grid { grid-template-columns: repeat(4, 1fr); } }
-.sentinel-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+.sentinel-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 .sentinel-label { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 1px; }
 .sentinel-value { font-size: 1.4rem; font-weight: 700; color: #f0f6fc; line-height: 1.1; }
-.sentinel-delta { font-size: 0.9rem; font-weight: 600; margin-top: 6px; }
-.section-header { font-size: 1.1rem; font-weight: 700; color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 1.5px; }
-.pos-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 12px; border-left: 6px solid #30363d; }
+.sentinel-delta { font-size: 0.95rem; font-weight: 600; margin-top: 8px; }
+.section-header { font-size: 1.1rem; font-weight: 700; color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 2px; }
+.pos-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 22px; margin-bottom: 15px; border-left: 8px solid #30363d; }
 .pos-card.profit { border-left-color: #3fb950; }
 .pos-card.urgent { border-left-color: #f85149; }
 .pnl-pos { color: #3fb950; font-weight: bold; }
 .pnl-neg { color: #f85149; font-weight: bold; }
-.phase-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; display: inline-block; margin-right: 10px; }
+.phase-badge { padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; display: inline-block; margin-right: 10px; }
 </style>
 """
 
 # ==============================================================================
-# 5. アプリケーション・レイアウト
+# 5. アプリケーション・メインレイアウト
 # ==============================================================================
 
 st.set_page_config(page_title="SENTINEL PRO", page_icon="🛡️", layout="wide", initial_sidebar_state="expanded")
@@ -169,42 +172,45 @@ with st.sidebar:
             wl_data.remove(tkr); save_watchlist_data(wl_data); st.rerun()
     
     st.markdown("---")
-    st.caption("⚠️ 本ツールは個人研究用です。投資判断は自己責任で行ってください。")
+    st.caption("🛡️ SENTINEL SYSTEM V2.1")
+    st.caption("Personal Analytics and BYOK Model Integration.")
 
 fx_val = CurrencyEngine.get_usd_jpy()
-tab_1, tab_2, tab_3 = st.tabs(["📊 市場概況", "🔍 ECR戦略診断", "💼 資産管理"])
+tab_1, tab_2, tab_3 = st.tabs(["📊 マーケット概況", "🔍 ECR戦略診断", "💼 資産管理"])
 
 # ------------------------------------------------------------------------------
-# TAB 1: 市場概況 (AI分析機能付)
+# TAB 1: マーケット概況 (AI解説機能付)
 # ------------------------------------------------------------------------------
 with tab_1:
-    st.markdown('<div class="section-header">📊 MARKET OVERVIEW</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📊 MARKET OVERVIEW & SCANNER</div>', unsafe_allow_html=True)
     m_info = get_market_overview_live()
     
-    # 既存のスキャン結果（ある場合）を読み込み
+    # 既存のスキャンファイルがあれば読み込み
     scan_df = pd.DataFrame()
     if RESULTS_DIR.exists():
         files = sorted(RESULTS_DIR.glob("*.json"), reverse=True)
         if files:
             try:
                 with open(files[0], "r", encoding="utf-8") as f:
-                    scan_df = pd.DataFrame(json.load(f).get("qualified_full", []))
+                    data_json = json.load(f)
+                    scan_df = pd.DataFrame(data_json.get("qualified_full", []))
             except: pass
 
-    # AI市場分析ボタン
-    if st.button("🤖 AI 市場概況解説を実行 (SENTINEL AI)", use_container_width=True, type="primary"):
+    # 🤖 AI市場分析
+    if st.button("🤖 AIによる最新市場分析 (SENTINEL MARKET EYE)", use_container_width=True, type="primary"):
         api_key = st.secrets.get("DEEPSEEK_API_KEY")
         if not api_key:
-            st.error("APIキーが設定されていません。")
+            st.error("DeepSeek APIキーが設定されていません。")
         else:
-            with st.spinner("AIによる市場分析中..."):
+            with st.spinner("AIが市場動向を解析中..."):
                 m_news = NewsEngine.format_for_prompt(NewsEngine.get_general_market())
                 act_n = len(scan_df[scan_df["status"]=="ACTION"]) if not scan_df.empty else 0
                 prompt = (
-                    f"あなたは経験豊富なマクロ経済アナリストです。以下のデータに基づき、現在の米国株市場の地合いを投資家に分かりやすく、客観的に要約してください。\n"
-                    f"SPY: ${m_info['spy']:.2f} ({m_info['spy_change']:+.2f}%), VIX: {m_info['vix']:.2f}\n"
-                    f"現在のアクション銘柄数: {act_n}\n"
-                    f"最新ニュース:\n{m_news}\n"
+                    f"あなたは経験豊富なマクロ経済アナリストです。以下のデータに基づき、現在の米国株市場の地合いと投資家へのアドバイスを教育目的で要約してください。\n"
+                    f"市場状況: SPY ${m_info['spy']:.2f} ({m_info['spy_change']:+.2f}%), VIX指数: {m_info['vix']:.2f}\n"
+                    f"システム検知アクション銘柄数: {act_n}\n"
+                    f"最新ニュース見出し:\n{m_news}\n\n"
+                    f"注意：投資判断の最終責任はユーザーにあります。客観的な分析に留めてください。"
                 )
                 try:
                     cl = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
@@ -215,7 +221,7 @@ with tab_1:
     if st.session_state.ai_market_text:
         st.info(st.session_state.ai_market_text)
 
-    # 主要指標カード
+    # 主要カード
     draw_sentinel_grid_ui([
         {"label": "S&P 500 (SPY)", "value": f"${m_info['spy']:.2f}", "delta": f"{m_info['spy_change']:+.2f}%"},
         {"label": "VIX INDEX", "value": f"{m_info['vix']:.2f}"},
@@ -224,7 +230,7 @@ with tab_1:
     ])
 
     if not scan_df.empty:
-        st.markdown('<div class="section-header">🗺️ SECTOR RS MAP</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">🗺️ SECTOR RELATIVE STRENGTH MAP</div>', unsafe_allow_html=True)
         scan_df["vcp_score"] = scan_df["vcp"].apply(lambda x: x.get("score", 0))
         treemap_fig = px.treemap(scan_df, path=["sector", "ticker"], values="vcp_score", color="rs", 
                                  color_continuous_scale="RdYlGn", range_color=[70, 100])
@@ -235,14 +241,15 @@ with tab_1:
 # TAB 2: ECR戦略診断 (V2.1)
 # ------------------------------------------------------------------------------
 with tab_2:
-    st.markdown('<div class="section-header">🔍 STRATEGY SCAN (ECR V2.1)</div>', unsafe_allow_html=True)
-    t_input = st.text_input("ティッカーシンボル入力", value=st.session_state.target_ticker).upper().strip()
+    st.markdown('<div class="section-header">🔍 SINGLE TICKER STRATEGY DIAGNOSTIC (ECR V2.1)</div>', unsafe_allow_html=True)
+    t_input = st.text_input("分析するティッカーを入力", value=st.session_state.target_ticker).upper().strip()
 
     c1, c2 = st.columns(2)
-    if c1.button("🚀 戦略分析を実行", type="primary", use_container_width=True) and t_input:
-        with st.spinner(f"Analyzing {t_input}..."):
+    if c1.button("🚀 戦略スキャンを開始", type="primary", use_container_width=True) and t_input:
+        with st.spinner(f"{t_input} を詳細解析中..."):
             df_full = DataEngine.get_data(t_input, "2y")
             if df_full is not None and not df_full.empty:
+                # 戦略エンジンの実行 (ここで確実に analyze_single を呼ぶ)
                 v_res = VCPAnalyzer.calculate(df_full)
                 ecr_res = ECRStrategyEngine.analyze_single(t_input, df_full)
                 p_curr = DataEngine.get_current_price(t_input)
@@ -252,29 +259,29 @@ with tab_2:
                     "vcp": v_res, "price": p_curr, "pf": pf_val, "ticker": t_input, "ecr": ecr_res
                 }
                 st.session_state.ai_analysis_text = ""
-            else: st.error(f"{t_input} のデータが取得できません。")
+            else: st.error(f"{t_input} のデータ取得に失敗しました。")
 
     if c2.button("⭐ ウォッチリストに追加", use_container_width=True) and t_input:
         wl = load_watchlist_data()
         if t_input not in wl: 
-            wl.append(t_input); save_watchlist_data(wl); st.success(f"{t_input} を追加しました")
+            wl.append(t_input); save_watchlist_data(wl); st.success(f"{t_input} をリストに追加しました")
 
-    # 分析結果表示
+    # 結果表示
     if st.session_state.quant_results_stored and st.session_state.quant_results_stored["ticker"] == t_input:
         res_q = st.session_state.quant_results_stored
         ecr = res_q["ecr"]
         
-        # フェーズ表示バッジ
+        # フェーズバッジ
         ph = ecr["phase"]
         ph_color = "#238636" if ph=="ACCUMULATION" else "#d29922" if ph=="IGNITION" else "#f85149" if ph=="RELEASE" else "#8b949e"
         st.markdown(f'''
-            <div style="margin-bottom:15px;">
+            <div style="margin-bottom:20px;">
                 <span class="phase-badge" style="background:{ph_color};">PHASE: {ph}</span>
-                <span style="font-weight:bold; color:#58a6ff;">STRATEGY: {ecr["strategy"]}</span>
+                <span style="font-weight:bold; color:#58a6ff; letter-spacing:1px;">STRATEGY: {ecr["strategy"]}</span>
             </div>
         ''', unsafe_allow_html=True)
 
-        # 1行目: メイン指標
+        # 1行目: 動的指標 (Dynamics)
         draw_sentinel_grid_ui([
             {"label": "🛡️ SENTINEL RANK", "value": f"{ecr['sentinel_rank']}/100", "delta": f"{ecr['dynamics']['rank_delta']:+.1f}"},
             {"label": "⚡ ENERGY (VCP)", "value": f"{ecr['components']['energy_vcp']}/105"},
@@ -282,7 +289,7 @@ with tab_2:
             {"label": "📈 PROFIT FACTOR", "value": f"x{res_q['pf']:.2f}"}
         ])
 
-        # 2行目: サブ指標
+        # 2行目: 個別クオンツ内訳
         vcp_bd = res_q['vcp'].get('breakdown', {})
         draw_sentinel_grid_ui([
             {"label": "📏 TIGHTNESS", "value": f"{vcp_bd.get('tight',0)} pt"},
@@ -291,33 +298,33 @@ with tab_2:
             {"label": "🎯 PIVOT DIST", "value": f"{ecr['metrics']['dist_to_pivot_pct']}%"}
         ])
 
-        # チャート
+        # チャート描画
         df_p = DataEngine.get_data(t_input, "1y")
         if df_p is not None:
             df_p = df_p.last("180D")
             fig = go.Figure(data=[go.Candlestick(x=df_p.index, open=df_p['Open'], high=df_p['High'], low=df_p['Low'], close=df_p['Close'])])
-            fig.update_layout(template="plotly_dark", height=450, margin=dict(l=0,r=0,t=0,b=0), xaxis_rangeslider_visible=False)
+            fig.update_layout(template="plotly_dark", height=450, margin=dict(l=0,r=0,t=10,b=0), xaxis_rangeslider_visible=False)
             st.plotly_chart(fig, use_container_width=True)
 
-        # 🤖 個別銘柄AI解説
-        if st.button(f"🤖 AIによる {t_input} 戦略解説を表示", use_container_width=True):
+        # 🤖 AI銘柄個別診断
+        if st.button(f"🤖 AIによる {t_input} 個別戦略解説", use_container_width=True):
             ak = st.secrets.get("DEEPSEEK_API_KEY")
             if ak:
-                with st.spinner("銘柄分析中..."):
+                with st.spinner("ファンダメンタルズとニュースを解析中..."):
                     news_data = NewsEngine.get(t_input).get("articles", [])[:3]
                     news_str = "\n".join([f"・{a.get('title')}" for a in news_data])
                     fund = FundamentalEngine.format_for_prompt(FundamentalEngine.get(t_input), res_q['price'])
                     prompt = (
-                        f"銘柄: {t_input}\nランク: {ecr['sentinel_rank']}, フェーズ: {ecr['phase']}\n"
-                        f"VCPスコア: {ecr['components']['energy_vcp']}, SESスコア: {ecr['components']['quality_ses']}\n"
-                        f"財務データ:\n{fund}\n最近のニュース:\n{news_str}\n\n"
-                        f"上記データを踏まえ、この銘柄の現状と今後の注目点をプロの視点で簡潔に解説してください。"
+                        f"銘柄: {t_input}\nシステム評価: {ecr['sentinel_rank']}/100, フェーズ: {ecr['phase']}\n"
+                        f"テクニカル要因: VCP={ecr['components']['energy_vcp']}, SES={ecr['components']['quality_ses']}\n"
+                        f"財務データ:\n{fund}\n最近の注目ニュース:\n{news_str}\n\n"
+                        f"これらのデータから、この銘柄の現状と今後のリスク・チャンスをプロのファンドマネージャーのように簡潔に解説してください。"
                     )
                     try:
                         cl = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
                         r = cl.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
                         st.session_state.ai_analysis_text = r.choices[0].message.content.replace("$", r"\$")
-                    except: st.error("AI解説の生成に失敗しました。")
+                    except: st.error("AI分析の実行に失敗しました。")
         
         if st.session_state.ai_analysis_text:
             st.markdown("---")
@@ -327,21 +334,21 @@ with tab_2:
 # TAB 3: 資産管理 (ポートフォリオ)
 # ------------------------------------------------------------------------------
 with tab_3:
-    st.markdown('<div class="section-header">💼 PORTFOLIO RISK MANAGEMENT</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">💼 ASSET MANAGEMENT & RISK CONTROL</div>', unsafe_allow_html=True)
     port = load_portfolio_json()
 
-    with st.expander("💰 資金・口座残高の設定", expanded=False):
+    with st.expander("💰 口座残高・通貨設定", expanded=False):
         c1, c2, c3 = st.columns(3)
-        in_jpy = c1.number_input("国内預り金 (JPY)", value=int(port.get("cash_jpy", 1000000)), step=10000)
-        in_usd = c2.number_input("外国証券用 (USD)", value=float(port.get("cash_usd", 0)), step=100.0)
-        if c3.button("設定を保存", use_container_width=True):
+        in_jpy = c1.number_input("国内預り金残高 (JPY)", value=int(port.get("cash_jpy", 1000000)), step=10000)
+        in_usd = c2.number_input("外国証券用残高 (USD)", value=float(port.get("cash_usd", 0)), step=100.0)
+        if c3.button("残高を保存する", use_container_width=True):
             port["cash_jpy"] = in_jpy; port["cash_usd"] = in_usd
-            save_portfolio_json(port); st.success("保存しました"); st.rerun()
+            save_portfolio_json(port); st.success("設定を更新しました"); st.rerun()
 
-    # 保有ポジション集計
+    # 保有ポジション集計ロジック
     pos_map = port.get("positions", {})
-    agg_usd = 0.0
-    detailed = []
+    agg_usd_val = 0.0
+    detailed_list = []
 
     for tkr, data in pos_map.items():
         c_p = DataEngine.get_current_price(tkr)
@@ -349,76 +356,76 @@ with tab_3:
             try: c_p = yf.Ticker(tkr).fast_info.get('lastPrice')
             except: c_p = data.get('avg_cost', 0)
         
-        v_usd = c_p * data['shares']
-        agg_usd += v_usd
+        val_usd = c_p * data['shares']
+        agg_usd_val += val_usd
         pnl_pct = ((c_p / data['avg_cost']) - 1) * 100
-        detailed.append({
-            "ticker": tkr, "val": v_usd, "pnl": pnl_pct, 
+        detailed_list.append({
+            "ticker": tkr, "val": val_usd, "pnl": pnl_pct, 
             "shares": data['shares'], "cost": data['avg_cost'], "curr": c_p
         })
 
-    t_nav = (agg_usd + port["cash_usd"]) * fx_val + port["cash_jpy"]
+    total_nav_jpy = (agg_usd_val + port["cash_usd"]) * fx_val + port["cash_jpy"]
     
-    # 資産サマリー
+    # 資産状況サマリー
     draw_sentinel_grid_ui([
-        {"label": "💰 TOTAL NAV (JPY)", "value": f"¥{t_nav:,.0f}"},
-        {"label": "🛡️ EQUITY VALUE", "value": f"${agg_usd:,.2f}"},
+        {"label": "💰 TOTAL NAV (評価額計)", "value": f"¥{total_nav_jpy:,.0f}"},
+        {"label": "🛡️ EQUITY (株式合計)", "value": f"${agg_usd_val:,.2f}"},
         {"label": "💵 CASH (JPY/USD)", "value": f"¥{port['cash_jpy']:,.0f}", "delta": f"${port['cash_usd']:.2f}"},
-        {"label": "💹 FX RATE", "value": f"¥{fx_val:.2f}"}
+        {"label": "💹 FX RATE (USDJPY)", "value": f"¥{fx_val:.2f}"}
     ])
 
-    # ポートフォリオAI解説
-    if st.button("🛡️ AI ポートフォリオ・リスク診断", use_container_width=True, type="primary"):
+    # AI リスク診断
+    if st.button("🛡️ AI ポートフォリオ・リスク診断を実行", use_container_width=True, type="primary"):
         ak = st.secrets.get("DEEPSEEK_API_KEY")
         if ak:
-            with st.spinner("リスク分析中..."):
-                p_report = "\n".join([f"・{x['ticker']}: ${x['val']:.2f} (PnL: {x['pnl']:+.1f}%)" for x in detailed])
+            with st.spinner("リスク分散状況を解析中..."):
+                p_summary = "\n".join([f"・{x['ticker']}: ${x['val']:.2f} (含み損益: {x['pnl']:+.1f}%)" for x in detailed_list])
                 prompt = (
-                    f"あなたはリスク管理責任者です。以下のポートフォリオの現状を分析し、"
-                    f"市場の地合い（VIX: {get_market_overview_live()['vix']}）を踏まえたリスクアドバイスを行ってください。\n"
-                    f"総資産: ¥{t_nav:,.0f}, 現金比率: {(port['cash_jpy']+port['cash_usd']*fx_val)/t_nav*100:.1f}%\n"
-                    f"保有状況:\n{p_report}"
+                    f"あなたはリスク管理責任者です。以下のポートフォリオ状況を元に、"
+                    f"現在の市場地合い（VIX指数: {get_market_overview_live()['vix']}）を考慮したリスク管理アドバイスを行ってください。\n"
+                    f"総資産評価額: ¥{total_nav_jpy:,.0f}, 現金比率: {(port['cash_jpy'] + port['cash_usd'] * fx_val) / total_nav_jpy * 100:.1f}%\n"
+                    f"個別保有詳細:\n{p_summary}"
                 )
                 try:
                     cl = OpenAI(api_key=ak, base_url="https://api.deepseek.com")
                     res = cl.chat.completions.create(model="deepseek-reasoner", messages=[{"role": "user", "content": prompt}])
                     st.session_state.ai_port_text = res.choices[0].message.content.replace("$", r"\$")
-                except: st.error("AI診断に失敗しました。")
+                except: st.error("AI診断中にエラーが発生しました。")
     
     if st.session_state.ai_port_text:
         st.info(st.session_state.ai_port_text)
 
-    # ポジション一覧
+    # ポジション詳細
     if pos_map:
         st.markdown('<div class="section-header">📋 ACTIVE POSITIONS</div>', unsafe_allow_html=True)
-        for p in detailed:
-            p_cls = "profit" if p["pnl"] >= 0 else "urgent"
+        for p in detailed_list:
+            card_cls = "profit" if p["pnl"] >= 0 else "urgent"
             st.markdown(f'''
-                <div class="pos-card {p_cls}">
+                <div class="pos-card {card_cls}">
                     <div style="display: flex; justify-content: space-between;">
                         <b>{p['ticker']}</b> 
                         <span class="{"pnl-pos" if p["pnl"]>=0 else "pnl-neg"}">{p['pnl']:+.2f}%</span>
                     </div>
-                    <div style="font-size: 0.85rem; margin-top: 8px;">
+                    <div style="font-size: 0.9rem; margin-top: 10px;">
                         {p['shares']} shares @ ${p['cost']:.2f} (Live: ${p['curr']:.2f}) | Value: ${p['val']:,.2f}
                     </div>
                 </div>
             ''', unsafe_allow_html=True)
-            if st.button(f"ポジション削除 {p['ticker']}", key=f"del_{p['ticker']}"):
+            if st.button(f"削除 {p['ticker']}", key=f"del_{p['ticker']}"):
                 del port["positions"][p['ticker']]; save_portfolio_json(port); st.rerun()
 
-    # 新規追加フォーム
-    with st.form("add_new_position"):
-        st.markdown("➕ **新規ポジション登録**")
+    # 追加フォーム
+    with st.form("add_pos_form"):
+        st.markdown("➕ **保有ポジションを追加登録**")
         cx1, cx2, cx3 = st.columns(3)
-        new_tkr = cx1.text_input("銘柄コード").upper().strip()
-        new_shr = cx2.number_input("株数", min_value=1)
-        new_cst = cx3.number_input("取得単価 (USD)", min_value=0.01)
-        if st.form_submit_button("ポートフォリオに登録"):
-            if new_tkr:
-                port["positions"][new_tkr] = {"shares": new_shr, "avg_cost": new_cst}
-                save_portfolio_json(port); st.success(f"{new_tkr} を登録しました"); st.rerun()
+        add_tkr = cx1.text_input("銘柄").upper().strip()
+        add_shr = cx2.number_input("株数", min_value=1)
+        add_cst = cx3.number_input("平均単価 (USD)", min_value=0.01)
+        if st.form_submit_button("ポートフォリオに反映"):
+            if add_tkr:
+                port["positions"][add_tkr] = {"shares": add_shr, "avg_cost": add_cst}
+                save_portfolio_json(port); st.success(f"{add_tkr} を登録しました"); st.rerun()
 
 st.divider()
-st.caption(f"🛡️ SENTINEL PRO SYSTEM | CORE V2.1 INTEGRATED | {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}")
+st.caption(f"🛡️ SENTINEL PRO SYSTEM | CORE ENGINE V2.1 | UPDATED: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
