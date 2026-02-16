@@ -4,15 +4,7 @@ import numpy as np
 class SentinelEfficiencyAnalyzer:
     """
     🛡️ SENTINEL EFFICIENCY SCORE (SES) - PRO EDITION
-    
-    VCPが「チャートの形」を見るのに対し、SESは「値動きの質（物理学）」を見る。
     機関投資家による「効率的な買い集め」と「売り枯れ」を定量化する。
-    
-    Score Max: 100pt
-    1. Fractal Efficiency (30pt): トレンドの直線性（カウフマン効率性比率）
-    2. True Force Index   (30pt): 出来高×値幅による真の買い圧力
-    3. Volatility Squeeze (20pt): ボラティリティの極度な収縮
-    4. Bar Quality        (20pt): ローソク足の実体と引け位置の質
     """
 
     @staticmethod
@@ -27,7 +19,7 @@ class SentinelEfficiencyAnalyzer:
             low = df["Low"]
             volume = df["Volume"]
 
-            # ── 1️⃣ Fractal Efficiency (カウフマン効率性比率) - 30pt ──
+            # ── 1. Fractal Efficiency (30pt) ──
             net_change = abs(close.iloc[-1] - close.iloc[-period])
             sum_moves = (close.diff().abs().iloc[-period:]).sum()
             er = net_change / sum_moves if sum_moves > 0 else 0
@@ -37,9 +29,8 @@ class SentinelEfficiencyAnalyzer:
             elif er > 0.50: er_score = 25
             elif er > 0.40: er_score = 20
             elif er > 0.30: er_score = 10
-            else: er_score = 0
 
-            # ── 2️⃣ True Force Index (真の買い圧力) - 30pt ──
+            # ── 2. True Force Index (30pt) ──
             price_change = close.diff()
             force = volume * price_change
             subset_force = force.iloc[-period:]
@@ -52,9 +43,8 @@ class SentinelEfficiencyAnalyzer:
             if force_ratio > 0.80: vol_score = 30
             elif force_ratio > 0.65: vol_score = 20
             elif force_ratio > 0.55: vol_score = 10
-            else: vol_score = 0
 
-            # ── 3️⃣ Volatility Squeeze (ボラティリティ収縮) - 20pt ──
+            # ── 3. Volatility Squeeze (20pt) ──
             returns = close.pct_change()
             curr_volatility = returns.iloc[-period:].std()
             past_volatility = returns.iloc[-60:-period].std()
@@ -65,9 +55,8 @@ class SentinelEfficiencyAnalyzer:
             elif vol_contraction < 0.65: sqz_score = 15
             elif vol_contraction < 0.8: sqz_score = 10
             elif vol_contraction > 1.2: sqz_score = -5
-            else: sqz_score = 0
 
-            # ── 4️⃣ Bar Quality (ローソク足の質) - 20pt ──
+            # ── 4. Bar Quality (20pt) ──
             high_low = high - low
             clv = ((close - low) / high_low).fillna(0.5)
             body_str = ((close - open_) / high_low).fillna(0)
@@ -78,7 +67,6 @@ class SentinelEfficiencyAnalyzer:
             if avg_clv > 0.6 and avg_body > 0.1: bar_score = 20
             elif avg_clv > 0.55 and avg_body > 0: bar_score = 15
             elif avg_clv > 0.5: bar_score = 10
-            else: bar_score = 0
 
             total_score = er_score + vol_score + sqz_score + bar_score
             
