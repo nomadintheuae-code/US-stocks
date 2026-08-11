@@ -360,26 +360,27 @@ assign_percentiles(): sort by raw_rs, assign percentile
 ## 16. Git State
 
 - **Current branch**: main
-- **Latest commit**: 0948a74 "daily scan.yml の削除" (REWRITTEN history - credential purged, PUSHED to fork)
+- **Latest commit**: 4617c29 "phase1: organize project and complete validation" (Phase 1 completion, 2026-08-12; NOT pushed yet)
+- **Previous HEAD**: 0948a74 "daily scan.yml の削除" (REWRITTEN history - credential purged, PUSHED to fork)
 - **History note**: 6 commits rewritten via git-filter-repo (2026-08-12) to remove revoked FMP credential. Commit count preserved (185). Old hashes (3c1e44e, 31044d9, 5f44ff7, a353c1b, ad3821b, d84a03b) replaced by new hashes.
 - **Remote**: `origin` = https://github.com/nomadintheuae-code/US-stocks.git (user's FORK; re-pointed 2026-08-12). origin/main == 0948a74 (pushed, verified via ls-remote).
 - **Upstream**: parent repo EMMA019/US-stocks — NOT modified, NOT pushed to (user does not own it).
-- **Uncommitted changes**: Phase 1 completion (modified: config.py, core_fmp.py, engines/core_fmp.py, app.py, requirements.txt, .env.sample, README.md; new: sentinel/, .gitignore, PROJECT_CONTEXT.md, AI_INSTRUCTIONS.md, config.yaml, tests/, pyproject.toml, requirements-dev.txt). Pending clean commit (NO push without authorization).
-- **Untracked (ignored)**: .env, cache_v45/, cache/, results/, __pycache__/, AUDIT_REPORT.md
+- **Uncommitted changes**: NONE (Phase 1 committed as 4617c29; NOT pushed — push only on explicit authorization)
+- **Untracked (ignored)**: .env, cache_v45/, cache/, results/, __pycache__/, .pytest_cache/, AUDIT_REPORT.md
 
 ## 17. Backup State
 
-- **Latest backup**: 2026-08-12_00-30 (FINAL CHECKPOINT - after fork push)
-- **Backup file**: US-stocks_2026-08-12_00-30_final-checkpoint.tar.gz
+- **Latest backup**: 2026-08-12_00-47 (PHASE 1 COMPLETION checkpoint — pre-commit; records commit 4617c29)
+- **Backup file**: US-stocks_2026-08-12_00-47_phase1-completion.tar.gz
 - **Backup location**: ~/ProjectBackups/US-stocks/
 - **Backup format**: tar.gz
-- **Backup size**: 59K (22 files)
-- **Backup verified**: Yes (tar -tzf OK; .env excluded; no active credential; no revoked-credential pattern)
-- **Contents**: Source code, engines, sentinel package, config.yaml, .gitignore, configs, requirements, README, PROJECT_CONTEXT.md, AI_INSTRUCTIONS.md
-- **Excluded**: venv, __pycache__, cache_v45/, cache/, results/*.json, .env, .git, *.log
+- **Backup size**: 66K (36 files)
+- **Backup verified**: Yes (tar -tzf OK; .env excluded; no venv/caches/results/__pycache__/.pytest_cache; no sk- secret pattern; contains tests/, pyproject.toml, requirements-dev.txt, config.yaml, sentinel/, README, PROJECT_CONTEXT, AI_INSTRUCTIONS)
+- **Contents**: Source code, engines, sentinel package, tests, config.yaml, .gitignore, configs, requirements, pyproject, README, PROJECT_CONTEXT.md, AI_INSTRUCTIONS.md
+- **Excluded**: .env, venv, __pycache__, .pytest_cache, cache_v45/, cache/, results/*.json, .git, *.log
 - **Pre-rewrite HEAD recorded**: 3c1e44ed4f06b48579fa0275c8ecdc6d97b6fc3a (stored in /tmp/opencode/pre_rewrite_head.txt)
 - **Retained (NOT deleted per user instruction)**: 22-30 (initial, contains REVOKED credential - see note), 23-23 (Phase 1), 23-30 (security checkpoint), 23-44 (post-rotation), 00-01 (pre-rewrite), 00-30 (final checkpoint)
-- **Next backup**: Phase 1 completion checkpoint (planned 2026-08-12; see Section 21 log)
+- **Next backup**: After Phase 1 commit push (if authorized) / Phase 2 start
 
 ## 18. Next Step
 
@@ -387,10 +388,10 @@ assign_percentiles(): sort by raw_rs, assign percentile
 1. ✅ Credential rotated; ✅ new key in `.env` (600, ignored); ✅ history rewritten (credential purged, HEAD `0948a74`); ✅ pushed to fork `nomadintheuae-code/US-stocks` (force-with-lease, verified).
 2. ✅ FMP news HTTP 402 isolated (FMPPlanError; app.py graceful notice).
 3. ✅ Tests added (40 passing), requirements pinned, README rewritten, docs updated.
-4. ⏸️ **PENDING**: clean commit of Phase 1 working tree (`phase1: ...`). Push only on explicit authorization.
-5. ⏸️ Phase 1 completion checkpoint backup (after commit).
+4. ✅ Phase 1 committed as `4617c29` (working tree clean). **PUSH pending — only on explicit authorization.**
+5. ✅ Phase 1 completion checkpoint backup created (00-47, verified).
 
-**Phase 2 (next, after Phase 1 commit)**: Refactor RSAnalyzer → RSIndicator, VCPAnalyzer → VCPIndicator, MarketDataProvider abstraction, CacheManager with compression
+**Phase 2 (next, after optional push authorization)**: Refactor RSAnalyzer → RSIndicator, VCPAnalyzer → VCPIndicator, MarketDataProvider abstraction, CacheManager with compression
 
 ## 20. SECURITY INCIDENT — FMP API Key Exposure
 
