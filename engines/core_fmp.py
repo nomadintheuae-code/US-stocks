@@ -6,31 +6,62 @@ Hannah（FMPサポート）推奨のStableパスを確実に処理するエン�
 import os, requests, json, hashlib, time
 from pathlib import Path
 import pandas as pd
+from dotenv import load_dotenv
 
-# APIキー（環境変数になければ直接指定）
+load_dotenv()
+
+# APIキー（環境変数からのみ取得）
 FMP_API_KEY = os.environ.get("FMP_API_KEY", "")
 BASE_URL = "https://financialmodelingprep.com/stable"
 CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
-def _get(slug: str, params: dict = None, cache_key: str = None, ttl: int = 3600):
+class FMPError(Exception):
+    """FMP API request failed with a non-200 status."""
+
+    def __init__(self, slug: str, status_code: int):
+        self.slug = slug
+        self.status_code = status_code
+        super().__init__(f"FMP API error for '{slug}' (HTTP {status_code})")
+
+
+class FMPPlanError(FMPError):
+    """The current FMP plan does not include this endpoint (HTTP 402)."""
+
+    def __init__(self, slug: str):
+        super().__init__(slug, 402)
+        self.message = (
+            "FMP news is unavailable on the current plan (HTTP 402). "
+            "Upgrade the FMP plan or use yfinance/RSS news instead."
+        )
+
+
+def _get(slug: str, params: dict = None, cache_key: str = None, ttl: int = 3600,
+         raise_on_plan: bool = False):
     params = params or {}
     if cache_key:
         h = hashlib.md5(cache_key.encode()).hexdigest()
         cache_file = CACHE_DIR / f"{h}.json"
         if cache_file.exists() and (time.time() - cache_file.stat().st_mtime < ttl):
-            try: return json.loads(cache_file.read_text())
-            except: pass
+            try:
+                return json.loads(cache_file.read_text())
+            except (json.JSONDecodeError, OSError):
+                pass
 
     url = f"{BASE_URL}/{slug}"
     try:
         time.sleep(0.1) # レートリミット配慮
         resp = requests.get(url, params={**params, "apikey": FMP_API_KEY}, timeout=15)
-        if resp.status_code != 200: return None
+        if resp.status_code != 200:
+            if raise_on_plan and resp.status_code == 402:
+                raise FMPPlanError(slug)
+            return None
         data = resp.json()
         if cache_key and data:
             cache_file.write_text(json.dumps(data))
         return data
+    except FMPPlanError:
+        raise
     except Exception as e:
         print(f"Error fetching {slug}: {e}")
         return None
@@ -47,7 +78,10 @@ def get_historical_data(ticker: str, days: int = 365) -> pd.DataFrame | None:
 
 def get_news(ticker: str, limit: int = 10) -> list:
     # Hannah推奨のニュースパス
-    data = _get("news/stock-latest", {"limit": 50, "symbol": ticker}, f"news_{ticker}", 3600*3)
+    # 現在のFMPプランでは HTTP 402 が返る。FMPPlanError として分離し、
+    # 呼び出し側（app.py）でユーザー向けメッセージに変換する。
+    data = _get("news/stock-latest", {"limit": 50, "symbol": ticker}, f"news_{ticker}", 3600*3,
+                raise_on_plan=True)
     if not isinstance(data, list): return []
     return [{
         "title": d.get("title", ""),

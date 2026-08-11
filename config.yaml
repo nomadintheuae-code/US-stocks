@@ -1,0 +1,156 @@
+# SENTINEL PRO - Configuration
+# All tunable parameters should be defined here.
+# Environment-specific values and secrets go in .env (not committed).
+
+# ==============================================================================
+# CAPITAL & POSITION MANAGEMENT
+# ==============================================================================
+capital:
+  jpy: 1000000              # 運用資金（円）
+  max_positions: 20         # 最大同時保有数
+  account_risk_pct: 0.015   # 1トレードあたりリスク (1.5%)
+  max_same_sector: 2        # セクターあたり最大銘柄数
+  max_position_pct: 0.40    # 1ポジション最大（総資金の40%）
+
+# ==============================================================================
+# SCAN FILTERS
+# ==============================================================================
+scan:
+  min_rs_rating: 70         # RS最低スコア（0-99 パーセンタイル）
+  min_vcp_score: 55         # VCP最低スコア（0-105）
+  min_profit_factor: 1.1    # バックテスト最低プロフィットファクター
+
+# ==============================================================================
+# EXIT STRATEGY
+# ==============================================================================
+exit:
+  stop_loss_atr: 2.0        # 損切り = ATR × この値
+  target_r_multiple: 2.5    # 利確 = リスク × この値 (R-multiple)
+
+# ==============================================================================
+# VCP PARAMETERS
+# ==============================================================================
+vcp:
+  # Tightness (収縮度合い) - periods for range calculation
+  tightness_periods: [20, 30, 40, 60]
+  # Volume dry-up comparison windows
+  volume_lookback_short: 20    # 直近出来高期間
+  volume_lookback_long: 60     # 比較対象出来高期間（直近を除く）
+  volume_lookback_gap: 20      # 直近と比較期間の間のギャップ
+  # MA Alignment periods
+  ma_periods: [50, 150, 200]
+  # Pivot distance thresholds for bonus points
+  pivot_near_pct: 0.04         # 0-4% = 5pt bonus
+  pivot_far_pct: 0.08          # 4-8% = 3pt bonus
+  # Scoring weights (max 105)
+  max_tightness_score: 40
+  max_volume_score: 30
+  max_ma_score: 30
+  max_pivot_bonus: 5
+
+# ==============================================================================
+# RS PARAMETERS
+# ==============================================================================
+rs:
+  # Lookback windows in trading days
+  windows: [252, 126, 63, 21]  # 12m, 6m, 3m, 1m
+  # Weights for each window (must sum to 1.0)
+  weights: [0.4, 0.2, 0.2, 0.2]
+  # Minimum data required (days)
+  min_data_days: 21
+
+# ==============================================================================
+# STRATEGY VALIDATOR (Backtest) PARAMETERS
+# ==============================================================================
+backtest:
+  lookback_bars: 250         # バックテスト対象期間（バー数）
+  min_bars_for_entry: 50     # エントリー判定に必要な最小バー数
+  pivot_lookback: 20         # ピボット計算用ルックバック
+  ma_filter_period: 50       # MAフィルター期間
+
+# ==============================================================================
+# SES (Sentinel Efficiency Score) PARAMETERS
+# ==============================================================================
+ses:
+  period: 20                 # 計算期間
+  # Fractal Efficiency thresholds
+  fe_thresholds: [0.60, 0.50, 0.40, 0.30]
+  fe_scores: [30, 25, 20, 10]
+  # True Force Index thresholds
+  force_thresholds: [0.80, 0.65, 0.55]
+  force_scores: [30, 20, 10]
+  # Volatility Squeeze thresholds
+  vol_contraction_thresholds: [0.50, 0.65, 0.80, 1.20]
+  vol_contraction_scores: [20, 15, 10, -5]
+  # Bar Quality thresholds
+  clv_thresholds: [0.60, 0.55, 0.50]
+  body_thresholds: [0.10, 0.00]
+  bar_scores: [20, 15, 10]
+
+# ==============================================================================
+# ECR STRATEGY PARAMETERS
+# ==============================================================================
+ecr:
+  # Component weights for Sentinel Rank
+  vcp_weight: 0.4
+  ses_weight: 0.3
+  rs_weight: 0.3
+  # Rank bonuses
+  vcp_ses_bonus_high: 1.15   # VCP≥95 & SES≥80
+  vcp_ses_bonus_mid: 1.05    # VCP≥85 & SES≥70
+  # Phase detection thresholds
+  ignition_rank_delta: 15
+  ignition_rank_slope: 3
+  ignition_vol_ratio: 1.8
+  accumulation_rank: 80
+  accumulation_rank_slope: 2
+  accumulation_dist_max: 0.08
+  release_dist: -0.07
+  release_rank_slope: 0
+
+# ==============================================================================
+# CACHE SETTINGS
+# ==============================================================================
+cache:
+  price_expiry_hours: 12         # 価格キャッシュ有効期限
+  fundamental_expiry_hours: 24   # ファンダメンタルキャッシュ
+  news_expiry_hours: 1           # ニュースキャッシュ
+  insider_expiry_hours: 6        # インサイダー取引キャッシュ
+  sector_expiry_days: 30         # セクター情報キャッシュ
+  compression: "zstd"            # 圧縮方式: zstd, lz4, gzip, none
+
+# ==============================================================================
+# PERFORMANCE SETTINGS
+# ==============================================================================
+performance:
+  max_workers: 3                 # 最大並列ワーカー数（I/O bound用）
+  batch_size: 50                 # yfinanceバッチ取得サイズ
+  request_timeout: 15            # HTTPリクエストタイムアウト（秒）
+  rate_limit_delay: 0.1          # API呼び出し間遅延（秒）
+
+# ==============================================================================
+# DATA SOURCE SETTINGS
+# ==============================================================================
+data:
+  default_period: "700d"         # デフォルト取得期間
+  min_bars_required: 150         # 最低必要バー数
+  auto_adjust: true              # 分割・配当調整
+  repair: true                   # データ修復
+  # Universe settings
+  universe_file: ""              # 外部ユニバースファイル（空なら内蔵）
+  filter_delisted: true          # 上場廃止銘柄を除外
+
+# ==============================================================================
+# NOTIFICATION SETTINGS
+# ==============================================================================
+notification:
+  line_enabled: false            # LINE通知有効化（トークン設定時のみ）
+  line_chunk_size: 4000          # LINEメッセージ分割サイズ
+
+# ==============================================================================
+# UI SETTINGS
+# ==============================================================================
+ui:
+  default_language: "ja"         # デフォルト言語 (ja/en)
+  chart_days: 120                # チャート表示日数
+  news_limit: 8                  # 表示ニュース数

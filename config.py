@@ -1,7 +1,18 @@
+"""
+Backward-compatible configuration wrapper.
+Uses new sentinel.config system but exposes old CONFIG dict and TICKERS.
+"""
 import os
+from typing import Any, Dict, List
+
+from sentinel.config import get_config
+
+
+# Load new config system
+_cfg = get_config()
 
 # ==============================================================================
-# ⚙️ 設定ヘルパー
+# ⚙️ 設定ヘルパー (kept for reference)
 # ==============================================================================
 
 def _ei(key: str, default: int) -> int:
@@ -9,41 +20,65 @@ def _ei(key: str, default: int) -> int:
     v = os.getenv(key, "").strip()
     return int(v) if v else int(default)
 
+
 def _ef(key: str, default: float) -> float:
     """環境変数を float で取得。未設定・空文字はデフォルト値を返す。"""
     v = os.getenv(key, "").strip()
     return float(v) if v else float(default)
 
+
 # ==============================================================================
-# ⚙️ CONFIG
+# ⚙️ CONFIG (Backward Compatible Dict)
 # ==============================================================================
 
-CONFIG = {
+CONFIG: Dict[str, Any] = {
     # --- 資金・ポジション管理 ---
-    "CAPITAL_JPY":       _ei("CAPITAL_JPY", 1_000_000),   # 運用資金（円）
-    "MAX_POSITIONS":     _ei("MAX_POSITIONS", 20),         # 最大同時保有数
-    "ACCOUNT_RISK_PCT":  _ef("ACCOUNT_RISK_PCT", 0.015),   # 1トレードあたりリスク (1.5%)
-    "MAX_SAME_SECTOR":   _ei("MAX_SAME_SECTOR", 2),        # セクターあたり最大銘柄数
+    "CAPITAL_JPY":       _cfg.capital.jpy,
+    "MAX_POSITIONS":     _cfg.capital.max_positions,
+    "ACCOUNT_RISK_PCT":  _cfg.capital.account_risk_pct,
+    "MAX_SAME_SECTOR":   _cfg.capital.max_same_sector,
 
     # --- スキャンフィルター ---
-    "MIN_RS_RATING":     _ei("MIN_RS_RATING", 70),         # RS最低スコア（0-99）
-    "MIN_VCP_SCORE":     _ei("MIN_VCP_SCORE", 55),         # VCP最低スコア（0-100）
-    "MIN_PROFIT_FACTOR": _ef("MIN_PROFIT_FACTOR", 1.1),    # バックテスト最低PF
+    "MIN_RS_RATING":     _cfg.scan.min_rs_rating,
+    "MIN_VCP_SCORE":     _cfg.scan.min_vcp_score,
+    "MIN_PROFIT_FACTOR": _cfg.scan.min_profit_factor,
 
     # --- 出口戦略 ---
-    "STOP_LOSS_ATR":     _ef("STOP_LOSS_ATR", 2.0),        # 損切り = ATR × この値
-    "TARGET_R_MULTIPLE": _ef("TARGET_R_MULTIPLE", 2.5),    # 利確 = リスク × この値
+    "STOP_LOSS_ATR":     _cfg.exit.stop_loss_atr,
+    "TARGET_R_MULTIPLE": _cfg.exit.target_r_multiple,
 
     # --- システム ---
-    "CACHE_EXPIRY":       12 * 3600,   # 価格キャッシュ有効期限（秒）
-    "FUND_CACHE_EXPIRY":  24 * 3600,   # ファンダメンタルキャッシュ（秒）
-    "NEWS_CACHE_EXPIRY":   1 * 3600,   # ニュースキャッシュ（秒）
-    "NEWS_FETCH_TIMEOUT":  6,          # 本文fetchタイムアウト（秒）
-    "NEWS_MAX_CHARS":      400,        # 本文最大文字数
+    "CACHE_EXPIRY":       _cfg.get_cache_expiry_seconds("price"),
+    "FUND_CACHE_EXPIRY":  _cfg.get_cache_expiry_seconds("fundamental"),
+    "NEWS_CACHE_EXPIRY":  _cfg.get_cache_expiry_seconds("news"),
+    "NEWS_FETCH_TIMEOUT": _cfg.performance.request_timeout,
+    "NEWS_MAX_CHARS":     400,
 }
 
+# Allow environment variable overrides for backward compatibility
+_env_overrides = {
+    "CAPITAL_JPY": "CAPITAL_JPY",
+    "MAX_POSITIONS": "MAX_POSITIONS",
+    "ACCOUNT_RISK_PCT": "ACCOUNT_RISK_PCT",
+    "MIN_RS_RATING": "MIN_RS_RATING",
+    "MIN_VCP_SCORE": "MIN_VCP_SCORE",
+    "MIN_PROFIT_FACTOR": "MIN_PROFIT_FACTOR",
+    "STOP_LOSS_ATR": "STOP_LOSS_ATR",
+    "TARGET_R_MULTIPLE": "TARGET_R_MULTIPLE",
+}
+
+for key, env_key in _env_overrides.items():
+    if os.getenv(env_key):
+        try:
+            if key in ["CAPITAL_JPY", "MAX_POSITIONS", "MAX_SAME_SECTOR", "MIN_RS_RATING", "MIN_VCP_SCORE"]:
+                CONFIG[key] = int(os.getenv(env_key, ""))
+            else:
+                CONFIG[key] = float(os.getenv(env_key, ""))
+        except (ValueError, TypeError):
+            pass  # Keep config.yaml value
+
 # ==============================================================================
-# 📋 TICKER UNIVERSE (450+)
+# 📋 TICKER UNIVERSE
 # ==============================================================================
 
 _ORIGINAL = [
@@ -146,4 +181,19 @@ _EXPANSION = [
     "PM", "PEP", "KO", "PG",
 ]
 
-TICKERS: list[str] = sorted(list(set(_ORIGINAL + _EXPANSION)))
+TICKERS: List[str] = sorted(list(set(_ORIGINAL + _EXPANSION)))
+
+# Filter delisted tickers if enabled
+if _cfg.data.filter_delisted:
+    DELISTED = {"BITF", "CFLT", "DVAX", "HOLX", "MMC"}
+    TICKERS = [t for t in TICKERS if t not in DELISTED]
+
+# Support external universe file
+if _cfg.data.universe_file and os.path.exists(_cfg.data.universe_file):
+    try:
+        with open(_cfg.data.universe_file, "r") as f:
+            external = [line.strip().upper() for line in f if line.strip() and not line.startswith("#")]
+        if external:
+            TICKERS = external
+    except Exception:
+        pass  # Fall back to built-in universe

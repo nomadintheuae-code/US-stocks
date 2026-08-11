@@ -1,0 +1,14 @@
+[project]
+name = "sentinel-pro"
+version = "5.1.0"
+description = "SENTINEL PRO - US Stock Scanner (RS ratings + VCP setups)"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+# NOTE: Dependency versions are NOT declared here. requirements.txt is the
+# single source of truth for the installed dependency set (see requirements-dev.txt).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -q"

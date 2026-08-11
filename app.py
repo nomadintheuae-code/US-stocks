@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import core_fmp as fmp
+from core_fmp import FMPPlanError
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 1. 銘柄リスト & 設定 (旧 config.py を統合)
@@ -76,7 +77,12 @@ def main():
             q = fmp.get_quote(ticker)
             f = fmp.get_fundamentals(ticker)
             a = fmp.get_analyst_consensus(ticker)
-            news = fmp.get_news(ticker, limit=3)
+            news = []
+            news_error = None
+            try:
+                news = fmp.get_news(ticker, limit=3)
+            except FMPPlanError as exc:
+                news_error = exc.message
 
         st.subheader(f"📊 {ticker} Deep Dive")
         if q:
@@ -110,6 +116,9 @@ def main():
             for n in news:
                 st.markdown(f"- [{n['title']}]({n['url']})")
                 st.caption(f"{n['source']} | {n['published_at']}")
+        elif news_error:
+            st.write("---")
+            st.caption(f"ℹ️ {news_error}")
 
 if __name__ == "__main__":
     main()

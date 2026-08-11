@@ -1,0 +1,26 @@
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Data caches
+cache_v45/
+cache/
+results/*.json
+*.pickle
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Backup / docs generated
+AUDIT_REPORT.md
