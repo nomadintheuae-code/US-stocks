@@ -360,38 +360,39 @@ assign_percentiles(): sort by raw_rs, assign percentile
 ## 16. Git State
 
 - **Current branch**: main
-- **Latest commit**: 4617c29 "phase1: organize project and complete validation" (Phase 1 completion, 2026-08-12; NOT pushed yet)
+- **Latest commit**: 40a2cc8 "phase1: record committed HEAD and backup state in PROJECT_CONTEXT" (Phase 1, 2026-08-12)
+- **PUSHED**: ✅ origin/main == 40a2cc8 (2026-08-12, normal fast-forward push 0948a74..40a2cc8 — no force). Verified via ls-remote.
 - **Previous HEAD**: 0948a74 "daily scan.yml の削除" (REWRITTEN history - credential purged, PUSHED to fork)
 - **History note**: 6 commits rewritten via git-filter-repo (2026-08-12) to remove revoked FMP credential. Commit count preserved (185). Old hashes (3c1e44e, 31044d9, 5f44ff7, a353c1b, ad3821b, d84a03b) replaced by new hashes.
 - **Remote**: `origin` = https://github.com/nomadintheuae-code/US-stocks.git (user's FORK; re-pointed 2026-08-12). origin/main == 0948a74 (pushed, verified via ls-remote).
 - **Upstream**: parent repo EMMA019/US-stocks — NOT modified, NOT pushed to (user does not own it).
-- **Uncommitted changes**: NONE (Phase 1 committed as 4617c29; NOT pushed — push only on explicit authorization)
+- **Uncommitted changes**: NONE (Phase 1 fully PUSHED to fork as 40a2cc8; branch head in sync)
 - **Untracked (ignored)**: .env, cache_v45/, cache/, results/, __pycache__/, .pytest_cache/, AUDIT_REPORT.md
 
 ## 17. Backup State
 
-- **Latest backup**: 2026-08-12_00-47 (PHASE 1 COMPLETION checkpoint — pre-commit; records commit 4617c29)
-- **Backup file**: US-stocks_2026-08-12_00-47_phase1-completion.tar.gz
+- **Latest backup**: 2026-08-12_00-55 (PHASE 1 FINAL — after push to fork; records pushed HEAD 40a2cc8)
+- **Backup file**: US-stocks_2026-08-12_00-55_phase1-final-pushed.tar.gz
 - **Backup location**: ~/ProjectBackups/US-stocks/
 - **Backup format**: tar.gz
-- **Backup size**: 66K (36 files)
-- **Backup verified**: Yes (tar -tzf OK; .env excluded; no venv/caches/results/__pycache__/.pytest_cache; no sk- secret pattern; contains tests/, pyproject.toml, requirements-dev.txt, config.yaml, sentinel/, README, PROJECT_CONTEXT, AI_INSTRUCTIONS)
+- **Backup verified**: Yes (tar -tzf OK; .env excluded; no venv/caches/results/__pycache__/.pytest_cache; no sk- secret pattern)
+- **Previous checkpoint**: US-stocks_2026-08-12_00-47_phase1-completion.tar.gz (pre-commit state, retained)
 - **Contents**: Source code, engines, sentinel package, tests, config.yaml, .gitignore, configs, requirements, pyproject, README, PROJECT_CONTEXT.md, AI_INSTRUCTIONS.md
 - **Excluded**: .env, venv, __pycache__, .pytest_cache, cache_v45/, cache/, results/*.json, .git, *.log
 - **Pre-rewrite HEAD recorded**: 3c1e44ed4f06b48579fa0275c8ecdc6d97b6fc3a (stored in /tmp/opencode/pre_rewrite_head.txt)
-- **Retained (NOT deleted per user instruction)**: 22-30 (initial, contains REVOKED credential - see note), 23-23 (Phase 1), 23-30 (security checkpoint), 23-44 (post-rotation), 00-01 (pre-rewrite), 00-30 (final checkpoint)
-- **Next backup**: After Phase 1 commit push (if authorized) / Phase 2 start
+- **Retained (NOT deleted per user instruction)**: 22-30 (initial, contains REVOKED credential - see note), 23-23 (Phase 1), 23-30 (security checkpoint), 23-44 (post-rotation), 00-01 (pre-rewrite), 00-30 (final checkpoint), 00-47 (Phase 1 completion), 00-55 (Phase 1 final)
+- **Next backup**: At Phase 2 milestones
 
 ## 18. Next Step
 
-**Phase 1 COMPLETE (2026-08-12). Security incident CLOSED.**
+**Phase 1 COMPLETE (2026-08-12). Security incident CLOSED. Phase 1 PUSHED to fork.**
 1. ✅ Credential rotated; ✅ new key in `.env` (600, ignored); ✅ history rewritten (credential purged, HEAD `0948a74`); ✅ pushed to fork `nomadintheuae-code/US-stocks` (force-with-lease, verified).
 2. ✅ FMP news HTTP 402 isolated (FMPPlanError; app.py graceful notice).
 3. ✅ Tests added (40 passing), requirements pinned, README rewritten, docs updated.
-4. ✅ Phase 1 committed as `4617c29` (working tree clean). **PUSH pending — only on explicit authorization.**
-5. ✅ Phase 1 completion checkpoint backup created (00-47, verified).
+4. ✅ Phase 1 committed (`4617c29`, `40a2cc8`) and **PUSHED** to fork (normal fast-forward `0948a74..40a2cc8`, no force; verified origin/main == local HEAD).
+5. ✅ Phase 1 final checkpoint backup created (00-55, verified).
 
-**Phase 2 (next, after optional push authorization)**: Refactor RSAnalyzer → RSIndicator, VCPAnalyzer → VCPIndicator, MarketDataProvider abstraction, CacheManager with compression
+**Phase 2 (next)**: Refactor RSAnalyzer → RSIndicator, VCPAnalyzer → VCPIndicator, MarketDataProvider abstraction, CacheManager with compression
 
 ## 20. SECURITY INCIDENT — FMP API Key Exposure
 
@@ -460,6 +461,21 @@ The key assignment appears in **6 commits on main** (all reachable from `origin/
 committing them would entangle the fix with the unremediated history.*
 
 ## 21. Session History
+
+### 2026-08-12 — PHASE 1 PUSHED TO FORK (approved)
+**Goal**: Push the Phase 1 commits to the user's fork (nomadintheuae-code/US-stocks) after explicit approval
+**Work completed**:
+- Pre-push verification: git status clean; HEAD 40a2cc8 (on cleaned history 0948a74); origin → fork URL; `.env` NOT tracked (only `.env.sample` tracked; `.env` ignored, NOT in HEAD/index); no credential patterns in tracked files; origin/main == 0948a74 (ancestor of HEAD → fast-forward possible)
+- Confirmed remote ahead-by-exactly-2 (4617c29, 40a2cc8); merge-base check → FF_OK_ANCESTOR_CONFIRMED
+- Pushed with NORMAL push (no --force, no --force-with-lease): `0948a74..40a2cc8 main -> main`
+- Post-push verification: local HEAD == origin/main == ls-remote main == 40a2cc8 (SYNCED_OK); git status clean
+- Updated PROJECT_CONTEXT.md (Sections 16-18) with final Phase 1 pushed state; created final checkpoint backup 00-55
+**Tests**: pre-push verification suite (status/log/remote/env/creds/ancestor) + post-push sync check
+**Results**: Phase 1 live on fork at 40a2cc8; working tree clean; no credentials pushed
+**Problems**: None (earlier `git ls-files .env` exit-0 was a pathspec false positive — file is not tracked)
+**Decisions**: Normal fast-forward push (remote was ancestor); no history rewrite; EMMA019 upstream untouched; 22-30 backup retained
+**Backup**: US-stocks_2026-08-12_00-55_phase1-final-pushed.tar.gz (verified)
+**Next step**: STOP (per instruction). Phase 2 starts on user command.
 
 ### 2026-08-12 — PHASE 1 COMPLETION (tests, pinning, README, validation)
 **Goal**: Finish Phase 1 (Foundation): test suite, dependency pinning, README, full validation, commit prep
