@@ -209,13 +209,39 @@ rs.compute_percentiles(raw_list)  # sorts by raw_rs, assigns rs_rating
 
 **Backward compatibility**: `RSAnalyzer` is a thin static wrapper delegating to `RSIndicator` with default config. Existing callers (`sentinel.py`, `ecr_strategy.py`, `app2.py`) produce identical results.
 
-### VCP Scoring (engines/analysis.py:10-163) - Max 105 points
+### VCP Scoring — VCPIndicator (engines/analysis.py:104-260) - Max 105 points
+```python
+# Configurable VCP scoring — reads from config.yaml vcp: section
+vcp = VCPIndicator()  # loads tightness_periods, volume_lookback, ma_periods, etc.
+result = vcp.calculate(df)  # returns score, atr, signals, breakdown
+```
+
 | Component | Weight | Logic |
 |-----------|--------|-------|
-| Tightness | 40pt | Price range % over 20/30/40/60d; contraction = 20d < 30d < 40d |
-| Volume Dry-up | 30pt | 20d avg vol / 60d avg vol (20d prior); <0.45 = 30pt |
-| MA Alignment | 30pt | Price>MA50 (10), MA50>MA150 (10), MA150>MA200 (10) |
-| Pivot Bonus | 5pt | Distance to 50d high: 0-4% = 5pt, 4-8% = 3pt |
+| Tightness | 40pt | Price range % over configurable periods (default 20/30/40/60d); contraction = short < mid < long |
+| Volume Dry-up | 30pt | short_vol / long_vol (gap-separated); <0.45 = 30pt |
+| MA Alignment | 30pt | Price>MA_short (10), MA_short>MA_mid (10), MA_mid>MA_long (10) |
+| Pivot Bonus | 5pt | Distance to pivot high: 0-4% = 5pt, 4-8% = 3pt |
+
+**Configuration** (config.yaml `vcp:` section):
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| tightness_periods | [20, 30, 40, 60] | Periods for range calculation |
+| volume_lookback_short | 20 | Short-term volume window |
+| volume_lookback_long | 60 | Long-term volume window start |
+| volume_lookback_gap | 20 | Gap between short and long windows |
+| ma_periods | [50, 150, 200] | Moving average periods |
+| pivot_near_pct | 0.04 | Near pivot threshold (5pt bonus) |
+| pivot_far_pct | 0.08 | Far pivot threshold (3pt bonus) |
+| max_tightness_score | 40 | Max tightness points |
+| max_volume_score | 30 | Max volume points |
+| max_ma_score | 30 | Max MA alignment points |
+
+**API**:
+- Instance: `VCPIndicator(tightness_periods=..., ma_periods=..., ...)`
+- `calculate(df) → dict` — returns {score, atr, signals, is_dryup, range_pct, vol_ratio, breakdown}
+
+**Backward compatibility**: `VCPAnalyzer` is a thin static wrapper delegating to `VCPIndicator` with default config. Existing callers (`sentinel.py`, `ecr_strategy.py`, `app2.py`) produce identical results.
 
 ### StrategyValidator Backtest (engines/analysis.py:200-258)
 - Simulates pivot breakout + MA50 filter entries
@@ -291,6 +317,28 @@ rs.compute_percentiles(raw_list)  # sorts by raw_rs, assigns rs_rating
 - README.md updated: repository structure mentions RSIndicator; Configuration section includes RS example; Project Status reflects Phase 2.2 completion; test count updated to 66
 - Docs backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase2_2-docs.tar.gz` (verified, 43 files, 82KB)
 - Next milestone: MILESTONE 2.2.5 (Final verification) → STOP
+
+### Phase 2.3 Status (2026-08-12)
+**🔄 IN PROGRESS — VCPAnalyzer → VCPIndicator Refactor**:
+- Status: MILESTONE 2.3.2 (Implementation) — VCPIndicator introduced
+- Objective: Refactor VCP calculation into a configurable, testable component without changing behavior
+- HEAD commit: `8255b8e`
+- Pre-phase backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase2_3.tar.gz` (verified, 43 files, 82KB)
+- Checkpoint backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase2_3-checkpoint.tar.gz` (verified, 43 files, 83KB)
+- Files changed:
+  - `engines/analysis.py` — added `VCPIndicator` class (configurable tightness_periods/volume_lookback/ma_periods/pivot thresholds, validation, backward-compat classmethod); `VCPAnalyzer` now a thin wrapper delegating to `VCPIndicator`
+  - `tests/test_analysis.py` — added 12 new tests (VCPIndicator config, calculate, validation, edge cases, backward compat)
+- Architecture changes:
+  - `VCPIndicator` reads from existing `config.yaml` `vcp:` section (previously unused by VCPAnalyzer)
+  - Constructor accepts optional overrides for all configurable parameters
+  - Validation: tightness_periods >= 2, ma_periods >= 2, pivot_far_pct > pivot_near_pct, etc.
+  - `VCPAnalyzer` preserved as static wrapper — zero behavioral change for existing callers (`sentinel.py`, `ecr_strategy.py`, `app2.py`)
+- Configuration: config.yaml `vcp:` section now wired to VCPIndicator (schema unchanged)
+- Backward compatibility: VERIFIED — VCPAnalyzer.calculate() ≡ VCPIndicator.calculate()
+- Tests: **78 passed** (66 previous + 12 new), full suite green (~196s)
+- Regression: **9/9 passed** — golden replay reproduces Phase 2.1 baseline exactly
+- Known issues: None
+- Next step: MILESTONE 2.3.3 (Documentation) → 2.3.4 (Final verification) → STOP
 
 ### Phase 2.1 Status (2026-08-12)
 **✅ COMPLETE — Reproducibility gate before indicator refactors**:
@@ -400,11 +448,12 @@ rs.compute_percentiles(raw_list)  # sorts by raw_rs, assigns rs_rating
 ## 14. Testing
 
 - **Test framework**: pytest 9.1.1 (configured via pyproject.toml `[tool.pytest.ini_options]`, `pythonpath = ["."]`)
-- **Available tests**: 66 (tests/test_config.py, tests/test_fmp.py, tests/test_analysis.py [incl. 17 RSIndicator tests], tests/test_imports.py, tests/test_regression.py)
-- **Last test run**: 2026-08-12 — `python -m pytest` → **66 passed** (incl. Phase 2.1 regression suite + new RSIndicator tests)
+- **Available tests**: 78 (tests/test_config.py, tests/test_fmp.py, tests/test_analysis.py [incl. 17 RSIndicator + 12 VCPIndicator tests], tests/test_imports.py, tests/test_regression.py)
+- **Last test run**: 2026-08-12 — `python -m pytest` → **78 passed** (incl. Phase 2.1 regression suite + RSIndicator + VCPIndicator tests)
 - **Network**: fully mocked (test_fmp.py stubs requests.get; no live API calls in tests). Phase 2.1 regression replay is fully offline — it reads frozen OHLCV pickles and stubs fundamentals/news/insider (never hits yfinance/FMP).
 - **Phase 2.1 regression suite** (tests/test_regression.py): replays the 310-ticker scan against a frozen snapshot (stored OUTSIDE repo under ~/ProjectBackups/US-stocks/frozen_snapshots/). Asserts (a) a fresh run reproduces the golden artifact exactly, (b) two runs are identical (determinism), (c) frozen replay matches the live 2026-08-12 reference on decision fields (310 scanned / 30 qualified / 15 ACTION), (d) golden has no secrets + correct baseline counts. Skips cleanly if the snapshot dir is absent; recreate via `./venv/bin/python scripts/capture_frozen_snapshot.py`.
-- **RSIndicator tests** (tests/test_analysis.py, 17 new): config loading, validation, compute_raw (short/up/down/fallback), compute_percentiles (ascending/empty), NaN propagation, None handling, classmethod equivalence, backward compat with RSAnalyzer
+- **RSIndicator tests** (tests/test_analysis.py, 17): config loading, validation, compute_raw (short/up/down/fallback), compute_percentiles (ascending/empty), NaN propagation, None handling, classmethod equivalence, backward compat with RSAnalyzer
+- **VCPIndicator tests** (tests/test_analysis.py, 12): config loading, constructor overrides, validation (tightness_periods, ma_periods, pivot thresholds), calculate output format, edge cases (short frame, None), backward compat with VCPAnalyzer
 - **Golden artifact**: tests/golden/baseline_2026-08-12.json (machine-readable commitment of HEAD b5b0986 output).
 - **Known failing tests**: NONE
 - **Run command**: `pytest` (or `./venv/bin/python -m pytest`)

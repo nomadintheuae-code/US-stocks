@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from engines.analysis import RSAnalyzer, RSIndicator, StrategyValidator, VCPAnalyzer
+from engines.analysis import RSAnalyzer, RSIndicator, StrategyValidator, VCPAnalyzer, VCPIndicator
 
 
 def _frame(n=260, drift=0.5, vol=1.0, seed=0):
@@ -68,6 +68,92 @@ def test_vcp_dry_volume_flagged():
     res = VCPAnalyzer.calculate(df)
     assert res["is_dryup"] is True
     assert "Volume Dry-up Detected" in res["signals"]
+
+
+# --- VCPIndicator -----------------------------------------------------------
+
+def test_vcp_indicator_default_config_loads():
+    ind = VCPIndicator()
+    assert ind.tightness_periods == [20, 30, 40, 60]
+    assert ind.volume_lookback_short == 20
+    assert ind.volume_lookback_long == 60
+    assert ind.volume_lookback_gap == 20
+    assert ind.ma_periods == [50, 150, 200]
+    assert ind.pivot_near_pct == 0.04
+    assert ind.pivot_far_pct == 0.08
+    assert ind.max_tightness_score == 40
+    assert ind.max_volume_score == 30
+    assert ind.max_ma_score == 30
+
+
+def test_vcp_indicator_custom_config():
+    ind = VCPIndicator(tightness_periods=[15, 25, 35, 50], ma_periods=[40, 100, 150])
+    assert ind.tightness_periods == [15, 25, 35, 50]
+    assert ind.ma_periods == [40, 100, 150]
+
+
+def test_vcp_indicator_invalid_tightness_periods():
+    with pytest.raises(ValueError, match="at least 2 periods"):
+        VCPIndicator(tightness_periods=[20])
+
+
+def test_vcp_indicator_invalid_pivot_thresholds():
+    with pytest.raises(ValueError, match="pivot_far_pct must be > pivot_near_pct"):
+        VCPIndicator(pivot_near_pct=0.08, pivot_far_pct=0.04)
+
+
+def test_vcp_indicator_invalid_ma_periods():
+    with pytest.raises(ValueError, match="at least 2 periods"):
+        VCPIndicator(ma_periods=[50])
+
+
+def test_vcp_indicator_calculate_short_frame():
+    ind = VCPIndicator()
+    res = ind.calculate(_frame(n=50))
+    assert res["score"] == 0
+    assert res["atr"] == 0.0
+
+
+def test_vcp_indicator_calculate_none():
+    ind = VCPIndicator()
+    res = ind.calculate(None)
+    assert res["score"] == 0
+
+
+def test_vcp_indicator_calculate_output_format():
+    ind = VCPIndicator()
+    res = ind.calculate(_frame(n=300, drift=0.5))
+    assert set(res) >= {"score", "atr", "signals", "is_dryup", "range_pct", "vol_ratio", "breakdown"}
+    assert 0 <= res["score"] <= 105
+    assert res["atr"] > 0
+    assert set(res["breakdown"]) == {"tight", "vol", "ma", "pivot"}
+
+
+def test_vcp_indicator_calculate_dry_volume():
+    ind = VCPIndicator()
+    df = _frame(n=300, drift=0.3)
+    df.iloc[-20:, df.columns.get_loc("Volume")] = df["Volume"].iloc[-60:-40].mean() * 0.3
+    res = ind.calculate(df)
+    assert res["is_dryup"] is True
+    assert "Volume Dry-up Detected" in res["signals"]
+
+
+# --- VCPAnalyzer backward compatibility --------------------------------------
+
+def test_vcpanalyzer_calculate_compat():
+    df = _frame(n=300, drift=0.5)
+    assert VCPAnalyzer.calculate(df) == VCPIndicator().calculate(df)
+
+
+def test_vcpanalyzer_short_frame_compat():
+    assert VCPAnalyzer.calculate(_frame(n=50))["score"] == 0
+    assert VCPAnalyzer.calculate(None)["score"] == 0
+
+
+def test_vcpanalyzer_dry_volume_compat():
+    df = _frame(n=300, drift=0.3)
+    df.iloc[-20:, df.columns.get_loc("Volume")] = df["Volume"].iloc[-60:-40].mean() * 0.3
+    assert VCPAnalyzer.calculate(df)["is_dryup"] is True
 
 
 # --- StrategyValidator ------------------------------------------------------

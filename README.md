@@ -58,7 +58,7 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 │   └── __init__.py
 ├── engines/             # Feature modules
 │   ├── data.py          #   Market data layer
-│   ├── analysis.py      #   RSIndicator (configurable RS), VCPAnalyzer, StrategyValidator
+│   ├── analysis.py      #   RSIndicator (configurable RS), VCPIndicator (configurable VCP), StrategyValidator
 │   ├── fundamental.py   #   Fundamental scoring
 │   ├── news.py          #   RSS/Yahoo news
 │   ├── notify.py        #   LINE Notify
@@ -150,7 +150,7 @@ Open http://localhost:8501
 pytest                      # or: python -m pytest
 ```
 
-The suite contains 66 tests (offline, no network) covering config loading, FMP client, indicator calculations (including RSIndicator), import checks, and Phase 2.1 golden regression replay.
+The suite contains 78 tests (offline, no network) covering config loading, FMP client, indicator calculations (RSIndicator + VCPIndicator), import checks, and Phase 2.1 golden regression replay.
 
 ## Known Limitations
 
@@ -170,11 +170,12 @@ Actively developed.
 
 **Completed (Phase 1)**: Externalized configuration, security hardening, pinned dependencies, offline test suite.
 
-**Completed (Phase 2.2)**: Refactored `RSAnalyzer` → configurable `RSIndicator` with:
-- Configurable lookback windows, weights, and minimum data days via `config.yaml` `rs:` section
-- Input validation (weights must sum to 1.0, windows/weights length match)
-- Full backward compatibility — `RSAnalyzer` preserved as thin wrapper
-- 17 new unit tests; full suite 66 tests passing; Phase 2.1 golden regression intact
+**Completed (Phase 2.2)**: Refactored `RSAnalyzer` → configurable `RSIndicator`.
+**Completed (Phase 2.3)**: Refactored `VCPAnalyzer` → configurable `VCPIndicator` with:
+- Configurable tightness periods, volume lookback windows, MA periods, and pivot thresholds via `config.yaml` `vcp:` section
+- Input validation (periods ordering, threshold relationships)
+- Full backward compatibility — `VCPAnalyzer` preserved as thin wrapper
+- 12 new unit tests; full suite 78 tests passing; Phase 2.1 golden regression intact
 
 **Planned**:
 - VCPAnalyzer → VCPIndicator refactor (Phase 2.3)
