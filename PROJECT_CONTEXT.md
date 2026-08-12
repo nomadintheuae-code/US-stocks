@@ -341,12 +341,29 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Next step: MILESTONE 2.3.3 (Documentation) → 2.3.4 (Final verification) → STOP
 
 ### Phase 2.4 Status (2026-08-12)
-**⚠️ INTERRUPTION CHECKPOINT (2026-08-12 17:01)** — Connection lost during Phase 2.4.2E work:
-- Working tree contains uncommitted changes for 2.4.2A, 2.4.2B, 2.4.2C, 2.4.2D, and 2.4.2E
-- 2.4.2E (StrategyValidator walk-forward) is IN PROGRESS — NOT completed, NOT authorized
-- WIP checkpoint commit created: `wip: checkpoint phase 2.4 strategy layer` — recovery only, NOT milestone completion
-- Backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_wip-checkpoint-phase2_4.tar.gz` (verified, 92KB, 41 files)
-- Next: Resume from checkpoint; 2.4.2E requires authorization before completion
+**✅ MILESTONE 2.4.2E COMPLETE — StrategyValidator walk-forward** (2026-08-12):
+- Objective: Refactor StrategyValidator so walk-forward evaluation is point-in-time and does not use future bars, while preserving existing behavior for legacy callers — ACHIEVED
+- Implementation (already committed in WIP checkpoint `40bb38a`):
+  - `_point_in_time_indicators(df, bar_idx)`: computes ATR(14), MA50, pivot at bar_idx using only `df.iloc[:bar_idx+1]` — structural look-ahead guard
+  - `evaluate_walk_forward(df, min_bars_for_entry=200, lookback_bars=250)`: point-in-time backtest using `_point_in_time_indicators()` for entry decisions; returns {profit_factor, trades, start, evaluated_bars}
+  - `run_walk_forward(df, min_bars_for_entry=200, lookback_bars=250)`: convenience wrapper returning float profit_factor
+  - Legacy `run()` preserved byte-for-byte unchanged — sentinel.py/app2.py production path unaffected
+- Tests (9 walk-forward tests, all passing):
+  - `test_walk_forward_api_compat`: API exists and returns correct types
+  - `test_walk_forward_evaluation_result`: output structure validated
+  - `test_walk_forward_deterministic`: identical inputs → identical outputs
+  - `test_walk_forward_empty_insufficient_data`: None/short frame → 1.0
+  - `test_walk_forward_atr_uses_only_available_bars`: ATR(14) at bar t equals ATR on truncated frame
+  - `test_walk_forward_point_in_time_isolation`: future bars don't affect indicators
+  - `test_walk_forward_no_future_bar_leakage`: bar limits verified at multiple indices
+  - `test_walk_forward_detects_lookahead`: synthetic spike frame distinguishes clean vs biased
+  - `test_walk_forward_matches_legacy_run`: walk-forward matches legacy run() on normal data
+- Regression: **9/9 passed** — golden replay reproduces Phase 2.1 baseline exactly
+- Full suite: **132 passed** (366s)
+- Golden artifact `tests/golden/baseline_2026-08-12.json`: UNCHANGED byte-for-byte
+- Backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase2_4-2e-checkpoint.tar.gz` (verified, 93KB, 41 files)
+- Known issues: None
+- Next step: STOP — Phase 2.4.2 complete (A through E all done); await authorization for Phase 2.4.3 regression
 
 **✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
 - Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
@@ -644,6 +661,22 @@ committing them would entangle the fix with the unremediated history.*
 **Decisions**: Implemented via explicit opt-in (no config schema change, no forced baseline change); constructor-only knobs; default behavior preserved; golden NOT modified
 **Backup**: NEW checkpoint `US-stocks_2026-08-12_phase2_4-2d-checkpoint.tar.gz` (verified); pre-phase2_4 and phase2_4-checkpoint backups untouched
 **Next step**: STOP — await authorization before 2.4.2E
+
+### 2026-08-12 — PHASE 2.4.2E StrategyValidator Walk-Forward (engines/analysis.py)
+**Goal**: Refactor StrategyValidator so walk-forward evaluation is point-in-time and does not use future bars, while preserving existing behavior for legacy callers.
+**Work completed**:
+- Inspected existing StrategyValidator: `run()` uses `high.iloc[i-20:i].max()` for pivot (correct: `i-20:i` excludes bar i) and `close.rolling(50).mean().iloc[i]` for MA50 (correct: rolling mean at bar i uses only bars ≤ i). ATR uses full-frame rolling (potential issue but `start = max(50, len(df)-250)` limits exposure)
+- Implemented `_point_in_time_indicators(df, bar_idx)`: truncates frame to `df.iloc[:bar_idx+1]`, computes ATR(14)/MA50/pivot from truncated data only — structural look-ahead guard
+- Implemented `evaluate_walk_forward(df, min_bars_for_entry=200, lookback_bars=250)`: point-in-time backtest using `_point_in_time_indicators()` for entry decisions; returns {profit_factor, trades, start, evaluated_bars}
+- Implemented `run_walk_forward(df, ...)`: convenience wrapper returning float profit_factor
+- Legacy `run()` preserved byte-for-byte unchanged — sentinel.py/app2.py production path unaffected
+- Added 9 tests: API compat, output structure, deterministic, insufficient data, ATR isolation, point-in-time isolation, no-future-bar leakage, lookahead detection (synthetic spike frame), legacy match
+**Tests**: `pytest tests/test_analysis.py --tb=short` → **79 passed** (13s); full suite `pytest --tb=short` → **132 passed** (366s); `pytest tests/test_regression.py -v` → **9/9 passed** (218s)
+**Results**: golden byte-for-byte unchanged; regression 9/9; walk-forward tests all green; no future-bar leakage confirmed; legacy run() identical on normal data
+**Problems**: None
+**Decisions**: Opt-in walk-forward via separate methods (run_walk_forward/evaluate_walk_forward); legacy run() untouched; _point_in_time_indicators is the structural guarantee; config.yaml untouched; golden NOT modified
+**Backup**: NEW checkpoint `US-stocks_2026-08-12_phase2_4-2e-checkpoint.tar.gz` (verified, 93KB, 41 files); previous backups untouched
+**Next step**: STOP — Phase 2.4.2 complete (A through E); await authorization for Phase 2.4.3 regression
 
 ### 2026-08-12 — PHASE 2.4.2C UniverseManager (config.py)
 **Goal**: Implement UniverseManager (load, validate, filter the ticker universe) as an opt-in class preserving the current 310-ticker behavior.
