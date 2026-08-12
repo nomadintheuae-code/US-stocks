@@ -1,7 +1,105 @@
 import pandas as pd
 import numpy as np
+from typing import List, Optional
 
 from config import CONFIG
+
+
+# ==============================================================================
+# 📈 RSIndicator — configurable Relative Strength
+# ==============================================================================
+
+class RSIndicator:
+    """Configurable Relative Strength indicator.
+
+    Computes a weighted momentum score across multiple lookback windows,
+    then assigns cross-sectional percentiles within a universe.
+
+    Configuration is read from config.yaml ``rs:`` section by default,
+    but can be overridden via constructor arguments.
+    """
+
+    DEFAULT_WINDOWS = [252, 126, 63, 21]
+    DEFAULT_WEIGHTS = [0.4, 0.2, 0.2, 0.2]
+    DEFAULT_MIN_DATA_DAYS = 21
+    ERROR_SENTINEL = -999.0
+
+    def __init__(
+        self,
+        windows: Optional[List[int]] = None,
+        weights: Optional[List[float]] = None,
+        min_data_days: Optional[int] = None,
+    ):
+        cfg = self._load_rs_config()
+        self.windows = windows if windows is not None else cfg.get("windows", self.DEFAULT_WINDOWS)
+        self.weights = weights if weights is not None else cfg.get("weights", self.DEFAULT_WEIGHTS)
+        self.min_data_days = min_data_days if min_data_days is not None else cfg.get("min_data_days", self.DEFAULT_MIN_DATA_DAYS)
+        self._validate_config()
+
+    @staticmethod
+    def _load_rs_config() -> dict:
+        """Load the ``rs:`` section from config.yaml (best-effort)."""
+        try:
+            from sentinel.config import get_config
+            cfg = get_config()
+            return {
+                "windows": list(cfg.rs.windows),
+                "weights": list(cfg.rs.weights),
+                "min_data_days": int(cfg.rs.min_data_days),
+            }
+        except Exception:
+            return {}
+
+    def _validate_config(self) -> None:
+        if len(self.windows) != len(self.weights):
+            raise ValueError(
+                f"windows ({len(self.windows)}) and weights ({len(self.weights)}) must match"
+            )
+        if abs(sum(self.weights) - 1.0) > 0.001:
+            raise ValueError(f"weights must sum to 1.0, got {sum(self.weights)}")
+        if self.min_data_days < 1:
+            raise ValueError(f"min_data_days must be >= 1, got {self.min_data_days}")
+
+    def compute_raw(self, df: pd.DataFrame) -> float:
+        """Compute the raw weighted-momentum RS score for a single ticker."""
+        try:
+            c = df["Close"]
+            if len(c) < self.min_data_days:
+                return self.ERROR_SENTINEL
+
+            returns = []
+            for window in self.windows:
+                if len(c) >= window:
+                    returns.append(c.iloc[-1] / c.iloc[-window] - 1)
+                else:
+                    returns.append(c.iloc[-1] / c.iloc[0] - 1)
+
+            return sum(r * w for r, w in zip(returns, self.weights))
+        except Exception:
+            return self.ERROR_SENTINEL
+
+    def compute_percentiles(self, raw_list: list[dict]) -> list[dict]:
+        """Assign percentile ratings (1-99) to a list of ``{'raw_rs': float}`` dicts.
+
+        Sorts the list in-place by raw_rs ascending, then writes ``rs_rating``.
+        """
+        if not raw_list:
+            return raw_list
+        raw_list.sort(key=lambda x: x["raw_rs"])
+        total = len(raw_list)
+        for i, item in enumerate(raw_list):
+            item["rs_rating"] = int(((i + 1) / total) * 99) + 1
+        return raw_list
+
+    # -- backward-compat classmethods (delegate to default instance) --
+
+    @classmethod
+    def get_raw_score(cls, df: pd.DataFrame) -> float:
+        return cls().compute_raw(df)
+
+    @classmethod
+    def assign_percentiles(cls, raw_list: list[dict]) -> list[dict]:
+        return cls().compute_percentiles(raw_list)
 
 # ==============================================================================
 # 🎯 VCPAnalyzer（改良版・内訳付き）
@@ -163,35 +261,20 @@ class VCPAnalyzer:
         }
 
 # ==============================================================================
-# 📈 RSAnalyzer（変更なし）
+# 📈 RSAnalyzer — backward-compatible wrapper around RSIndicator
 # ==============================================================================
+# RSAnalyzer is retained for backward compatibility. New code should use
+# RSIndicator directly. All behavior is delegated to RSIndicator with
+# default configuration (matches the original hardcoded values exactly).
 
 class RSAnalyzer:
     @staticmethod
     def get_raw_score(df: pd.DataFrame) -> float:
-        try:
-            c = df["Close"]
-            if len(c) < 21:
-                return -999.0
-
-            r12 = (c.iloc[-1] / c.iloc[-252] - 1) if len(c) >= 252 else (c.iloc[-1] / c.iloc[0] - 1)
-            r6  = (c.iloc[-1] / c.iloc[-126] - 1) if len(c) >= 126 else (c.iloc[-1] / c.iloc[0] - 1)
-            r3  = (c.iloc[-1] / c.iloc[-63]  - 1) if len(c) >= 63  else (c.iloc[-1] / c.iloc[0] - 1)
-            r1  = (c.iloc[-1] / c.iloc[-21]  - 1) if len(c) >= 21  else (c.iloc[-1] / c.iloc[0] - 1)
-
-            return (r12 * 0.4) + (r6 * 0.2) + (r3 * 0.2) + (r1 * 0.2)
-        except Exception:
-            return -999.0
+        return RSIndicator.get_raw_score(df)
 
     @staticmethod
     def assign_percentiles(raw_list: list[dict]) -> list[dict]:
-        if not raw_list:
-            return raw_list
-        raw_list.sort(key=lambda x: x["raw_rs"])
-        total = len(raw_list)
-        for i, item in enumerate(raw_list):
-            item["rs_rating"] = int(((i + 1) / total) * 99) + 1
-        return raw_list
+        return RSIndicator.assign_percentiles(raw_list)
 
 # ==============================================================================
 # 🔬 StrategyValidator（変更なし）

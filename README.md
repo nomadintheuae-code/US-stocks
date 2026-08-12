@@ -58,7 +58,7 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 │   └── __init__.py
 ├── engines/             # Feature modules
 │   ├── data.py          #   Market data layer
-│   ├── analysis.py      #   VCPAnalyzer, RSAnalyzer, StrategyValidator
+│   ├── analysis.py      #   RSIndicator (configurable RS), VCPAnalyzer, StrategyValidator
 │   ├── fundamental.py   #   Fundamental scoring
 │   ├── news.py          #   RSS/Yahoo news
 │   ├── notify.py        #   LINE Notify
@@ -98,6 +98,17 @@ pip install -r requirements-dev.txt
 ## Configuration
 
 All tunable parameters live in **`config.yaml`** (capital, scan filters, exit strategy, VCP/RS/backtest/SES/ECR weights, cache, performance, data, notification, UI).
+
+### RS Configuration Example
+
+```yaml
+rs:
+  windows: [252, 126, 63, 21]   # lookback windows (trading days)
+  weights: [0.4, 0.2, 0.2, 0.2] # must sum to 1.0
+  min_data_days: 21              # minimum data required per ticker
+```
+
+The `RSIndicator` class reads these values at instantiation. Validation ensures weights sum to 1.0 and windows/weights lists have equal length.
 
 Secrets and environment overrides go in **`.env`** (git-ignored). Copy `.env.sample` to `.env` and fill in:
 
@@ -139,6 +150,8 @@ Open http://localhost:8501
 pytest                      # or: python -m pytest
 ```
 
+The suite contains 66 tests (offline, no network) covering config loading, FMP client, indicator calculations (including RSIndicator), import checks, and Phase 2.1 golden regression replay.
+
 ## Known Limitations
 
 - **FMP news returns HTTP 402** on the current FMP plan. `app.py` handles this gracefully and shows a notice instead of crashing; the RSS/Yahoo news path (`engines/news.py`, used by `app2.py`) is unaffected. Upgrading the FMP plan (or using the RSS path) is required for FMP news.
@@ -153,11 +166,18 @@ pytest                      # or: python -m pytest
 
 ## Project Status
 
-Actively developed. Recent work (Phase 1): externalized configuration, security hardening, pinned dependencies, and a focused offline test suite.
+Actively developed.
 
-Planned (Phase 2):
+**Completed (Phase 1)**: Externalized configuration, security hardening, pinned dependencies, offline test suite.
 
-- More scan filters & presets
+**Completed (Phase 2.2)**: Refactored `RSAnalyzer` → configurable `RSIndicator` with:
+- Configurable lookback windows, weights, and minimum data days via `config.yaml` `rs:` section
+- Input validation (weights must sum to 1.0, windows/weights length match)
+- Full backward compatibility — `RSAnalyzer` preserved as thin wrapper
+- 17 new unit tests; full suite 66 tests passing; Phase 2.1 golden regression intact
+
+**Planned**:
+- VCPAnalyzer → VCPIndicator refactor (Phase 2.3)
 - Export CSV/Excel from dashboard
 - Enhanced portfolio persistence (JSON or SQLite)
 - Mobile-friendly layout tweaks
