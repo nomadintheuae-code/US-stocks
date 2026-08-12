@@ -12,3 +12,7 @@ license = { text = "MIT" }
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra -q"
+markers = [
+    "regression: deterministic-replay tests that need the frozen data snapshot",
+    "slow: full-precision tests that replay the 310-ticker scan",
+]

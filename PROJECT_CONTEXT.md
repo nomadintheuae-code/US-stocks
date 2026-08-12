@@ -242,6 +242,17 @@ assign_percentiles(): sort by raw_rs, assign percentile
 - ✅ **Test suite added** (2026-08-12): tests/ — 40 tests, all passing offline (config, fmp client w/ mocked network, analysis, imports)
 - ✅ **README.md rewritten** (2026-08-12): structure, install, config, usage, tests, limitations, security notes
 - ✅ **PHASE 1 COMPLETE (2026-08-12)** — see Section 21 session log
+- ✅ **Phase 2.1 (reproducibility harness)**: frozen data snapshot (310/310 pickles, sectors, meta) captured at HEAD b5b0986; frozen scan replays live 2026-08-12 decisions EXACTLY (310/30/15 ACTION, decision fields MATCH); golden artifact tests/golden/baseline_2026-08-12.json (no secrets, schema v1); tests/test_regression.py + scripts/capture_frozen_snapshot.py + tests/regression_harness.py; full suite 49 tests passing (2026-08-12)
+
+### Phase 2.1 Status (2026-08-12)
+**✅ COMPLETE — Reproducibility gate before indicator refactors**:
+- Frozen snapshot at HEAD `b5b0986`: 310 pickles + sectors + meta → `~/ProjectBackups/US-stocks/frozen_snapshots/2026-08-12_b5b0986/` (outside repo, excluded from backups)
+- Replay harness (tests/regression_harness.py): yfinance stubbed, fundamentals/news/insider stubbed empty, temp results dir, pure-Python pickling; `run_frozen_scan()` = deterministic offline 310-ticker scan
+- Cross-check: frozen vs live `results/2026-08-12.json` → **DECISION MATCH** (counts, order, per-ticker status/rs/vcp/pf/entry/stop/target/shares/sector all identical; only live fundamental/informational fields like analyst/insider/PE intentionally absent — they never drive decisions)
+- Golden baseline recorded; 9 regression tests added (golden replay, bit-level determinism, live-decision match, no-secrets, baseline counts, universe↔config, ranking/ordering invariants)
+- Full suite: **49 passed** (~2m37s; heavy tests skip if snapshot absent)
+- Pre-Phase 2.1 backup verified: `US-stocks_2026-08-12_02-12_pre-phase2_1.tar.gz`
+- Working tree clean; NOT committed (commit pending authorization)
 
 ### Phase 1 Status (2026-08-12)
 **✅ COMPLETE** — Foundation (config externalization + security + tests):
@@ -271,6 +282,14 @@ assign_percentiles(): sort by raw_rs, assign percentile
 - [x] Pin requirements.txt + requirements-dev.txt + pyproject.toml — DONE
 - [x] Rewrite README.md — DONE
 - [x] Create Phase 1 completion checkpoint backup — DONE
+
+### Immediate (Phase 2.1 - Reproducibility gate) ✅ COMPLETE
+- [x] Capture frozen data snapshot at HEAD b5b0986 (310 pickles + sectors + meta) — DONE
+- [x] Build deterministic replay harness (tests/regression_harness.py) — DONE
+- [x] Verify frozen replay == live 2026-08-12 decisions (DECISION MATCH) — DONE
+- [x] Write golden baseline artifact (tests/golden/baseline_2026-08-12.json) — DONE
+- [x] Add regression tests (9) + scan determinism — DONE (49/49 passing)
+- [ ] Commit Phase 2.1 files (authorization pending; NO push)
 
 ### Short-term (Phase 2-3)
 - [ ] Refactor RSAnalyzer → RSIndicator (configurable windows/weights)
@@ -323,7 +342,8 @@ assign_percentiles(): sort by raw_rs, assign percentile
 | **Delisted tickers in universe** | Noisy logs, wasted API calls | ✅ FIXED (2026-08-11) | Filter delisted tickers at load time (config.py + config.yaml filter_delisted) |
 | **Configuration scattered** | Hard to tune, inconsistent defaults | ✅ FIXED (2026-08-11) | Centralized in config.yaml + sentinel/config.py (Pydantic) |
 | **No .gitignore / .env protection** | Risk of committing secrets | ✅ FIXED (2026-08-11) | .gitignore created |
-| **No tests** | No regression protection | ✅ FIXED (2026-08-12) | pytest suite in tests/ (40 tests, offline) |
+| **No tests** | No regression protection | ✅ FIXED (2026-08-12) | pytest suite in tests/ (49 tests, offline; + Phase 2.1 deterministic golden replay) |
+| **Strategy output not reproducible** | Refactors could silently change scan decisions | ✅ FIXED (2026-08-12) | Phase 2.1 frozen snapshot + golden artifact + regression tests — every future run must reproduce HEAD b5b0986 decisions |
 | **requirements unpinned** | Non-reproducible installs | ✅ FIXED (2026-08-12) | requirements.txt pinned to verified versions |
 | **Sector filter after ranking** | Unfair percentiles for filtered sectors | OPEN | Filter universe before RS ranking |
 | **No breakout confirmation in VCP** | Detects setup only, not trigger | OPEN | Add volume surge + price close above pivot |
@@ -332,9 +352,11 @@ assign_percentiles(): sort by raw_rs, assign percentile
 ## 14. Testing
 
 - **Test framework**: pytest 9.1.1 (configured via pyproject.toml `[tool.pytest.ini_options]`, `pythonpath = ["."]`)
-- **Available tests**: 40 (tests/test_config.py, tests/test_fmp.py, tests/test_analysis.py, tests/test_imports.py)
-- **Last test run**: 2026-08-12 — `python -m pytest` → 40 passed
-- **Network**: fully mocked in test_fmp.py (requests.get stubbed); no live API calls in tests
+- **Available tests**: 49 (tests/test_config.py, tests/test_fmp.py, tests/test_analysis.py, tests/test_imports.py, tests/test_regression.py)
+- **Last test run**: 2026-08-12 — `python -m pytest` → **49 passed** (incl. Phase 2.1 regression suite)
+- **Network**: fully mocked (test_fmp.py stubs requests.get; no live API calls in tests). Phase 2.1 regression replay is fully offline — it reads frozen OHLCV pickles and stubs fundamentals/news/insider (never hits yfinance/FMP).
+- **Phase 2.1 regression suite** (tests/test_regression.py): replays the 310-ticker scan against a frozen snapshot (stored OUTSIDE repo under ~/ProjectBackups/US-stocks/frozen_snapshots/). Asserts (a) a fresh run reproduces the golden artifact exactly, (b) two runs are identical (determinism), (c) frozen replay matches the live 2026-08-12 reference on decision fields (310 scanned / 30 qualified / 15 ACTION), (d) golden has no secrets + correct baseline counts. Skips cleanly if the snapshot dir is absent; recreate via `./venv/bin/python scripts/capture_frozen_snapshot.py`.
+- **Golden artifact**: tests/golden/baseline_2026-08-12.json (machine-readable commitment of HEAD b5b0986 output).
 - **Known failing tests**: NONE
 - **Run command**: `pytest` (or `./venv/bin/python -m pytest`)
 - **Note**: app.py is imported via py_compile/startup check only (Streamlit bare-mode); app2.py is import-tested
@@ -366,8 +388,8 @@ assign_percentiles(): sort by raw_rs, assign percentile
 - **History note**: 6 commits rewritten via git-filter-repo (2026-08-12) to remove revoked FMP credential. Commit count preserved (185). Old hashes (3c1e44e, 31044d9, 5f44ff7, a353c1b, ad3821b, d84a03b) replaced by new hashes.
 - **Remote**: `origin` = https://github.com/nomadintheuae-code/US-stocks.git (user's FORK; re-pointed 2026-08-12). origin/main == 0948a74 (pushed, verified via ls-remote).
 - **Upstream**: parent repo EMMA019/US-stocks — NOT modified, NOT pushed to (user does not own it).
-- **Uncommitted changes**: NONE (Phase 1 fully PUSHED to fork as 40a2cc8; branch head in sync)
-- **Untracked (ignored)**: .env, cache_v45/, cache/, results/, __pycache__/, .pytest_cache/, AUDIT_REPORT.md
+- **Uncommitted changes**: Phase 2.1 files pending commit — tests/regression_harness.py, tests/test_regression.py, tests/golden/baseline_2026-08-12.json (new), scripts/capture_frozen_snapshot.py (new), pyproject.toml (markers) — NOT committed (authorization pending; NO push)
+- **Untracked (ignored)**: .env, cache_v45/, cache/, results/, __pycache__/, .pytest_cache/, AUDIT_REPORT.md, ~/ProjectBackups/US-stocks/frozen_snapshots/ (outside repo)
 
 ## 17. Backup State
 
@@ -381,18 +403,21 @@ assign_percentiles(): sort by raw_rs, assign percentile
 - **Excluded**: .env, venv, __pycache__, .pytest_cache, cache_v45/, cache/, results/*.json, .git, *.log
 - **Pre-rewrite HEAD recorded**: 3c1e44ed4f06b48579fa0275c8ecdc6d97b6fc3a (stored in /tmp/opencode/pre_rewrite_head.txt)
 - **Retained (NOT deleted per user instruction)**: 22-30 (initial, contains REVOKED credential - see note), 23-23 (Phase 1), 23-30 (security checkpoint), 23-44 (post-rotation), 00-01 (pre-rewrite), 00-30 (final checkpoint), 00-47 (Phase 1 completion), 00-55 (Phase 1 final)
+- **Pre-Phase 2.1 checkpoint (2026-08-12_02-12)**: US-stocks_2026-08-12_02-12_pre-phase2_1.tar.gz (verified; created before the reproducibility harness)
+- **Separate resource**: frozen_snapshots/ at ~/ProjectBackups/US-stocks/ holds the 310-ticker frozen OHLCV snapshot (~13MB pickles + sectors + meta) — intentionally OUTSIDE the repo and EXCLUDED from tarball backups (regenerated from the project when needed)
 - **Next backup**: At Phase 2 milestones
 
 ## 18. Next Step
 
-**Phase 1 COMPLETE (2026-08-12). Security incident CLOSED. Phase 1 PUSHED to fork.**
+**Phase 1 COMPLETE (2026-08-12). Security incident CLOSED. Phase 1 PUSHED to fork. Phase 2.1 (reproducibility gate) COMPLETE.**
 1. ✅ Credential rotated; ✅ new key in `.env` (600, ignored); ✅ history rewritten (credential purged, HEAD `0948a74`); ✅ pushed to fork `nomadintheuae-code/US-stocks` (force-with-lease, verified).
 2. ✅ FMP news HTTP 402 isolated (FMPPlanError; app.py graceful notice).
 3. ✅ Tests added (40 passing), requirements pinned, README rewritten, docs updated.
 4. ✅ Phase 1 committed (`4617c29`, `40a2cc8`) and **PUSHED** to fork (normal fast-forward `0948a74..40a2cc8`, no force; verified origin/main == local HEAD).
 5. ✅ Phase 1 final checkpoint backup created (00-55, verified).
+6. ✅ **Phase 2.1 reproducibility gate** (2026-08-12): frozen snapshot at HEAD `b5b0986` → `~/ProjectBackups/US-stocks/frozen_snapshots/2026-08-12_b5b0986/` (310/310 pickles + sectors + meta); replay harness reproduces live decisions EXACTLY (310/30/15 ACTION, decision fields MATCH); golden artifact `tests/golden/baseline_2026-08-12.json`; 9 regression tests; full suite **49 passed**; pre-Phase 2.1 backup verified (`02-12_pre-phase2_1.tar.gz`).
 
-**Phase 2 (next)**: Refactor RSAnalyzer → RSIndicator, VCPAnalyzer → VCPIndicator, MarketDataProvider abstraction, CacheManager with compression
+**Phase 2 (next, NOT started)**: Refactor RSAnalyzer → RSIndicator, VCPAnalyzer → VCPIndicator, MarketDataProvider abstraction, CacheManager with compression — guarded by the Phase 2.1 regression suite (golden replay + determinism). Working tree has uncommitted Phase 2.1 files (commit pending; NO push without authorization).
 
 ## 20. SECURITY INCIDENT — FMP API Key Exposure
 
@@ -461,6 +486,22 @@ The key assignment appears in **6 commits on main** (all reachable from `origin/
 committing them would entangle the fix with the unremediated history.*
 
 ## 21. Session History
+
+### 2026-08-12 02:20 — PHASE 2.1 REPRODUCIBILITY GATE (test infra; NO strategy code touched)
+**Goal**: Build a deterministic regression baseline BEFORE any Phase 2 indicator refactors, so strategy behavior changes are always detectable.
+**Work completed**:
+- Snapshot: copied 310/310 data pickles + sectors/meta from HEAD `b5b0986` → `~/ProjectBackups/US-stocks/frozen_snapshots/2026-08-12_b5b0986/` (out of repo; excluded from backups via `frozen_snapshots` in handle_pre_phase2_1.sh)
+- Harness `tests/regression_harness.py`: `run_frozen_scan()` = offline 310-ticker scan (yfinance stubbed, fundamentals/news/insider stubbed empty, temp results dir, deterministic pure-Python pickling); `normalize_results`, `write_golden`, `decision_all` (decision-field projection), snapshot meta + presence helpers
+- Capture script `scripts/capture_frozen_snapshot.py`: writes snapshot + regenerates golden + cross-checks frozen replay vs live `results/2026-08-12.json` → **DECISION MATCH** (310 scanned / 30 qualified / 15 ACTION; counts, order, and per-ticker status/rs/vcp/pf/entry/stop/target/shares/sector identical; live-only fundamental fields like analyst/insider/PE never drive decisions)
+- Golden `tests/golden/baseline_2026-08-12.json` (schema v1, baseline_commit b5b0986, no secrets — regex-verified)
+- `tests/test_regression.py` (9 tests): golden reproduction, bit-identical determinism across independent runs, live-decision match, no-secrets, baseline counts, universe↔config.TICKERS, selected⊆qualified, (status_rank, score) ordering invariant
+- pyproject.toml: registered `regression`/`slow` pytest markers
+**Tests**: full suite `python -m pytest` → **49 passed** (~2m37s, includes 4 replay runs); py_compile all modules + imports OK
+**Results**: Reproducibility gate in place — any future code change that alters decisions will fail the golden replay/determinism tests
+**Problems**: One regression test initially encoded a wrong ordering assumption (sorted by score alone); fixed to sentinel's actual (status_rank, score) key — 49/49 green
+**Decisions**: Snapshot stored outside repo (git-ignored tracks via marker file); golden IS tracked (machine-readable, secret-free); comparison uses decision-field projection because live fundamental/informational fields differ by design
+**Backup**: pre-Phase 2.1 checkpoint `US-stocks_2026-08-12_02-12_pre-phase2_1.tar.gz` (verified)
+**Next step**: STOP — report to user; commit Phase 2.1 files pending authorization (NO push)
 
 ### 2026-08-12 — PHASE 1 PUSHED TO FORK (approved)
 **Goal**: Push the Phase 1 commits to the user's fork (nomadintheuae-code/US-stocks) after explicit approval
