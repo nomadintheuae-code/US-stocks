@@ -530,45 +530,10 @@ class VCPAnalyzer:
 # ==============================================================================
 # 🔁 Strategy — abstract base class for trading strategies
 # ==============================================================================
-# New abstraction for the Phase 3 Strategies layer. Existing callers are
-# completely unaffected; this class is opt-in and has no behavioral impact
-# until concrete subclasses are created and used.
-from abc import ABC, abstractmethod
-
-
-class Strategy(ABC):
-    """Abstract base class for trading strategies.
-
-    Subclasses must implement calculate(), get_score(), get_signals(),
-    and get_entry_stop_target(). This class is deliberately minimal and
-    does not change any existing behavior — it is purely additive and
-    opt-in. All existing engine classes (VCPAnalyzer, VCPIndicator,
-    RSAnalyzer, StrategyValidator) remain untouched.
-    """
-
-    @abstractmethod
-    def calculate(self, df: pd.DataFrame) -> dict:
-        """Compute strategy analysis for a single ticker.
-
-        Returns a dict with at minimum: score, signals, is_dryup,
-        range_pct, vol_ratio, breakdown, atr.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_score(self) -> int:
-        """Return the strategy composite score."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_signals(self) -> list[str]:
-        """Return list of human-readable signal strings."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_entry_stop_target(self) -> tuple[float, float, float]:
-        """Return (entry_price, stop_price, target_price)."""
-        raise NotImplementedError
+# Canonical location: engines/strategies/base.py
+# Re-exported here for backward compatibility so that
+# ``from engines.analysis import Strategy`` continues to work.
+from engines.strategies.base import Strategy
 
 
 # ==============================================================================

@@ -400,6 +400,32 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - No production code changes (documentation-only milestone)
 - **Phase 2 COMPLETE** — all milestones (2.1–2.5) verified and passed
 
+### Phase 3 Status (2026-08-12)
+**🔄 IN PROGRESS — Strategies Layer**:
+- Phase 3 Discovery: ✅ Complete
+- Slice 3.1 (Strategy package structure): ✅ COMPLETE
+- Slice 3.2 (RelativeStrengthRanking): ⏳ Pending authorization
+- Slice 3.3 (VCPBreakoutStrategy): ⏳ Pending authorization
+- Slice 3.4 (MinerviniTrendTemplate): ⏳ Pending authorization
+- Slice 3.5 (Regression/test gate): ⏳ Pending
+- Slice 3.6 (Documentation + closeout): ⏳ Pending
+
+**✅ SLICE 3.1 COMPLETE — Strategy Package Structure** (2026-08-12):
+- Objective: Establish `engines.strategies` package as home for Phase 3 strategies, with canonical Strategy ABC — ACHIEVED
+- New files:
+  - `engines/strategies/__init__.py` — package init, re-exports Strategy
+  - `engines/strategies/base.py` — canonical Strategy ABC (moved from engines/analysis.py)
+- Modified files:
+  - `engines/analysis.py` — Strategy class replaced with `from engines.strategies.base import Strategy` (backward-compatible re-export)
+  - `tests/test_analysis.py` — added 5 new tests for package structure
+- Backward compatibility: VERIFIED — `from engines.analysis import Strategy` still works; `Strategy` is the same class via all import paths
+- Tests: full suite `pytest --tb=short` → **137 passed** (167s); `pytest tests/test_analysis.py --tb=short` → **84 passed** (7.5s); `pytest tests/test_regression.py -v --tb=short` → **9/9 passed** (153s)
+- Golden artifact: UNCHANGED byte-for-byte (sha256: `1bf2f37...`)
+- Pre-phase backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase3.tar.gz` (verified, 95KB, 41 files)
+- Checkpoint backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3_3-1-checkpoint.tar.gz` (verified, 96KB, 44 files)
+- Known issues: None
+- Next step: STOP — await authorization for Slice 3.2 (RelativeStrengthRanking)
+
 **✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
 - Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
 - Objective: Build UniverseManager (load, validate, filter delisted) as an opt-in class without changing any existing behavior — ACHIEVED
@@ -546,14 +572,15 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 ## 14. Testing
 
 - **Test framework**: pytest 9.1.1 (configured via pyproject.toml `[tool.pytest.ini_options]`, `pythonpath = ["."]`)
-- **Available tests**: 132 (tests/test_config.py [23], tests/test_fmp.py [18], tests/test_analysis.py [79], tests/test_imports.py [3], tests/test_regression.py [9])
-- **Last test run**: 2026-08-12 — `python -m pytest` → **132 passed** (incl. Phase 2.1 regression suite + Phase 2.2/2.3 indicator tests + Phase 2.4.2 A/B/C/D/E classes)
+- **Available tests**: 137 (tests/test_config.py [23], tests/test_fmp.py [18], tests/test_analysis.py [84], tests/test_imports.py [3], tests/test_regression.py [9])
+- **Last test run**: 2026-08-12 — `python -m pytest` → **137 passed** (incl. Phase 2.1 regression suite + Phase 2.2/2.3 indicator tests + Phase 2.4.2 A/B/C/D/E classes + Phase 3.1 strategy package tests)
 - **Network**: fully mocked (test_fmp.py stubs requests.get; no live API calls in tests). Phase 2.1 regression replay is fully offline — it reads frozen OHLCV pickles and stubs fundamentals/news/insider (never hits yfinance/FMP).
 - **Phase 2.1 regression suite** (tests/test_regression.py): replays the 310-ticker scan against a frozen snapshot (stored OUTSIDE repo under ~/ProjectBackups/US-stocks/frozen_snapshots/). Asserts (a) a fresh run reproduces the golden artifact exactly, (b) two runs are identical (determinism), (c) frozen replay matches the live 2026-08-12 reference on decision fields (310 scanned / 30 qualified / 15 ACTION), (d) golden has no secrets + correct baseline counts. Skips cleanly if the snapshot dir is absent; recreate via `./venv/bin/python scripts/capture_frozen_snapshot.py`.
 - **RSIndicator tests** (tests/test_analysis.py, 17): config loading, validation, compute_raw (short/up/down/fallback), compute_percentiles (ascending/empty), NaN propagation, None handling, classmethod equivalence, backward compat with RSAnalyzer
 - **VCPIndicator tests** (tests/test_analysis.py, 12): config loading, constructor overrides, validation (tightness_periods, ma_periods, pivot thresholds), calculate output format, edge cases (short frame, None), backward compat with VCPAnalyzer
 - **VCP pivot/breakout tests** (tests/test_analysis.py, 12): left-side pivot detection, handle structure/contraction, breakout confirmed, volume-required, failed breakout, insufficient data, no-look-ahead, output schema, constructor validation, backward compat
 - **Walk-forward tests** (tests/test_analysis.py, 9): API compat, output structure, deterministic, insufficient data, ATR isolation, point-in-time isolation, no-future-bar leakage, lookahead detection, legacy match
+- **Strategy package tests** (tests/test_analysis.py, 5): package importable, importable from base, re-exported from init, same class via both paths, abstract direct instantiation fails
 - **Golden artifact**: tests/golden/baseline_2026-08-12.json (machine-readable commitment of HEAD b5b0986 output).
 - **Known failing tests**: NONE
 - **Run command**: `pytest` (or `./venv/bin/python -m pytest`)

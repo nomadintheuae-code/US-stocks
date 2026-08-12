@@ -674,6 +674,40 @@ def test_strategy_entry_stop_target_abstract():
         pass
 
 
+# --- Strategy package structure (Phase 3.1) --------------------------------
+
+def test_strategies_package_importable():
+    import engines.strategies
+    assert engines.strategies is not None
+
+
+def test_strategy_importable_from_strategies_base():
+    from engines.strategies.base import Strategy as Strat
+    assert Strat is not None
+
+
+def test_strategy_reexported_from_strategies_init():
+    from engines.strategies import Strategy as Strat
+    assert Strat is not None
+
+
+def test_strategy_same_class_via_both_imports():
+    from engines.analysis import Strategy as S1
+    from engines.strategies.base import Strategy as S2
+    from engines.strategies import Strategy as S3
+    assert S1 is S2
+    assert S2 is S3
+
+
+def test_strategy_is_abstract_direct_instantiate_fails():
+    from engines.strategies.base import Strategy as Strat
+    try:
+        Strat()
+        assert False, "Strategy should not be instantiable"
+    except TypeError:
+        pass
+
+
 # --- MarketDataProvider abstraction tests ---
 
 def test_marketdataprovider_importable():
