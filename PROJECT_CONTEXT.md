@@ -365,6 +365,27 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — Phase 2.4.2 complete (A through E all done); await authorization for Phase 2.4.3 regression
 
+**✅ MILESTONE 2.4.3 COMPLETE — Regression Gate** (2026-08-12):
+- Objective: Verify all Phase 2.4.2 changes produce no regressions — ACHIEVED
+- Regression gate (`pytest tests/test_regression.py -v`): **9/9 passed** (159s)
+  - `test_golden_artifact_exists`: golden JSON present
+  - `test_golden_artifact_contains_no_secrets`: no credentials in golden
+  - `test_golden_baseline_counts_matches_approved_baseline`: 310/30/15, commit b5b0986
+  - `test_golden_universe_matches_config`: universe count matches config.TICKERS
+  - `test_frozen_scan_reproduces_golden`: fresh run == golden exactly
+  - `test_frozen_scan_is_deterministic`: two runs identical
+  - `test_frozen_scan_matches_live_reference_decisions`: frozen replay == live 2026-08-12 decisions
+  - `test_qualified_is_action_superset_in_golden`: selected ⊆ qualified
+  - `test_ranking_order_present_in_golden`: (status_rank, score) ordering correct
+- Full suite: **132 passed** (179s)
+- Golden artifact `tests/golden/baseline_2026-08-12.json`: UNCHANGED byte-for-byte (sha256: `1bf2f37...`)
+- Decision fields verified: 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- config.yaml: NOT modified
+- Golden baseline: NOT modified
+- Backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase2_4-3-regression-gate.tar.gz` (verified, 93KB, 41 files)
+- Known issues: None
+- **Phase 2.4 COMPLETE** — all milestones (2.4.2A–E + 2.4.3) verified and passed
+
 **✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
 - Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
 - Objective: Build UniverseManager (load, validate, filter delisted) as an opt-in class without changing any existing behavior — ACHIEVED
@@ -677,6 +698,24 @@ committing them would entangle the fix with the unremediated history.*
 **Decisions**: Opt-in walk-forward via separate methods (run_walk_forward/evaluate_walk_forward); legacy run() untouched; _point_in_time_indicators is the structural guarantee; config.yaml untouched; golden NOT modified
 **Backup**: NEW checkpoint `US-stocks_2026-08-12_phase2_4-2e-checkpoint.tar.gz` (verified, 93KB, 41 files); previous backups untouched
 **Next step**: STOP — Phase 2.4.2 complete (A through E); await authorization for Phase 2.4.3 regression
+
+### 2026-08-12 — PHASE 2.4.3 Regression Gate (verification only)
+**Goal**: Verify all Phase 2.4.2 changes produce no regressions against the Phase 2.1 golden baseline.
+**Work completed**:
+- Verified Phase 2.4.2E checkpoint backup intact: `US-stocks_2026-08-12_phase2_4-2e-checkpoint.tar.gz` (93KB, 41 files)
+- Ran regression gate: `pytest tests/test_regression.py -v --tb=short` → **9/9 passed** (159s)
+- Ran full suite: `pytest --tb=short` → **132 passed** (179s)
+- Verified golden artifact `tests/golden/baseline_2026-08-12.json` UNCHANGED byte-for-byte (sha256: `1bf2f37...`)
+- Verified 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- Verified decision fields match: status, entry, stop, target, shares, sector, rs, vcp, pf all identical
+- Verified config.yaml NOT modified; golden baseline NOT modified
+- Created Phase 2.4.3 checkpoint backup: `US-stocks_2026-08-12_phase2_4-3-regression-gate.tar.gz` (verified, 93KB, 41 files)
+**Tests**: 132 passed, 0 failed, 0 skipped
+**Results**: All Phase 2.4.2 changes verified regression-free; Phase 2.4 COMPLETE
+**Problems**: None
+**Decisions**: No code changes required — regression gate is verification-only
+**Backup**: `US-stocks_2026-08-12_phase2_4-3-regression-gate.tar.gz` (verified); all previous backups untouched
+**Next step**: STOP — Phase 2.4 COMPLETE; await authorization for Phase 2.5 or next work
 
 ### 2026-08-12 — PHASE 2.4.2C UniverseManager (config.py)
 **Goal**: Implement UniverseManager (load, validate, filter the ticker universe) as an opt-in class preserving the current 310-ticker behavior.
