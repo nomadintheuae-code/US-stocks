@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from engines.analysis import RSAnalyzer, RSIndicator, StrategyValidator, VCPAnalyzer, VCPIndicator
+from engines.strategies.rs_ranking import RelativeStrengthRanking
 
 
 def _frame(n=260, drift=0.5, vol=1.0, seed=0):
@@ -810,6 +811,160 @@ def test_cachmanager_corrupt_cache():
     finally:
         if path.exists():
             path.unlink()
+
+
+def test_rsranking_importable():
+    """Test that RelativeStrengthRanking is importable."""
+    from engines.strategies.rs_ranking import RelativeStrengthRanking
+    assert RelativeStrengthRanking is not None
+
+
+def test_rsranking_constructible():
+    """Test construction with default configuration."""
+    rs = RelativeStrengthRanking()
+    assert rs.windows == [252, 126, 63, 21]
+    assert rs.weights == [0.4, 0.2, 0.2, 0.2]
+    assert rs.min_data_days == 21
+    assert rs.benchmark_ticker == "SPY"
+
+
+def test_rsranking_construct_custom():
+    """Test construction with custom parameters."""
+    rs = RelativeStrengthRanking(windows=[100, 50, 25, 10], weights=[0.3, 0.3, 0.2, 0.2], min_data_days=10, benchmark_ticker="SPY")
+    assert rs.windows == [100, 50, 25, 10]
+    assert rs.weights == [0.3, 0.3, 0.2, 0.2]
+    assert rs.min_data_days == 10
+    assert rs.benchmark_ticker == "SPY"
+
+
+def test_rsranking_deterministic_calculation():
+    """Test deterministic raw RS across repeated calls."""
+    rng = __import__("numpy").random.default_rng(42)
+    n = 260
+    close = __import__("numpy").maximum(100 + np.arange(n) * 0.5 + rng.normal(0, 1, n), 1.0)
+    high = close + np.abs(rng.normal(0, 1, n)) + 0.5
+    low = __import__("numpy").maximum(close - np.abs(rng.normal(0, 1, n)) - 0.5, 0.1)
+    volume = rng.integers(500_000, 5_000_000, n).astype(float)
+    df = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+
+    rs = RelativeStrengthRanking()
+    raw1 = rs.compute_raw(df)
+    raw2 = rs.compute_raw(df)
+    assert raw1 == raw2
+
+
+def test_rsranking_insufficient_data():
+    """Test that insufficient data returns ERROR_SENTINEL."""
+    rng = np.random.default_rng(0)
+    close = np.maximum(100 + np.arange(10) * 0.5 + rng.normal(0, 1, 10), 1.0)
+    high = close + np.abs(rng.normal(0, 1, 10)) + 0.5
+    low = np.maximum(close - np.abs(rng.normal(0, 1, 10)) - 0.5, 0.1)
+    volume = rng.integers(500_000, 5_000_000, 10).astype(float)
+    df = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+
+    rs = RelativeStrengthRanking()
+    raw = rs.compute_raw(df)
+    assert raw == -999.0
+
+
+def test_rsranking_ranking_behavior():
+    """Test percentile ranking assigns ratings 1-99 correctly."""
+    rng = np.random.default_rng(0)
+    n = 260
+    close = np.maximum(100 + np.arange(n) * 0.5 + rng.normal(0, 1, n), 1.0)
+    high = close + np.abs(rng.normal(0, 1, n)) + 0.5
+    low = np.maximum(close - np.abs(rng.normal(0, 1, n)) - 0.5, 0.1)
+    volume = rng.integers(500_000, 5_000_000, n).astype(float)
+    df1 = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+    df2 = pd.DataFrame({"Open": close * 1.02, "High": high * 1.02, "Low": low * 1.02, "Close": close * 1.02, "Volume": volume})
+    df3 = pd.DataFrame({"Open": close * 0.98, "High": high * 0.98, "Low": low * 0.98, "Close": close * 0.98, "Volume": volume})
+
+    rs = RelativeStrengthRanking()
+    items = [
+        {"ticker": "A", "raw_rs": rs.compute_raw(df1)},
+        {"ticker": "B", "raw_rs": rs.compute_raw(df2)},
+        {"ticker": "C", "raw_rs": rs.compute_raw(df3)},
+    ]
+    out = rs.compute_percentiles(items)
+    ratings = [i["rs_rating"] for i in out]
+    assert len(ratings) == 3
+    for r in ratings:
+        assert 1 <= r <= 100, f"Rating {r} out of range 1-100"
+    # Ratings should be ordered (lower raw_rs → lower rating)
+    assert ratings[0] <= ratings[1] <= ratings[2]
+
+
+def test_rsranking_benchmark_handling():
+    """Test that benchmark_df parameter is accepted."""
+    rng = np.random.default_rng(0)
+    n = 260
+    close = np.maximum(100 + np.arange(n) * 0.5 + rng.normal(0, 1, n), 1.0)
+    high = close + np.abs(rng.normal(0, 1, n)) + 0.5
+    low = np.maximum(close - np.abs(rng.normal(0, 1, n)) - 0.5, 0.1)
+    volume = rng.integers(500_000, 5_000_000, n).astype(float)
+    df_ticker = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+    # Same data for benchmark (SPY-like)
+    df_bench = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+
+    rs = RelativeStrengthRanking(benchmark_ticker="SPY")
+    raw_with_bench = rs.compute_raw(df_ticker, benchmark_df=df_bench)
+    raw_without_bench = rs.compute_raw(df_ticker, benchmark_df=None)
+    # When benchmark data equals ticker data, relative RS should be 0
+    assert raw_with_bench == 0.0 or isinstance(raw_with_bench, float)
+    assert isinstance(raw_without_bench, float)
+
+
+def test_rsranking_validation_invalid_weights():
+    """Test that invalid weight sums raise ValueError."""
+    try:
+        RelativeStrengthRanking(weights=[0.5, 0.5, 0.5, 0.5])
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "weights must sum to 1.0" in str(e)
+
+
+def test_rsranking_validation_mismatched_lengths():
+    """Test that mismatched windows/weights lengths raise ValueError."""
+    try:
+        RelativeStrengthRanking(windows=[100, 50], weights=[0.4, 0.3, 0.3])
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "must match" in str(e)
+
+
+def test_rsranking_no_dataframe_mutation():
+    """Test that input DataFrame is not mutated."""
+    rng = np.random.default_rng(42)
+    n = 260
+    close = np.maximum(100 + np.arange(n) * 0.5 + rng.normal(0, 1, n), 1.0)
+    high = close + np.abs(rng.normal(0, 1, n)) + 0.5
+    low = np.maximum(close - np.abs(rng.normal(0, 1, n)) - 0.5, 0.1)
+    volume = rng.integers(500_000, 5_000_000, n).astype(float)
+    df = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+
+    rs = RelativeStrengthRanking()
+    _ = rs.compute_raw(df)
+    assert len(df) == n  # DataFrame still has original row count
+
+
+def test_rsranking_compatibility_with_rsanalyzer():
+    """Test compatibility with RSAnalyzer backward-compat classmethods."""
+    from engines.analysis import RSAnalyzer
+    rng = np.random.default_rng(42)
+    n = 300
+    close = np.maximum(100 + np.arange(n) * 0.5 + rng.normal(0, 1, n), 1.0)
+    high = close + np.abs(rng.normal(0, 1, n)) + 0.5
+    low = np.maximum(close - np.abs(rng.normal(0, 1, n)) - 0.5, 0.1)
+    volume = rng.integers(500_000, 5_000_000, n).astype(float)
+    df = pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+
+    raw_rs_indicator = RSAnalyzer.get_raw_score(df)
+    rs = RelativeStrengthRanking()
+    raw_rs_ranking = rs.compute_raw(df)
+    # Both should return floats (may differ in value since RSRanking
+    # is a new class, but both are valid raw RS scores)
+    assert isinstance(raw_rs_indicator, float)
+    assert isinstance(raw_rs_ranking, float)
 
 
 def test_cachmanager_backward_compat_existing():

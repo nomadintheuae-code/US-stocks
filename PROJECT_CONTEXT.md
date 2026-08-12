@@ -404,11 +404,28 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 **🔄 IN PROGRESS — Strategies Layer**:
 - Phase 3 Discovery: ✅ Complete
 - Slice 3.1 (Strategy package structure): ✅ COMPLETE
-- Slice 3.2 (RelativeStrengthRanking): ⏳ Pending authorization
+- Slice 3.2 (RelativeStrengthRanking): ✅ COMPLETE (implementation + tests verified; uncommitted)
 - Slice 3.3 (VCPBreakoutStrategy): ⏳ Pending authorization
 - Slice 3.4 (MinerviniTrendTemplate): ⏳ Pending authorization
 - Slice 3.5 (Regression/test gate): ⏳ Pending
 - Slice 3.6 (Documentation + closeout): ⏳ Pending
+
+**✅ SLICE 3.2 COMPLETE — RelativeStrengthRanking Indicator** (2026-08-12, verified 2026-08-13):
+- Objective: Implement `RelativeStrengthRanking` as an additive, opt-in INDICATOR (not a replacement for RSIndicator) — ACHIEVED
+- New files:
+  - `engines/strategies/rs_ranking.py` — `RelativeStrengthRanking` class (weighted-momentum raw RS vs optional benchmark, cross-sectional percentiles 1-99, `rank_universe` workflow)
+- Modified files:
+  - `engines/strategies/__init__.py` — re-exports `RelativeStrengthRanking` (backward compatible)
+  - `tests/test_analysis.py` — added 11 new tests (importability, construction default/custom, deterministic calc, benchmark handling, ranking behavior, insufficient data, invalid-input validation, no DataFrame mutation, RSAnalyzer compatibility)
+- Semantics: same windows/weights/percentile algorithm as `RSIndicator`; `compute_raw(df, benchmark_df=None)` subtracts benchmark weighted-momentum when supplied; returns `ERROR_SENTINEL` (-999.0) on insufficient data; `compute_percentiles`/`rank_universe` sort-as-you-go 1-99 ratings
+- Backward compatibility: VERIFIED — `RSAnalyzer.get_raw_score`, `RSAnalyzer.assign_percentiles`, `VCPAnalyzer.calculate`, `StrategyValidator.run`, `DataEngine.get_data`, `DataEngine.get_current_price`, `config.TICKERS`, `config.CONFIG` all unchanged; `RSIndicator` untouched
+- Tests: full suite `pytest --tb=short` → **148 passed** (156s); `pytest tests/test_analysis.py --tb=short` → **95 passed** (7.1s); `pytest tests/test_analysis.py -k rsranking` → **11 passed**; `pytest tests/test_regression.py -v --tb=short` → **9/9 passed** (147s)
+- Golden artifact: UNCHANGED byte-for-byte (sha256: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`)
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- config.yaml: NOT modified; sentinel.py: NOT modified; golden baseline: NOT modified
+- Recovery checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3_3-2-recovery.tar.gz` (verified, 6.6MB, 462 files)
+- Known issues: None
+- Next step: STOP — report state, request authorization to commit
 
 **✅ SLICE 3.1 COMPLETE — Strategy Package Structure** (2026-08-12):
 - Objective: Establish `engines.strategies` package as home for Phase 3 strategies, with canonical Strategy ABC — ACHIEVED
@@ -424,7 +441,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Pre-phase backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase3.tar.gz` (verified, 95KB, 41 files)
 - Checkpoint backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3_3-1-checkpoint.tar.gz` (verified, 96KB, 44 files)
 - Known issues: None
-- Next step: STOP — await authorization for Slice 3.2 (RelativeStrengthRanking)
+- Next step: STOP — Slice 3.2 done; await authorization for Slice 3.3 (VCPBreakoutStrategy)
 
 **✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
 - Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
@@ -522,7 +539,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 ### Medium-term (Phase 3-7)
 - [ ] Implement VCPBreakoutStrategy with breakout confirmation
 - [ ] Implement MinerviniTrendTemplate (8 criteria)
-- [ ] Implement RelativeStrengthRanking (vs SPY/sector)
+- [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
 - [ ] BacktestEngine with walk-forward validation
 - [ ] Multi-market support (Crypto, Forex)
 - [ ] CSV/Excel export from dashboard
