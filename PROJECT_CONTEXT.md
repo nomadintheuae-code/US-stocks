@@ -404,11 +404,28 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 **🔄 IN PROGRESS — Strategies Layer**:
 - Phase 3 Discovery: ✅ Complete
 - Slice 3.1 (Strategy package structure): ✅ COMPLETE
-- Slice 3.2 (RelativeStrengthRanking): ✅ COMPLETE (implementation + tests verified; uncommitted)
-- Slice 3.3 (VCPBreakoutStrategy): ⏳ Pending authorization
+- Slice 3.2 (RelativeStrengthRanking): ✅ COMPLETE (committed `f607c76`)
+- Slice 3.3 (VCPBreakoutStrategy): ✅ COMPLETE (implementation + tests verified; uncommitted)
 - Slice 3.4 (MinerviniTrendTemplate): ⏳ Pending authorization
 - Slice 3.5 (Regression/test gate): ⏳ Pending
 - Slice 3.6 (Documentation + closeout): ⏳ Pending
+
+**✅ SLICE 3.3 COMPLETE — VCPBreakoutStrategy** (2026-08-12, verified 2026-08-13):
+- Objective: Implement `VCPBreakoutStrategy` composing the existing `VCPIndicator` (no duplicated VCP detection logic), additive and opt-in — ACHIEVED
+- New files:
+  - `engines/strategies/vcp_breakout.py` — `VCPBreakoutStrategy(Strategy)` implementing `calculate(df)` / `get_score()` / `get_signals()` / `get_entry_stop_target()` + `is_actionable()`; composes `VCPIndicator(use_contraction_pivot=True)`; look-ahead-free; insufficient data (<130 bars) → score 0, signals [], entry/stop/target (0.0,0.0,0.0), actionable False
+- Modified files:
+  - `engines/strategies/__init__.py` — re-exports `VCPBreakoutStrategy` (backward compatible)
+  - `tests/test_analysis.py` — added 10 new tests (importability, Strategy ABC compliance, confirmed breakout, volume requirement, failed breakout, entry/stop/target exactness, insufficient data, determinism, no input mutation, backward compatibility)
+- Strategy semantics: confirmed breakout = close > pivot AND volume surge (ratio ≥ 1.2); entry = round(pivot*1.002, 2); stop = round(entry − atr*2.0, 2); target = round(entry + (entry−stop)*2.5, 2); failed breakout → score 0, signal "Breakout Failed"; score is the strategy's own scale (clamped 0-120), never fed into sentinel.py
+- Backward compatibility: VERIFIED — `VCPIndicator`, `VCPAnalyzer.calculate`, `StrategyValidator.run`, `RSIndicator`, `RSAnalyzer`, `RelativeStrengthRanking`, `sentinel.py`, `config.yaml` all unchanged
+- Tests: full suite `pytest --tb=short` → **158 passed** (164s); `pytest tests/test_analysis.py --tb=short` → **105 passed** (7.7s); `pytest tests/test_analysis.py -k vcpbreakout` → **10 passed**; `pytest tests/test_regression.py -v --tb=short` → **9/9 passed** (155s)
+- Golden artifact: UNCHANGED byte-for-byte (sha256: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`)
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- config.yaml: NOT modified; sentinel.py: NOT modified; golden baseline: NOT modified
+- Pre-implementation backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase3_3.tar.gz` (verified, 6.6MB, 462 files)
+- Known issues: None
+- Next step: STOP — report state, request authorization to commit
 
 **✅ SLICE 3.2 COMPLETE — RelativeStrengthRanking Indicator** (2026-08-12, verified 2026-08-13):
 - Objective: Implement `RelativeStrengthRanking` as an additive, opt-in INDICATOR (not a replacement for RSIndicator) — ACHIEVED
@@ -441,7 +458,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Pre-phase backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase3.tar.gz` (verified, 95KB, 41 files)
 - Checkpoint backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3_3-1-checkpoint.tar.gz` (verified, 96KB, 44 files)
 - Known issues: None
-- Next step: STOP — Slice 3.2 done; await authorization for Slice 3.3 (VCPBreakoutStrategy)
+- Next step: STOP — Slice 3.3 done; await authorization for Slice 3.4 (MinerviniTrendTemplate)
 
 **✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
 - Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
@@ -537,7 +554,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Phase 2 regression gate — DONE 2026-08-12 (Phase 2.4.3 + 2.5)
 
 ### Medium-term (Phase 3-7)
-- [ ] Implement VCPBreakoutStrategy with breakout confirmation
+- [x] Implement VCPBreakoutStrategy with breakout confirmation — DONE 2026-08-12 (Phase 3.3, uncommitted)
 - [ ] Implement MinerviniTrendTemplate (8 criteria)
 - [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
 - [ ] BacktestEngine with walk-forward validation

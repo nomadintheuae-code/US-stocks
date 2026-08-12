@@ -4,7 +4,9 @@ import pandas as pd
 import pytest
 
 from engines.analysis import RSAnalyzer, RSIndicator, StrategyValidator, VCPAnalyzer, VCPIndicator
+from engines.strategies.base import Strategy
 from engines.strategies.rs_ranking import RelativeStrengthRanking
+from engines.strategies.vcp_breakout import VCPBreakoutStrategy
 
 
 def _frame(n=260, drift=0.5, vol=1.0, seed=0):
@@ -965,6 +967,131 @@ def test_rsranking_compatibility_with_rsanalyzer():
     # is a new class, but both are valid raw RS scores)
     assert isinstance(raw_rs_indicator, float)
     assert isinstance(raw_rs_ranking, float)
+
+
+# --- VCPBreakoutStrategy -----------------------------------------------------
+
+def test_vcpbreakout_importable():
+    """Test that VCPBreakoutStrategy is importable from the strategies package."""
+    from engines.strategies import VCPBreakoutStrategy as VBS
+    assert VBS is VCPBreakoutStrategy
+
+
+def test_vcpbreakout_strategy_abc_compliance():
+    """Test that VCPBreakoutStrategy implements the Strategy ABC."""
+    assert issubclass(VCPBreakoutStrategy, Strategy)
+    s = VCPBreakoutStrategy()
+    assert callable(s.calculate)
+    assert callable(s.get_score)
+    assert callable(s.get_signals)
+    assert callable(s.get_entry_stop_target)
+    assert s.get_score() == 0
+    assert s.get_signals() == []
+    assert s.get_entry_stop_target() == (0.0, 0.0, 0.0)
+    assert s.is_actionable() is False
+
+
+def test_vcpbreakout_confirmed_breakout():
+    """Confirmed breakout: close > pivot AND volume surge → actionable."""
+    s = VCPBreakoutStrategy()
+    df = _pivot_base_frame(breakout_close=102.0, base_volume=1_000_000.0, handle_volume=4_000_000.0)
+    res = s.calculate(df)
+    assert res["confirmed"] is True
+    assert res["actionable"] is True
+    assert s.is_actionable() is True
+    assert "Breakout Confirmed" in res["signals"]
+    assert res["entry"] == round(res["pivot"] * 1.002, 2)
+    assert res["pivot"] > 0
+
+
+def test_vcpbreakout_volume_required():
+    """Close above pivot WITHOUT volume surge → not confirmed, awaiting."""
+    s = VCPBreakoutStrategy()
+    df = _pivot_base_frame(breakout_close=102.0)  # same volume everywhere
+    res = s.calculate(df)
+    assert res["confirmed"] is False
+    assert res["actionable"] is False
+    assert s.is_actionable() is False
+    assert "Awaiting Breakout" in res["signals"]
+
+
+def test_vcpbreakout_failed_breakout():
+    """Handle high above pivot but close below pivot → failed, score 0."""
+    s = VCPBreakoutStrategy()
+    df = _pivot_base_frame(failed_spike=(104.0, 55.0))
+    res = s.calculate(df)
+    assert res["failed"] is True
+    assert res["confirmed"] is False
+    assert res["actionable"] is False
+    assert "Breakout Failed" in res["signals"]
+    assert res["score"] == 0
+
+
+def test_vcpbreakout_entry_stop_target_exactness():
+    """Entry/stop/target match the strategy formulas exactly."""
+    s = VCPBreakoutStrategy()
+    df = _pivot_base_frame(breakout_close=102.0, base_volume=1_000_000.0, handle_volume=4_000_000.0)
+    res = s.calculate(df)
+
+    ind = VCPIndicator(use_contraction_pivot=True)
+    pivot = ind.detect_pivot(df)["price"]
+    atr = ind.calculate(df)["atr"]
+
+    entry = round(pivot * 1.002, 2)
+    stop = round(entry - atr * 2.0, 2)
+    target = round(entry + (entry - stop) * 2.5, 2)
+    assert res["entry"] == entry
+    assert res["stop"] == stop
+    assert res["target"] == target
+    assert entry > stop > 0
+
+
+def test_vcpbreakout_insufficient_data():
+    """Fewer than 130 bars → safe non-actionable result."""
+    s = VCPBreakoutStrategy()
+    short = _pivot_base_frame()[:50]
+    res = s.calculate(short)
+    assert res["score"] == 0
+    assert res["signals"] == []
+    assert (res["entry"], res["stop"], res["target"]) == (0.0, 0.0, 0.0)
+    assert res["actionable"] is False
+    assert s.get_score() == 0
+    assert s.get_entry_stop_target() == (0.0, 0.0, 0.0)
+
+
+def test_vcpbreakout_deterministic():
+    """Repeated calculate() calls produce identical results."""
+    s = VCPBreakoutStrategy()
+    df = _pivot_base_frame(breakout_close=102.0, base_volume=1_000_000.0, handle_volume=4_000_000.0)
+    r1 = s.calculate(df)
+    r2 = s.calculate(df)
+    assert r1 == r2
+    assert s.get_score() == r2["score"]
+    assert s.get_signals() == r2["signals"]
+
+
+def test_vcpbreakout_no_input_mutation():
+    """Input DataFrame columns, length and values remain unchanged."""
+    s = VCPBreakoutStrategy()
+    df = _pivot_base_frame(breakout_close=102.0, base_volume=1_000_000.0, handle_volume=4_000_000.0)
+    before = df.copy(deep=True)
+    _ = s.calculate(df)
+    assert df.columns.tolist() == before.columns.tolist()
+    assert len(df) == len(before)
+    assert (df.values == before.values).all()
+
+
+def test_vcpbreakout_backward_compat():
+    """VCPAnalyzer.calculate and StrategyValidator.run are unchanged by the strategy."""
+    df = _pivot_base_frame(breakout_close=102.0, base_volume=1_000_000.0, handle_volume=4_000_000.0)
+    expected_vcp = VCPAnalyzer.calculate(df)
+    expected_pf = StrategyValidator.run(df)
+
+    s = VCPBreakoutStrategy()
+    _ = s.calculate(df)
+
+    assert VCPAnalyzer.calculate(df) == expected_vcp
+    assert StrategyValidator.run(df) == expected_pf
 
 
 def test_cachmanager_backward_compat_existing():
