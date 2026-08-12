@@ -285,6 +285,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - ✅ **README.md rewritten** (2026-08-12): structure, install, config, usage, tests, limitations, security notes
 - ✅ **PHASE 1 COMPLETE (2026-08-12)** — see Section 21 session log
 - ✅ **Phase 2.1 (reproducibility harness)**: frozen data snapshot (310/310 pickles, sectors, meta) captured at HEAD b5b0986; frozen scan replays live 2026-08-12 decisions EXACTLY (310/30/15 ACTION, decision fields MATCH); golden artifact tests/golden/baseline_2026-08-12.json (no secrets, schema v1); tests/test_regression.py + scripts/capture_frozen_snapshot.py + tests/regression_harness.py; full suite 49 tests passing (2026-08-12)
+- ✅ **PHASE 2 COMPLETE (2026-08-12)** — all indicator refactors regression-free; 132 tests passing; golden baseline preserved; see Sections 2.2–2.5 status
 
 ### Phase 2.2 Status (2026-08-12)
 **✅ ALL MILESTONES COMPLETE — RSIndicator Implementation + Documentation Verified**:
@@ -386,6 +387,19 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - **Phase 2.4 COMPLETE** — all milestones (2.4.2A–E + 2.4.3) verified and passed
 
+### Phase 2.5 Status (2026-08-12)
+**✅ MILESTONE 2.5 COMPLETE — Phase 2 Closeout & Final Verification** (2026-08-12):
+- Objective: Final verification that all Phase 2 indicator refactors are regression-free and documentation is current — ACHIEVED
+- Full suite (`pytest --tb=short`): **132 passed** (174s), 0 failed, 0 skipped
+- Regression gate (`pytest tests/test_regression.py -v --tb=short`): **9/9 passed** (162s)
+- Golden artifact `tests/golden/baseline_2026-08-12.json`: UNCHANGED byte-for-byte (sha256: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`)
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- Decision fields verified: status, entry, stop, target, shares, sector, rs, vcp, pf all match golden exactly
+- config.yaml: NOT modified
+- Golden baseline: NOT modified
+- No production code changes (documentation-only milestone)
+- **Phase 2 COMPLETE** — all milestones (2.1–2.5) verified and passed
+
 **✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
 - Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
 - Objective: Build UniverseManager (load, validate, filter delisted) as an opt-in class without changing any existing behavior — ACHIEVED
@@ -468,15 +482,18 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Add regression tests (9) + scan determinism — DONE (49/49 passing)
 - [ ] Commit Phase 2.1 files (authorization pending; NO push)
 
-### Short-term (Phase 2-3)
+### Short-term (Phase 2-3) ✅ COMPLETE
 - [x] Refactor RSAnalyzer → RSIndicator (configurable windows/weights) — DONE 2026-08-12, backward compatible
-- [ ] Refactor VCPAnalyzer → VCPIndicator (proper pivot/handle detection)
-- [ ] Create MarketDataProvider abstraction (yfinance, FMP providers)
-- [x] Implement CacheManager with compression
+- [x] Refactor VCPAnalyzer → VCPIndicator (proper pivot/handle detection) — DONE 2026-08-12 (Phase 2.3 + 2.4.2D)
+- [x] Create MarketDataProvider abstraction (yfinance, FMP providers) — DONE 2026-08-12 (Phase 2.4.2B)
+- [x] Implement CacheManager with compression — DONE 2026-08-12 (Phase 2.4.2B)
 - [x] Build UniverseManager (load, validate, filter delisted) — DONE 2026-08-12, opt-in, backward compatible
-- [ ] Create Strategy abstract base class
+- [x] Create Strategy abstract base class — DONE 2026-08-12 (Phase 2.4.2A)
+- [x] VCP contraction pivot + breakout confirmation — DONE 2026-08-12 (Phase 2.4.2D)
+- [x] StrategyValidator walk-forward (point-in-time) — DONE 2026-08-12 (Phase 2.4.2E)
+- [x] Phase 2 regression gate — DONE 2026-08-12 (Phase 2.4.3 + 2.5)
 
-### Medium-term (Phase 4-7)
+### Medium-term (Phase 3-7)
 - [ ] Implement VCPBreakoutStrategy with breakout confirmation
 - [ ] Implement MinerviniTrendTemplate (8 criteria)
 - [ ] Implement RelativeStrengthRanking (vs SPY/sector)
@@ -529,12 +546,14 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 ## 14. Testing
 
 - **Test framework**: pytest 9.1.1 (configured via pyproject.toml `[tool.pytest.ini_options]`, `pythonpath = ["."]`)
-- **Available tests**: 122 (tests/test_config.py [incl. 15 UniverseManager tests], tests/test_fmp.py, tests/test_analysis.py [incl. RSIndicator + VCPIndicator + Strategy/MarketDataProvider/CacheManager + 12 VCP pivot/breakout tests], tests/test_imports.py, tests/test_regression.py)
-- **Last test run**: 2026-08-12 — `python -m pytest` → **122 passed** (incl. Phase 2.1 regression suite + Phase 2.2/2.3 indicator tests + Phase 2.4.2 A/B/C/D classes)
+- **Available tests**: 132 (tests/test_config.py [23], tests/test_fmp.py [18], tests/test_analysis.py [79], tests/test_imports.py [3], tests/test_regression.py [9])
+- **Last test run**: 2026-08-12 — `python -m pytest` → **132 passed** (incl. Phase 2.1 regression suite + Phase 2.2/2.3 indicator tests + Phase 2.4.2 A/B/C/D/E classes)
 - **Network**: fully mocked (test_fmp.py stubs requests.get; no live API calls in tests). Phase 2.1 regression replay is fully offline — it reads frozen OHLCV pickles and stubs fundamentals/news/insider (never hits yfinance/FMP).
 - **Phase 2.1 regression suite** (tests/test_regression.py): replays the 310-ticker scan against a frozen snapshot (stored OUTSIDE repo under ~/ProjectBackups/US-stocks/frozen_snapshots/). Asserts (a) a fresh run reproduces the golden artifact exactly, (b) two runs are identical (determinism), (c) frozen replay matches the live 2026-08-12 reference on decision fields (310 scanned / 30 qualified / 15 ACTION), (d) golden has no secrets + correct baseline counts. Skips cleanly if the snapshot dir is absent; recreate via `./venv/bin/python scripts/capture_frozen_snapshot.py`.
 - **RSIndicator tests** (tests/test_analysis.py, 17): config loading, validation, compute_raw (short/up/down/fallback), compute_percentiles (ascending/empty), NaN propagation, None handling, classmethod equivalence, backward compat with RSAnalyzer
 - **VCPIndicator tests** (tests/test_analysis.py, 12): config loading, constructor overrides, validation (tightness_periods, ma_periods, pivot thresholds), calculate output format, edge cases (short frame, None), backward compat with VCPAnalyzer
+- **VCP pivot/breakout tests** (tests/test_analysis.py, 12): left-side pivot detection, handle structure/contraction, breakout confirmed, volume-required, failed breakout, insufficient data, no-look-ahead, output schema, constructor validation, backward compat
+- **Walk-forward tests** (tests/test_analysis.py, 9): API compat, output structure, deterministic, insufficient data, ATR isolation, point-in-time isolation, no-future-bar leakage, lookahead detection, legacy match
 - **Golden artifact**: tests/golden/baseline_2026-08-12.json (machine-readable commitment of HEAD b5b0986 output).
 - **Known failing tests**: NONE
 - **Run command**: `pytest` (or `./venv/bin/python -m pytest`)

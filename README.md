@@ -58,7 +58,7 @@ Built for daily automated scanning, interactive visualization, and portfolio tra
 │   └── __init__.py
 ├── engines/             # Feature modules
 │   ├── data.py          #   Market data layer
-│   ├── analysis.py      #   RSIndicator (configurable RS), VCPIndicator (configurable VCP), StrategyValidator
+│   ├── analysis.py      #   RSIndicator, VCPIndicator (w/ pivot detection), StrategyValidator (w/ walk-forward)
 │   ├── fundamental.py   #   Fundamental scoring
 │   ├── news.py          #   RSS/Yahoo news
 │   ├── notify.py        #   LINE Notify
@@ -150,7 +150,7 @@ Open http://localhost:8501
 pytest                      # or: python -m pytest
 ```
 
-The suite contains 78 tests (offline, no network) covering config loading, FMP client, indicator calculations (RSIndicator + VCPIndicator), import checks, and Phase 2.1 golden regression replay.
+The suite contains 132 tests (offline, no network) covering config loading, FMP client, indicator calculations (RSIndicator + VCPIndicator + VCP pivot/breakout + walk-forward), import checks, and Phase 2.1 golden regression replay.
 
 ## Known Limitations
 
@@ -170,18 +170,20 @@ Actively developed.
 
 **Completed (Phase 1)**: Externalized configuration, security hardening, pinned dependencies, offline test suite.
 
-**Completed (Phase 2.2)**: Refactored `RSAnalyzer` → configurable `RSIndicator`.
-**Completed (Phase 2.3)**: Refactored `VCPAnalyzer` → configurable `VCPIndicator` with:
-- Configurable tightness periods, volume lookback windows, MA periods, and pivot thresholds via `config.yaml` `vcp:` section
-- Input validation (periods ordering, threshold relationships)
-- Full backward compatibility — `VCPAnalyzer` preserved as thin wrapper
-- 12 new unit tests; full suite 78 tests passing; Phase 2.1 golden regression intact
+**Completed (Phase 2)**: Indicators Layer — all indicator refactors regression-free:
+- `RSIndicator`: configurable windows/weights, reads from `config.yaml rs:` section
+- `VCPIndicator`: configurable tightness/volume/MA/pivot, reads from `config.yaml vcp:` section
+- `VCPIndicator.detect_pivot()`: proper VCP contraction pivot (opt-in via `use_contraction_pivot`)
+- `StrategyValidator._point_in_time_indicators()`: look-ahead-free indicator computation
+- `StrategyValidator.evaluate_walk_forward()`: point-in-time backtest
+- `MarketDataProvider` + `DataEngineAdapter`: market data abstraction
+- `CacheManager`: TTL-based cache with compression
+- `UniverseManager`: universe load/validate/filter
+- `Strategy` ABC: strategy abstraction base
+- Full suite 132 tests passing; Phase 2.1 golden regression intact (9/9)
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
 
-**Planned**:
-- VCPAnalyzer → VCPIndicator refactor (Phase 2.3)
-- Export CSV/Excel from dashboard
-- Enhanced portfolio persistence (JSON or SQLite)
-- Mobile-friendly layout tweaks
+**Planned (Phase 3)**: Strategies Layer — VCPBreakoutStrategy, MinerviniTrendTemplate, RelativeStrengthRanking
 
 ## License
 
