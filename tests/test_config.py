@@ -77,3 +77,115 @@ def test_delisted_tickers_filtered():
     assert "MMC" not in root_config.TICKERS
     assert "AAPL" in root_config.TICKERS
     assert len(root_config.TICKERS) > 100
+
+
+# --- UniverseManager (Phase 2.4.2C) ------------------------------------------
+
+def test_universemanager_importable():
+    from config import UniverseManager
+    assert UniverseManager is not None
+
+
+def test_universemanager_construction():
+    from config import UniverseManager
+    m = UniverseManager()
+    assert m._filter_delisted is True
+    assert m._delisted == {"BITF", "CFLT", "DVAX", "HOLX", "MMC"}
+    assert m._universe_file == ""
+
+
+def test_universemanager_from_config():
+    from config import UniverseManager
+    m = UniverseManager.from_config()
+    assert m.load() == UniverseManager().load()
+
+
+def test_universemanager_load_matches_current_universe():
+    """Manager output must equal the existing config.TICKERS (310 active)."""
+    import config as root_config
+    from config import UniverseManager
+
+    m = UniverseManager()
+    assert m.load() == root_config.TICKERS
+    assert m.tickers == root_config.TICKERS
+    assert len(m) == len(root_config.TICKERS) == 310
+    assert list(m) == root_config.TICKERS
+
+
+def test_universemanager_deterministic_ordering():
+    from config import UniverseManager
+    m = UniverseManager()
+    assert m.load() == sorted(m.load())
+    assert len(m.load()) == len(set(m.load()))
+    assert m.load() == m.load() == UniverseManager().load()
+
+
+def test_universemanager_validate():
+    from config import UniverseManager
+    m = UniverseManager()
+    out = m.validate(["aapl", "MSFT", "  nvda ", "aapl", "", "xom"])
+    assert out == ["AAPL", "MSFT", "NVDA", "XOM"]
+    assert m.validate([]) == []
+    assert m.validate(None) == []
+
+
+def test_universemanager_delisted_filtered_by_default():
+    from config import UniverseManager
+    for t in UniverseManager.DELISTED:
+        assert t not in UniverseManager().load()
+
+
+def test_universemanager_delisted_filter_disabled():
+    from config import UniverseManager
+    loaded = UniverseManager(filter_delisted=False).load()
+    assert all(t in loaded for t in UniverseManager.DELISTED)
+
+
+def test_universemanager_filter_delisted_tickers():
+    from config import UniverseManager
+    m = UniverseManager()
+    out = m.filter_delisted_tickers(["AAPL", "BITF", "MSFT", "MMC"])
+    assert out == ["AAPL", "MSFT"]
+
+
+def test_universemanager_custom_delisted_set():
+    from config import UniverseManager
+    m = UniverseManager(delisted={"AAPL", "MSFT"})
+    assert "AAPL" not in m.load()
+    assert "BITF" in m.load()  # built-in delisted set replaced
+
+
+def test_universemanager_custom_base_tickers():
+    from config import UniverseManager
+    m = UniverseManager(tickers=["msft", "aapl", "MSFT", "zzz"])
+    assert m.load() == ["AAPL", "MSFT", "ZZZ"]
+
+
+def test_universemanager_external_universe_file(tmp_path):
+    from config import UniverseManager
+    f = tmp_path / "universe.txt"
+    f.write_text("# comment line\n\n  aapl  \nMSFT\nnvidia\n", encoding="utf-8")
+    m = UniverseManager(universe_file=str(f))
+    assert m.load() == ["AAPL", "MSFT", "NVIDIA"]
+
+
+def test_universemanager_external_file_order_preserved(tmp_path):
+    from config import UniverseManager
+    f = tmp_path / "universe.txt"
+    f.write_text("Z\nAAPL\nMSFT\n", encoding="utf-8")
+    m = UniverseManager(universe_file=str(f))
+    assert m.load() == ["Z", "AAPL", "MSFT"]
+
+
+def test_universemanager_external_missing_file_falls_back():
+    from config import UniverseManager
+    m = UniverseManager(universe_file="/nonexistent/path/universe.txt")
+    assert m.load() == UniverseManager().load()
+
+
+def test_universemanager_external_empty_file_falls_back(tmp_path):
+    from config import UniverseManager
+    f = tmp_path / "empty.txt"
+    f.write_text("", encoding="utf-8")
+    m = UniverseManager(universe_file=str(f))
+    assert m.load() == UniverseManager().load()

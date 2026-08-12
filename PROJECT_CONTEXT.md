@@ -340,6 +340,49 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: MILESTONE 2.3.3 (Documentation) → 2.3.4 (Final verification) → STOP
 
+### Phase 2.4 Status (2026-08-12)
+**⚠️ INTERRUPTION CHECKPOINT (2026-08-12 17:01)** — Connection lost during Phase 2.4.2E work:
+- Working tree contains uncommitted changes for 2.4.2A, 2.4.2B, 2.4.2C, 2.4.2D, and 2.4.2E
+- 2.4.2E (StrategyValidator walk-forward) is IN PROGRESS — NOT completed, NOT authorized
+- WIP checkpoint commit created: `wip: checkpoint phase 2.4 strategy layer` — recovery only, NOT milestone completion
+- Backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_wip-checkpoint-phase2_4.tar.gz` (verified, 92KB, 41 files)
+- Next: Resume from checkpoint; 2.4.2E requires authorization before completion
+
+**✅ MILESTONE 2.4.2C COMPLETE — UniverseManager** (continuation of in-progress Phase 2.4.2):
+- Status: 2.4.2A (Strategy base class) and 2.4.2B (MarketDataProvider + DataEngineAdapter + CacheManager) are in the working tree (unchanged from pre-existing state); 2.4.2C implemented now
+- Objective: Build UniverseManager (load, validate, filter delisted) as an opt-in class without changing any existing behavior — ACHIEVED
+- Files changed (2.4.2C):
+  - `config.py` — added `UniverseManager` class (built-in universe load, ticker validation/normalization, delisted filtering, external universe-file support, deterministic ordering; `from_config()` factory; `load()`/`tickers`/`__len__`/`__iter__`). Existing `config.TICKERS` computation untouched — callers unaffected
+  - `tests/test_config.py` — added 15 new UniverseManager tests (importability, construction, from_config, load-matches-current-universe, deterministic ordering, validate, delisted filtering on/off, custom delisted set, custom base tickers, external file incl. order-preserved/comment-skipping, missing/empty file fallback)
+- Architecture changes:
+  - `UniverseManager` faithfully re-implements the existing `config.TICKERS` logic: built-in dedupe+sort → delisted filter → optional external universe file (file order preserved; blank/`#` lines skipped; unreadable/empty falls back to built-in)
+  - Reads `data.filter_delisted` and `data.universe_file` from config.yaml (`sentinel/config.py`) with constructor overrides — config.yaml schema UNCHANGED
+  - Opt-in: `config.TICKERS` remains the live source used by sentinel.py; the manager is additive
+- Backward compatibility: VERIFIED — `UniverseManager().load() == config.TICKERS` (310 active tickers, sorted, unique, delisted absent)
+- Tests: **110 passed** (23 config + 57 analysis + 18 fmp + 3 imports + 9 regression), full suite green (~93s + regression run)
+- Regression: **9/9 executed and passed** — golden replay reproduces Phase 2.1 baseline exactly (310 scanned / 30 qualified / 15 ACTION)
+- Golden artifact `tests/golden/baseline_2026-08-12.json`: UNCHANGED byte-for-byte
+- Known issues: None
+- Backup state: `US-stocks_2026-08-12_pre-phase2_4.tar.gz` and `US-stocks_2026-08-12_phase2_4-checkpoint.tar.gz` both intact (untouched)
+- Next step: STOP — report to user (awaiting authorization for 2.4.2D)
+
+**✅ MILESTONE 2.4.2D COMPLETE — VCP Pivot + Breakout Confirmation** (2026-08-12):
+- Objective: Replace the naive 50-day-high pivot (`high.iloc[-50:].max()`) with a proper VCP contraction pivot and add breakout confirmation — ACHIEVED behind an explicit opt-in flag, so historical scan decisions are unchanged
+- Files changed (2.4.2D):
+  - `engines/analysis.py` — `VCPIndicator` gains opt-in `use_contraction_pivot` (+ `pivot_base_lookback`, `breakout_volume_ratio` constructor params, all constructor-only; config.yaml schema UNCHANGED). New public `detect_pivot(df, bar_idx=None)`; `calculate()` uses the proper pivot for the pivot bonus and adds a `pivot` key ONLY when the flag is enabled
+  - `tests/test_analysis.py` — added 12 new tests (default legacy preservation, left-side pivot detection, handle structure/contraction, wide-handle negative, breakout confirmed, volume-required, failed breakout, insufficient data, no-look-ahead invariance, output schema, constructor validation, backward compat)
+- Exact pivot algorithm: pivot = highest high of the LEFT side of the contraction base = max high over `[n-base_lookback, n-tightness_periods[0])` bars (base_lookback default 100, handle = last `tightness_periods[0]` = 20 bars); pivot_idx is the bar of that peak. Handle = last 20 bars (high/low/range_pct vs left_range_pct, `contracted` flag). Deterministic, uses only data ≤ evaluated bar
+- Exact breakout logic: at evaluated bar, `close_above_pivot` = close > pivot; `volume_ratio` = short volume window (last `volume_lookback_short`) / long window (prior `volume_lookback_long`, gap-separated — same windows as VCP volume logic); `volume_surge` = ratio ≥ `breakout_volume_ratio` (default 1.2); `confirmed` = close_above_pivot AND volume_surge; `failed` = close below pivot AND handle high pierced it; signal ∈ {Breakout Confirmed, Breakout Failed, Awaiting Breakout}
+- Configuration impact: NONE — config.yaml, sentinel.config schema, sentinel.py untouched. New knobs are constructor-only (opt-in). Default `VCPIndicator()`/`VCPAnalyzer.calculate()` output is byte-identical to before
+- Look-ahead bias: VERIFIED free — `detect_pivot(df, bar_idx=i) == detect_pivot(df.iloc[:i+1])` for i ∈ {129,140,160,180,199}; all series sliced to the evaluated bar; `breakout.bar_index` = evaluated bar; `lookahead_free=True`
+- Tests: **122 passed** (23 config + 70 analysis [incl. 13× RS/VCP legacy + 12 new pivot] + 18 fmp + 3 imports + 9 regression), full suite green (~6m17s, machine slow)
+- Regression: **9/9 executed and passed** — golden replay reproduces Phase 2.1 baseline exactly (310 scanned / 30 qualified / 15 ACTION); default behavior unchanged
+- Golden artifact `tests/golden/baseline_2026-08-12.json`: UNCHANGED byte-for-byte
+- Unrelated files: `config.py`, `engines/data.py`, `tests/test_config.py` carry only their pre-existing 2.4.2B/C uncommitted state (untouched this slice)
+- Known issues: None
+- Backup/checkpoint: NEW `US-stocks_2026-08-12_phase2_4-2d-checkpoint.tar.gz` (verified, 4 files); existing `pre-phase2_4` and `phase2_4-checkpoint` backups untouched
+- Next step: STOP — report to user (awaiting authorization for 2.4.2E)
+
 ### Phase 2.1 Status (2026-08-12)
 **✅ COMPLETE — Reproducibility gate before indicator refactors**:
 - Frozen snapshot at HEAD `b5b0986`: 310 pickles + sectors + meta → `~/ProjectBackups/US-stocks/frozen_snapshots/2026-08-12_b5b0986/` (outside repo, excluded from backups)
@@ -391,8 +434,8 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Refactor RSAnalyzer → RSIndicator (configurable windows/weights) — DONE 2026-08-12, backward compatible
 - [ ] Refactor VCPAnalyzer → VCPIndicator (proper pivot/handle detection)
 - [ ] Create MarketDataProvider abstraction (yfinance, FMP providers)
-- [ ] Implement CacheManager with compression
-- [ ] Build UniverseManager (load, validate, filter delisted)
+- [x] Implement CacheManager with compression
+- [x] Build UniverseManager (load, validate, filter delisted) — DONE 2026-08-12, opt-in, backward compatible
 - [ ] Create Strategy abstract base class
 
 ### Medium-term (Phase 4-7)
@@ -448,8 +491,8 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 ## 14. Testing
 
 - **Test framework**: pytest 9.1.1 (configured via pyproject.toml `[tool.pytest.ini_options]`, `pythonpath = ["."]`)
-- **Available tests**: 78 (tests/test_config.py, tests/test_fmp.py, tests/test_analysis.py [incl. 17 RSIndicator + 12 VCPIndicator tests], tests/test_imports.py, tests/test_regression.py)
-- **Last test run**: 2026-08-12 — `python -m pytest` → **78 passed** (incl. Phase 2.1 regression suite + RSIndicator + VCPIndicator tests)
+- **Available tests**: 122 (tests/test_config.py [incl. 15 UniverseManager tests], tests/test_fmp.py, tests/test_analysis.py [incl. RSIndicator + VCPIndicator + Strategy/MarketDataProvider/CacheManager + 12 VCP pivot/breakout tests], tests/test_imports.py, tests/test_regression.py)
+- **Last test run**: 2026-08-12 — `python -m pytest` → **122 passed** (incl. Phase 2.1 regression suite + Phase 2.2/2.3 indicator tests + Phase 2.4.2 A/B/C/D classes)
 - **Network**: fully mocked (test_fmp.py stubs requests.get; no live API calls in tests). Phase 2.1 regression replay is fully offline — it reads frozen OHLCV pickles and stubs fundamentals/news/insider (never hits yfinance/FMP).
 - **Phase 2.1 regression suite** (tests/test_regression.py): replays the 310-ticker scan against a frozen snapshot (stored OUTSIDE repo under ~/ProjectBackups/US-stocks/frozen_snapshots/). Asserts (a) a fresh run reproduces the golden artifact exactly, (b) two runs are identical (determinism), (c) frozen replay matches the live 2026-08-12 reference on decision fields (310 scanned / 30 qualified / 15 ACTION), (d) golden has no secrets + correct baseline counts. Skips cleanly if the snapshot dir is absent; recreate via `./venv/bin/python scripts/capture_frozen_snapshot.py`.
 - **RSIndicator tests** (tests/test_analysis.py, 17): config loading, validation, compute_raw (short/up/down/fallback), compute_percentiles (ascending/empty), NaN propagation, None handling, classmethod equivalence, backward compat with RSAnalyzer
@@ -586,6 +629,35 @@ The key assignment appears in **6 commits on main** (all reachable from `origin/
 committing them would entangle the fix with the unremediated history.*
 
 ## 21. Session History
+
+### 2026-08-12 — PHASE 2.4.2D VCP Pivot + Breakout Confirmation (engines/analysis.py)
+**Goal**: Replace the naive 50-day-high VCP pivot with a proper contraction pivot and add breakout confirmation, without changing historical scan decisions.
+**Work completed**:
+- Verified the golden gate: default `VCPIndicator().calculate()` output flows into sentinel.py's `vcp` decision field — any default change would break the 310/30/15 baseline
+- Implemented opt-in `use_contraction_pivot` (constructor-only) in `VCPIndicator`; `detect_pivot(df, bar_idx=None)` computes the left-side base high (base_lookback=100, handle = last 20 bars), handle metrics, and breakout state (close>pivot AND volume_ratio ≥ 1.2)
+- `calculate()` uses the proper pivot for the pivot bonus and adds a `pivot` key ONLY when the flag is enabled; default path byte-identical (verified: analyzer == default indicator)
+- Look-ahead avoidance: all series sliced to the evaluated bar; verified `detect_pivot(df, bar_idx=i) == detect_pivot(df.iloc[:i+1])` at multiple bars
+- Added 12 tests (`tests/test_analysis.py`) covering left-side pivot, handle/contraction, breakout confirmed, volume-required, failed breakout, insufficient data, no-look-ahead, schema, validation, backward compat
+**Tests**: full suite `venv/bin/python -m pytest --tb=short` → **122 passed** (~6m17s, machine slow); `pytest tests/test_regression.py -v` → **9/9 passed** (~5m52s)
+**Results**: golden byte-for-byte unchanged; regression 9/9; config.yaml, sentinel.py, RSIndicator, UniverseManager, MarketDataProvider, CacheManager untouched; git diff --check CLEAN
+**Problems**: full-suite/regression runs far slower than prior sessions (machine load/thermals); neither timed out after raising timeouts and both passed cleanly
+**Decisions**: Implemented via explicit opt-in (no config schema change, no forced baseline change); constructor-only knobs; default behavior preserved; golden NOT modified
+**Backup**: NEW checkpoint `US-stocks_2026-08-12_phase2_4-2d-checkpoint.tar.gz` (verified); pre-phase2_4 and phase2_4-checkpoint backups untouched
+**Next step**: STOP — await authorization before 2.4.2E
+
+### 2026-08-12 — PHASE 2.4.2C UniverseManager (config.py)
+**Goal**: Implement UniverseManager (load, validate, filter the ticker universe) as an opt-in class preserving the current 310-ticker behavior.
+**Work completed**:
+- Inspected existing universe handling: `config.py` computes `TICKERS` from `_ORIGINAL`+`_EXPANSION` (dedupe+sort → delisted filter via `data.filter_delisted` → optional external `data.universe_file`), validated by sentinel/config.py `DataConfig`
+- Implemented `UniverseManager` in `config.py`: `__init__(tickers=, delisted=, filter_delisted=, universe_file=)`, `from_config()`, `validate()` (uppercase/strip/dedupe/sort), `filter_delisted_tickers()`, `load()` (identical semantics to `config.TICKERS`), `tickers` property, `__len__`/`__iter__`
+- Existing `config.TICKERS` left untouched — manager is opt-in; all callers (sentinel.py, engines, tests) unaffected
+- Added 15 UniverseManager tests to `tests/test_config.py` (importability, construction, from_config, load-matches-current-universe == 310, deterministic ordering, validate, delisted on/off, custom delisted set, custom base tickers, external file + order/comment handling, missing/empty file fallback)
+**Tests**: focused `pytest tests/test_config.py` → 23 passed; full suite `venv/bin/python -m pytest --tb=short` → **110 passed**; `pytest tests/test_regression.py` → **9/9 passed (executed, not skipped)**
+**Results**: `UniverseManager().load() == config.TICKERS` verified (310 active, sorted, unique, no delisted); golden artifact byte-identical; config.yaml and sentinel.py untouched
+**Problems**: Two new tests initially omitted the `tmp_path` fixture arg (NameError) — fixed by adding the parameter; then all green
+**Decisions**: UniverseManager placed in config.py (natural home of the universe logic, no new architecture); opt-in only; external-file semantics preserved exactly (replace, file order, silent fallback)
+**Backup**: pre-existing `US-stocks_2026-08-12_pre-phase2_4.tar.gz` + `US-stocks_2026-08-12_phase2_4-checkpoint.tar.gz` both intact (not overwritten)
+**Next step**: STOP — await authorization before 2.4.2D
 
 ### 2026-08-12 04:15 — PHASE 2.2 RSIndicator REFACTOR (engines/analysis.py)
 **Goal**: Refactor RSAnalyzer into a configurable RSIndicator without changing behavior.

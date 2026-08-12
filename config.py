@@ -197,3 +197,126 @@ if _cfg.data.universe_file and os.path.exists(_cfg.data.universe_file):
             TICKERS = external
     except Exception:
         pass  # Fall back to built-in universe
+
+
+# ==============================================================================
+# 🛰️ UniverseManager — load, validate, filter the ticker universe
+# ==============================================================================
+# Encapsulates the universe logic above into a class. It is a faithful,
+# deterministic re-implementation of the existing config.TICKERS computation,
+# so existing callers that use config.TICKERS are completely unaffected.
+# The manager is opt-in: nothing here changes current behavior.
+# ==============================================================================
+
+class UniverseManager:
+    """Loads, validates and filters the ticker universe.
+
+    Responsibilities:
+    - Load the built-in curated ticker universe (deduplicated and sorted).
+    - Validate / normalize raw ticker lists.
+    - Filter delisted tickers (``data.filter_delisted`` in config.yaml).
+    - Support an optional external universe file (``data.universe_file``).
+
+    Behavior mirrors the existing ``config.TICKERS`` computation exactly:
+
+    1. Built-in tickers are deduplicated, uppercased and sorted.
+    2. Delisted tickers are removed when delisted filtering is enabled.
+    3. A non-empty external universe file (if configured) replaces the list
+       entirely; file order is preserved, and blank / ``#`` comment lines are
+       skipped. Unreadable or empty external files fall back to the built-in
+       universe.
+
+    Deterministic: identical inputs always produce an identical ticker list.
+    """
+
+    DELISTED = {"BITF", "CFLT", "DVAX", "HOLX", "MMC"}
+
+    def __init__(
+        self,
+        tickers: Optional[List[str]] = None,
+        delisted: Optional[set] = None,
+        filter_delisted: Optional[bool] = None,
+        universe_file: Optional[str] = None,
+    ):
+        cfg = self._load_data_config()
+        self._base_tickers = list(tickers) if tickers is not None else self._builtin_tickers()
+        self._delisted = set(delisted) if delisted is not None else set(self.DELISTED)
+        self._filter_delisted = (
+            filter_delisted if filter_delisted is not None else bool(cfg.get("filter_delisted", True))
+        )
+        self._universe_file = universe_file if universe_file is not None else cfg.get("universe_file", "")
+
+    @staticmethod
+    def _load_data_config() -> dict:
+        """Load the ``data:`` universe settings from config.yaml (best-effort)."""
+        try:
+            from sentinel.config import get_config
+            cfg = get_config()
+            return {
+                "filter_delisted": bool(cfg.data.filter_delisted),
+                "universe_file": str(cfg.data.universe_file or ""),
+            }
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _builtin_tickers() -> List[str]:
+        """Return the hardcoded built-in universe (raw, before normalization)."""
+        return list(_ORIGINAL) + list(_EXPANSION)
+
+    @classmethod
+    def from_config(cls) -> "UniverseManager":
+        """Construct a manager from the current config.yaml settings."""
+        return cls()
+
+    def validate(self, tickers: Optional[List[str]]) -> List[str]:
+        """Normalize and validate a raw ticker list.
+
+        Uppercases, strips whitespace, drops empty entries, de-duplicates,
+        and returns a deterministic sorted list.
+        """
+        seen: set = set()
+        out: List[str] = []
+        for t in tickers or []:
+            s = str(t).strip().upper()
+            if s and s not in seen:
+                seen.add(s)
+                out.append(s)
+        return sorted(out)
+
+    def filter_delisted_tickers(self, tickers: Optional[List[str]]) -> List[str]:
+        """Return ``tickers`` with delisted symbols removed (order preserved)."""
+        return [t for t in (tickers or []) if t not in self._delisted]
+
+    def load(self) -> List[str]:
+        """Return the final ticker universe.
+
+        Identical semantics to the existing ``config.TICKERS`` computation.
+        """
+        tickers = self.validate(self._base_tickers)
+        if self._filter_delisted:
+            tickers = self.filter_delisted_tickers(tickers)
+        if self._universe_file and os.path.exists(self._universe_file):
+            try:
+                with open(self._universe_file, "r", encoding="utf-8") as f:
+                    external = [
+                        line.strip().upper()
+                        for line in f
+                        if line.strip() and not line.startswith("#")
+                    ]
+                if external:
+                    tickers = external
+            except Exception:
+                pass  # Fall back to built-in universe
+        return tickers
+
+    @property
+    def tickers(self) -> List[str]:
+        """Alias for ``load()``."""
+        return self.load()
+
+    def __len__(self) -> int:
+        return len(self.load())
+
+    def __iter__(self):
+        return iter(self.load())

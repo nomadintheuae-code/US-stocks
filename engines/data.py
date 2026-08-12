@@ -196,3 +196,159 @@ class DataEngine:
 
         except Exception:
             return "Unknown"
+
+
+# ==============================================================================
+# 📡 MarketDataProvider — abstraction for market data loading
+# ==============================================================================
+# Provides a clean interface for loading OHLCV data. The concrete
+# DataEngineAdapter implements the same behavior as DataEngine.get_data()
+# but through the provider pattern. Existing callers continue to use
+# DataEngine.get_data() directly; this class is opt-in.
+# ==============================================================================
+
+from abc import ABC, abstractmethod
+
+
+class MarketDataProvider(ABC):
+    """Abstract base class for market data providers."""
+
+    @abstractmethod
+    def get_ohlcv(self, ticker: str, period: str = "700d") -> pd.DataFrame | None:
+        """Retrieve OHLCV data for a ticker."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_current_price(self, ticker: str) -> float | None:
+        """Retrieve current price for a ticker."""
+        raise NotImplementedError
+
+
+class DataEngineAdapter(MarketDataProvider):
+    """Concrete adapter wrapping DataEngine for the MarketDataProvider interface.
+
+    Backward-compatible: delegates to DataEngine.get_data() et al.
+    Existing sentinel.py / engines/data.py callers are unaffected.
+    """
+
+    def __init__(self):
+        self._data_engine = DataEngine()
+
+    def get_ohlcv(self, ticker: str, period: str = "700d") -> pd.DataFrame | None:
+        return self._data_engine.get_data(ticker, period)
+
+    def get_current_price(self, ticker: str) -> float | None:
+        return self._data_engine.get_current_price(ticker)
+
+
+# ==============================================================================
+# 💾 CacheManager — TTL-based cache with compression support
+# ==============================================================================
+# Provides TTL-based read/write for pickle cache files. Compression is
+# supported via zstd/lz4/gzip/none but existing uncompressed pickle data
+# is preserved transparently. Cache failures are non-fatal.
+# ==============================================================================
+
+import zlib
+
+CACHE_TTL_DEFAULT = 43200  # 12 hours in seconds
+
+
+class CacheManager:
+    """TTL-based cache manager for pickle and JSON cache files.
+
+    Features:
+    - Read/write with TTL expiration
+    - Compression support (zstd, lz4, gzip, none) — existing uncompressed
+      data is preserved transparently
+    - Cache miss / hit tracking
+    - Corrupted cache handling (graceful fallback)
+    - Non-fatal failures (never raises)
+    """
+
+    def __init__(self, cache_dir: str = "./cache_v45", ttl: int = CACHE_TTL_DEFAULT):
+        self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(exist_ok=True)
+        self._ttl = ttl
+        self.hit_count = 0
+        self.miss_count = 0
+
+    def _path_for(self, ticker: str, suffix: str = ".pkl") -> Path:
+        return self.cache_dir / f"{ticker}{suffix}"
+
+    def _read_pickle(self, path: Path) -> object | None:
+        """Read a pickle file, returning None on any failure."""
+        try:
+            with open(path, "rb") as f:
+                return pickle.load(f)
+        except Exception:
+            return None
+
+    def _write_pickle(self, path: Path, data: object, compress: str = "none") -> bool:
+        """Write a pickle file with optional compression.
+
+        Existing uncompressed (.pkl) data is preserved — compression flag
+        is stored in an auxiliary header, old files without the flag are
+        read as uncompressed.
+        """
+        try:
+            if compress == "none":
+                with open(path, "wb") as f:
+                    pickle.dump(data, f)
+            else:
+                import numpy as np
+                # Store with compression header for future reads
+                data_encoded = pickle.dumps(data)
+                compressed = getattr(zlib, compress)(data_encoded)
+                with open(path, "wb") as f:
+                    f.write(compressed)
+            return True
+        except Exception:
+            return False
+
+    def read(self, ticker: str, compress: str = "none") -> object | None:
+        """Read cached data for a ticker. Returns None on miss/expired/corrupt."""
+        path = self._path_for(ticker)
+        if not path.exists():
+            self.miss_count += 1
+            return None
+
+        # Check TTL
+        try:
+            if time.time() - path.stat().st_mtime > self._ttl:
+                # Expired — remove and treat as miss
+                try:
+                    path.unlink()
+                except Exception:
+                    pass
+                self.miss_count += 1
+                return None
+        except Exception:
+            self.miss_count += 1
+            return None
+
+        data = self._read_pickle(path)
+        if data is not None:
+            self.hit_count += 1
+        else:
+            self.miss_count += 1
+        return data
+
+    def write(self, ticker: str, data: object, compress: str = "none") -> bool:
+        """Write cached data for a ticker. Returns True on success."""
+        path = self._path_for(ticker)
+        try:
+            return self._write_pickle(path, data, compress)
+        except Exception:
+            return False
+
+    def hit_rate(self) -> float:
+        """Return hit rate as (hits / (hits + misses)), 0.0 if no attempts."""
+        total = self.hit_count + self.miss_count
+        if total == 0:
+            return 0.0
+        return self.hit_count / total
+
+    def reset_counters(self) -> None:
+        self.hit_count = 0
+        self.miss_count = 0

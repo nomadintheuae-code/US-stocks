@@ -131,6 +131,8 @@ class VCPIndicator:
     DEFAULT_MAX_PIVOT_BONUS = 5
     DEFAULT_ATR_PERIOD = 14
     DEFAULT_MIN_DATA_BARS = 130
+    DEFAULT_PIVOT_BASE_LOOKBACK = 100
+    DEFAULT_BREAKOUT_VOLUME_RATIO = 1.2
 
     def __init__(
         self,
@@ -144,6 +146,9 @@ class VCPIndicator:
         max_tightness_score: Optional[int] = None,
         max_volume_score: Optional[int] = None,
         max_ma_score: Optional[int] = None,
+        use_contraction_pivot: Optional[bool] = None,
+        pivot_base_lookback: Optional[int] = None,
+        breakout_volume_ratio: Optional[float] = None,
     ):
         cfg = self._load_vcp_config()
         self.tightness_periods = tightness_periods if tightness_periods is not None else cfg.get("tightness_periods", self.DEFAULT_TIGHTNESS_PERIODS)
@@ -160,6 +165,23 @@ class VCPIndicator:
         self.max_pivot_bonus = self.DEFAULT_MAX_PIVOT_BONUS
         self.atr_period = self.DEFAULT_ATR_PERIOD
         self.min_data_bars = self.DEFAULT_MIN_DATA_BARS
+        # Phase 2.4.2D — proper contraction pivot + breakout confirmation.
+        # Constructor-only (opt-in): config.yaml schema is UNCHANGED, and the
+        # default (use_contraction_pivot=False) preserves the historical
+        # 50-day-high pivot behavior exactly.
+        self.use_contraction_pivot = bool(
+            use_contraction_pivot if use_contraction_pivot is not None else False
+        )
+        self.pivot_base_lookback = (
+            pivot_base_lookback
+            if pivot_base_lookback is not None
+            else self.DEFAULT_PIVOT_BASE_LOOKBACK
+        )
+        self.breakout_volume_ratio = (
+            breakout_volume_ratio
+            if breakout_volume_ratio is not None
+            else self.DEFAULT_BREAKOUT_VOLUME_RATIO
+        )
         self._validate_config()
 
     @staticmethod
@@ -200,12 +222,128 @@ class VCPIndicator:
             raise ValueError("atr_period must be >= 1")
         if self.min_data_bars < 1:
             raise ValueError("min_data_bars must be >= 1")
+        if self.pivot_base_lookback < 2:
+            raise ValueError("pivot_base_lookback must be >= 2")
+        if self.breakout_volume_ratio <= 1.0:
+            raise ValueError("breakout_volume_ratio must be > 1.0")
+
+    def detect_pivot(self, df: pd.DataFrame, bar_idx: Optional[int] = None) -> Optional[dict]:
+        """Detect the proper VCP contraction pivot and evaluate breakout status.
+
+        The pivot is the highest high of the LEFT side of the contraction base
+        (the peak that precedes the recent handle) — not a naive N-day high.
+        The handle is the most recent ``tightness_periods[0]`` bars. Breakout
+        is confirmed only when the close is above the pivot AND the recent
+        volume ratio (short/long VCP windows) reaches ``breakout_volume_ratio``.
+
+        Look-ahead-free: every value is computed from data available at or
+        before ``bar_idx`` (default: the last bar). Returns ``None`` when there
+        is insufficient data (fewer than ``min_data_bars`` rows available).
+        """
+        if df is None:
+            return None
+        n = len(df)
+        if bar_idx is None:
+            bar_idx = n - 1
+        if bar_idx < 0 or bar_idx >= n or bar_idx + 1 < self.min_data_bars:
+            return None
+
+        # Only data available at the evaluated bar (no future bars).
+        h = df["High"].iloc[: bar_idx + 1]
+        l = df["Low"].iloc[: bar_idx + 1]
+        c = df["Close"].iloc[: bar_idx + 1]
+        v = df["Volume"].iloc[: bar_idx + 1]
+
+        size = len(h)
+        base = min(size, self.pivot_base_lookback)
+        handle_bars = min(base, self.tightness_periods[0])
+        left_bars = base - handle_bars
+
+        # ── Pivot: highest high of the left side of the base ─────────────
+        if left_bars > 0:
+            left_seg = h.iloc[size - base: size - handle_bars]
+            pivot = float(left_seg.max())
+            pivot_idx = size - base + int(left_seg.argmax())
+        else:
+            seg = h.iloc[size - base:]
+            pivot = float(seg.max())
+            pivot_idx = size - base + int(seg.argmax())
+
+        # ── Handle: most recent contraction window ───────────────────────
+        handle_high = float(h.iloc[size - handle_bars:].max())
+        handle_low = float(l.iloc[size - handle_bars:].min())
+        handle_range_pct = (handle_high - handle_low) / handle_high if handle_high > 0 else 0.0
+
+        left_low = (
+            float(l.iloc[size - base: size - handle_bars].min())
+            if left_bars > 0
+            else handle_low
+        )
+        left_range_pct = (pivot - left_low) / pivot if pivot > 0 else 0.0
+        handle_contracted = left_bars > 0 and handle_range_pct < left_range_pct
+
+        # ── Breakout volume (same windows as the VCP volume logic) ───────
+        n_v = size
+        short_start = max(0, n_v - self.volume_lookback_short)
+        v_short = float(v.iloc[short_start:].mean())
+        long_end = max(0, n_v - self.volume_lookback_short - self.volume_lookback_gap)
+        long_start = max(0, long_end - self.volume_lookback_long)
+        v_long = float(v.iloc[long_start:long_end].mean())
+        if pd.isna(v_short) or pd.isna(v_long):
+            vol_ratio = 1.0
+        else:
+            vol_ratio = v_short / v_long if v_long > 0 else 1.0
+
+        # ── Breakout evaluation at the evaluated bar ──────────────────────
+        close_price = float(c.iloc[-1])
+        close_above_pivot = close_price > pivot
+        volume_surge = bool(vol_ratio >= self.breakout_volume_ratio)
+        confirmed = close_above_pivot and volume_surge
+        failed = (not close_above_pivot) and handle_high > pivot
+
+        if confirmed:
+            signal = "Breakout Confirmed"
+        elif failed:
+            signal = "Breakout Failed"
+        else:
+            signal = "Awaiting Breakout"
+
+        return {
+            "price": round(pivot, 4),
+            "pivot_idx": int(pivot_idx),
+            "base_lookback": int(base),
+            "handle": {
+                "high": round(handle_high, 4),
+                "low": round(handle_low, 4),
+                "range_pct": round(handle_range_pct, 4),
+                "left_range_pct": round(left_range_pct, 4),
+                "contracted": handle_contracted,
+            },
+            "breakout": {
+                "confirmed": confirmed,
+                "close_above_pivot": close_above_pivot,
+                "volume_surge": volume_surge,
+                "volume_ratio": round(vol_ratio, 2),
+                "failed": failed,
+                "close": round(close_price, 4),
+                "bar_index": int(bar_idx),
+                "lookahead_free": True,
+            },
+            "signal": signal,
+        }
+
+    def _empty_pivot_result(self) -> dict:
+        """Empty result; carries ``pivot: None`` only when the opt-in is enabled."""
+        r = self._empty_result()
+        if self.use_contraction_pivot:
+            r["pivot"] = None
+        return r
 
     def calculate(self, df: pd.DataFrame) -> dict:
         """Compute the VCP score for a single ticker."""
         try:
             if df is None or len(df) < self.min_data_bars:
-                return self._empty_result()
+                return self._empty_pivot_result()
 
             close = df["Close"]
             high = df["High"]
@@ -220,7 +358,7 @@ class VCPIndicator:
             ], axis=1).max(axis=1)
             atr = float(tr.rolling(self.atr_period).mean().iloc[-1])
             if pd.isna(atr) or atr <= 0:
-                return self._empty_result()
+                return self._empty_pivot_result()
 
             # =====================================================
             # 1️⃣ Tightness（収縮度合い）
@@ -259,7 +397,7 @@ class VCPIndicator:
             long_end = -self.volume_lookback_short - self.volume_lookback_gap
             v_long_avg = float(volume.iloc[-self.volume_lookback_long:long_end].mean())
             if pd.isna(v_short_avg) or pd.isna(v_long_avg):
-                return self._empty_result()
+                return self._empty_pivot_result()
 
             v_ratio = v_short_avg / v_long_avg if v_long_avg > 0 else 1.0
 
@@ -292,8 +430,20 @@ class VCPIndicator:
             # =====================================================
             # 4️⃣ Pivot Bonus（ピボット接近ボーナス）
             # =====================================================
-            pivot_lookback = self.tightness_periods[0] * 2.5  # 50 for default [20,30,40,60]
-            pivot = float(high.iloc[-int(pivot_lookback):].max())
+            pivot_result = None
+            if self.use_contraction_pivot:
+                # Proper VCP contraction pivot (left side of the base) + breakout.
+                pivot_result = self.detect_pivot(df)
+                pivot = pivot_result["price"] if pivot_result is not None else None
+                if pivot is None:
+                    # Fallback to the historical recent-high pivot (unreachable
+                    # past the min_data_bars guard; keeps the score computable).
+                    pivot = float(
+                        high.iloc[-int(self.tightness_periods[0] * 2.5):].max()
+                    )
+            else:
+                pivot_lookback = self.tightness_periods[0] * 2.5  # 50 for default [20,30,40,60]
+                pivot = float(high.iloc[-int(pivot_lookback):].max())
             distance = (pivot - price) / pivot
 
             pivot_bonus = 0
@@ -316,9 +466,11 @@ class VCPIndicator:
                 signals.append("Trend Alignment OK")
             if pivot_bonus > 0:
                 signals.append("Near Pivot Point")
+            if pivot_result is not None:
+                signals.append(pivot_result["signal"])
 
             max_total = self.max_tightness_score + self.max_volume_score + self.max_ma_score + self.max_pivot_bonus
-            return {
+            result = {
                 "score": int(min(max_total, tight_score + vol_score + ma_score + pivot_bonus)),
                 "atr": atr,
                 "signals": signals,
@@ -332,9 +484,12 @@ class VCPIndicator:
                     "pivot": pivot_bonus
                 }
             }
+            if self.use_contraction_pivot:
+                result["pivot"] = pivot_result
+            return result
 
         except Exception:
-            return self._empty_result()
+            return self._empty_pivot_result()
 
     @staticmethod
     def _empty_result() -> dict:
@@ -371,6 +526,51 @@ class VCPAnalyzer:
     def _empty_result() -> dict:
         return VCPIndicator._empty_result()
 
+
+# ==============================================================================
+# 🔁 Strategy — abstract base class for trading strategies
+# ==============================================================================
+# New abstraction for the Phase 3 Strategies layer. Existing callers are
+# completely unaffected; this class is opt-in and has no behavioral impact
+# until concrete subclasses are created and used.
+from abc import ABC, abstractmethod
+
+
+class Strategy(ABC):
+    """Abstract base class for trading strategies.
+
+    Subclasses must implement calculate(), get_score(), get_signals(),
+    and get_entry_stop_target(). This class is deliberately minimal and
+    does not change any existing behavior — it is purely additive and
+    opt-in. All existing engine classes (VCPAnalyzer, VCPIndicator,
+    RSAnalyzer, StrategyValidator) remain untouched.
+    """
+
+    @abstractmethod
+    def calculate(self, df: pd.DataFrame) -> dict:
+        """Compute strategy analysis for a single ticker.
+
+        Returns a dict with at minimum: score, signals, is_dryup,
+        range_pct, vol_ratio, breakdown, atr.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_score(self) -> int:
+        """Return the strategy composite score."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_signals(self) -> list[str]:
+        """Return list of human-readable signal strings."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_entry_stop_target(self) -> tuple[float, float, float]:
+        """Return (entry_price, stop_price, target_price)."""
+        raise NotImplementedError
+
+
 # ==============================================================================
 # 📈 RSAnalyzer — backward-compatible wrapper around RSIndicator
 # ==============================================================================
@@ -388,8 +588,14 @@ class RSAnalyzer:
         return RSIndicator.assign_percentiles(raw_list)
 
 # ==============================================================================
-# 🔬 StrategyValidator（変更なし）
+# 🔬 StrategyValidator — walk-forward (point-in-time) backtest
 # ==============================================================================
+# ``run()`` preserves the historical decision logic byte-for-byte and remains
+# the production path (sentinel.py / app2.py). The Phase 2.4.2E addition is
+# ``run_walk_forward()`` / ``evaluate_walk_forward()``: an opt-in, point-in-time
+# re-implementation where every indicator is computed from the bars available
+# AT the evaluated bar (see ``_point_in_time_indicators``), structurally ruling
+# out any future-bar leakage. Default scan behavior is unchanged.
 
 class StrategyValidator:
     @staticmethod
@@ -452,3 +658,124 @@ class StrategyValidator:
             return round(min(10.0, float(pf)), 2)
         except Exception:
             return 1.0
+
+    @staticmethod
+    def _point_in_time_indicators(df: pd.DataFrame, bar_idx: int) -> dict:
+        """Decision inputs at ``bar_idx`` computed ONLY from bars ``[0, bar_idx]``.
+
+        Structural look-ahead guard: every indicator (TR / ATR / MA50 / pivot)
+        is derived from the truncated frame ``df.iloc[: bar_idx + 1]``, so no
+        bar after ``bar_idx`` can influence the returned values for that bar.
+
+        Mirrors ``run()`` exactly: ATR(14) via true-range rolling mean, MA50,
+        and the entry pivot = max high of the 20 bars *before* ``bar_idx``
+        (``high[bar_idx-20:bar_idx]``).
+        """
+        frame = df.iloc[: bar_idx + 1]
+
+        c = frame["Close"]
+        h = frame["High"]
+        l = frame["Low"]
+
+        tr = pd.concat([
+            h - l,
+            (h - c.shift()).abs(),
+            (l - c.shift()).abs(),
+        ], axis=1).max(axis=1)
+        atr = float(tr.rolling(14).mean().iloc[-1])
+
+        ma50 = float(c.rolling(50).mean().iloc[-1])
+
+        lo = max(0, bar_idx - 20)
+        pivot = float(h.iloc[lo:bar_idx].max())
+
+        return {"atr": atr, "ma50": ma50, "pivot": pivot}
+
+    @staticmethod
+    def evaluate_walk_forward(
+        df: pd.DataFrame,
+        min_bars_for_entry: int = 200,
+        lookback_bars: int = 250,
+    ) -> dict:
+        """Point-in-time (walk-forward) backtest record.
+
+        Same entry / stop / target / exit rules as ``run()``, but every
+        decision input at bar ``t`` uses only bars ``[0, t]``. Returns a dict
+        with ``profit_factor``, ``trades`` (R-multiples), ``start`` and
+        ``evaluated_bars`` so callers/tests can inspect the simulation.
+
+        Deterministic: identical inputs always yield an identical record.
+        """
+        if df is None or len(df) < min_bars_for_entry:
+            return {"profit_factor": 1.0, "trades": [], "start": None, "evaluated_bars": 0}
+
+        close = df["Close"]
+        high = df["High"]
+        low = df["Low"]
+
+        trades = []
+        in_pos = False
+        entry_p = 0.0
+        stop_p = 0.0
+
+        target_mult = CONFIG["TARGET_R_MULTIPLE"]
+        stop_mult = CONFIG["STOP_LOSS_ATR"]
+
+        start = max(50, len(df) - lookback_bars)
+
+        for i in range(start, len(df)):
+            if in_pos:
+                if float(low.iloc[i]) <= stop_p:
+                    trades.append(-1.0)
+                    in_pos = False
+                elif float(high.iloc[i]) >= entry_p + (entry_p - stop_p) * target_mult:
+                    trades.append(target_mult)
+                    in_pos = False
+                elif i == len(df) - 1:
+                    risk = entry_p - stop_p
+                    if risk > 0:
+                        r = (float(close.iloc[i]) - entry_p) / risk
+                        trades.append(r)
+                    in_pos = False
+            else:
+                if i < 20:
+                    continue
+                ind = StrategyValidator._point_in_time_indicators(df, i)
+                close_i = float(close.iloc[i])
+                if close_i > ind["pivot"] and close_i > ind["ma50"]:
+                    in_pos = True
+                    entry_p = close_i
+                    stop_p = entry_p - float(ind["atr"]) * stop_mult
+
+        if not trades:
+            return {
+                "profit_factor": 1.0,
+                "trades": [],
+                "start": start,
+                "evaluated_bars": len(df) - start,
+            }
+
+        pos = sum(t for t in trades if t > 0)
+        neg = abs(sum(t for t in trades if t < 0))
+        pf = pos / neg if neg > 0 else (5.0 if pos > 0 else 1.0)
+        return {
+            "profit_factor": round(min(10.0, float(pf)), 2),
+            "trades": [round(float(t), 4) for t in trades],
+            "start": start,
+            "evaluated_bars": len(df) - start,
+        }
+
+    @staticmethod
+    def run_walk_forward(
+        df: pd.DataFrame,
+        min_bars_for_entry: int = 200,
+        lookback_bars: int = 250,
+    ) -> float:
+        """Opt-in point-in-time profit-factor backtest (see ``evaluate_walk_forward``)."""
+        return float(
+            StrategyValidator.evaluate_walk_forward(
+                df,
+                min_bars_for_entry=min_bars_for_entry,
+                lookback_bars=lookback_bars,
+            )["profit_factor"]
+        )
