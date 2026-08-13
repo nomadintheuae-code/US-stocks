@@ -15,15 +15,23 @@ from config while ``filters.enabled`` is false, is an identity pass-through:
 ``filter_universe(tickers) -> (list(tickers), [])`` and
 ``filter_candidates(items) -> (list(items), [])``.
 
-Concrete filters (liquidity, market cap, sector, fundamental) are added in
-later Phase 4 slices; until then ``FilterEngine.from_config()`` yields an
-empty engine.
+Concrete filters:
+- ``LiquidityFilter`` — average dollar volume / average volume (universe stage).
+- ``MarketCapFilter`` — market-capitalization range (universe stage).
+
+Sector and fundamental filters are added in later Phase 4 slices.
+Default behavior: a ``FilterEngine`` constructed without filters, or one built
+from config while ``filters.enabled`` is false, is an identity pass-through:
+``filter_universe(tickers) -> (list(tickers), [])`` and
+``filter_candidates(items) -> (list(items), [])``.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Sequence, Tuple
 
 import pandas as pd
+
+from engines.data import DataEngine
 
 STAGE_UNIVERSE = "universe"    # applied to the ticker list BEFORE RS ranking
 STAGE_CANDIDATE = "candidate"  # applied to technically-qualified candidates
@@ -68,6 +76,100 @@ class Filter(ABC):
     def check(self, ctx: FilterContext) -> FilterResult:
         """Return whether ``ctx`` passes this filter."""
         raise NotImplementedError
+
+
+class LiquidityFilter(Filter):
+    """Universe-stage liquidity filter.
+
+    Requires minimum average dollar volume and/or minimum average volume.
+    Metrics are computed from the OHLCV frame (``ctx.df``) via
+    ``DataEngine.get_liquidity_metrics`` (trailing-only, look-ahead-free);
+    when no frame is available the volume threshold falls back to the
+    profile's ``average_volume`` (``.info``). Missing data is default-permissive.
+    """
+
+    name = "liquidity"
+    stage = STAGE_UNIVERSE
+
+    def __init__(
+        self,
+        min_avg_dollar_volume: Optional[float] = None,
+        min_avg_volume: Optional[float] = None,
+    ) -> None:
+        self.min_avg_dollar_volume = min_avg_dollar_volume
+        self.min_avg_volume = min_avg_volume
+
+    def check(self, ctx: FilterContext) -> FilterResult:
+        if self.min_avg_dollar_volume is None and self.min_avg_volume is None:
+            return FilterResult(passed=True)
+
+        dollar = self._dollar_volume(ctx)
+        volume = self._volume(ctx)
+
+        reasons: List[str] = []
+        if self.min_avg_dollar_volume is not None and dollar is not None and dollar < self.min_avg_dollar_volume:
+            reasons.append(f"avg_dollar_volume {dollar:.0f} < {self.min_avg_dollar_volume:.0f}")
+        if self.min_avg_volume is not None and volume is not None and volume < self.min_avg_volume:
+            reasons.append(f"avg_volume {volume:.0f} < {self.min_avg_volume:.0f}")
+
+        if reasons:
+            return FilterResult(passed=False, reason="; ".join(reasons))
+        return FilterResult(passed=True)
+
+    @staticmethod
+    def _dollar_volume(ctx: FilterContext) -> Optional[float]:
+        if ctx.df is not None and not ctx.df.empty:
+            try:
+                return DataEngine.get_liquidity_metrics(ctx.df)["avg_dollar_volume"]
+            except Exception:
+                return None
+        return None
+
+    @staticmethod
+    def _volume(ctx: FilterContext) -> Optional[float]:
+        if ctx.df is not None and not ctx.df.empty:
+            try:
+                metrics = DataEngine.get_liquidity_metrics(ctx.df)
+                if metrics["avg_volume"] is not None:
+                    return metrics["avg_volume"]
+            except Exception:
+                pass
+        if ctx.profile:
+            return ctx.profile.get("average_volume")
+        return None
+
+
+class MarketCapFilter(Filter):
+    """Universe-stage market-capitalization range filter.
+
+    Applies ``min_usd`` / ``max_usd`` (inclusive) to ``ctx.profile["market_cap"]``.
+    Missing profile data is default-permissive.
+    """
+
+    name = "market_cap"
+    stage = STAGE_UNIVERSE
+
+    def __init__(
+        self,
+        min_usd: Optional[float] = None,
+        max_usd: Optional[float] = None,
+    ) -> None:
+        self.min_usd = min_usd
+        self.max_usd = max_usd
+
+    def check(self, ctx: FilterContext) -> FilterResult:
+        if self.min_usd is None and self.max_usd is None:
+            return FilterResult(passed=True)
+
+        mc = (ctx.profile or {}).get("market_cap")
+        if mc is None:
+            return FilterResult(passed=True)
+
+        if self.min_usd is not None and mc < self.min_usd:
+            return FilterResult(passed=False, reason=f"market_cap {mc:.0f} < {self.min_usd:.0f}")
+        if self.max_usd is not None and mc > self.max_usd:
+            return FilterResult(passed=False, reason=f"market_cap {mc:.0f} > {self.max_usd:.0f}")
+        return FilterResult(passed=True)
 
 
 class FilterEngine:
@@ -128,11 +230,24 @@ class FilterEngine:
     def _build_filters(filter_cfg) -> List["Filter"]:
         """Instantiate the concrete filters configured for the pipeline.
 
-        Slice 4.1: framework only — no concrete filter classes yet. Later
-        Phase 4 slices extend this method with the liquidity / market-cap /
-        sector / fundamental filter constructions.
+        A filter is constructed only when at least one of its thresholds is
+        configured (all-None sections yield no filter). Order: liquidity,
+        market cap — each remains disabled unless ``filters.enabled`` is set.
         """
-        return []
+        filters: List[Filter] = []
+
+        liq = filter_cfg.liquidity
+        if liq.min_avg_dollar_volume is not None or liq.min_avg_volume is not None:
+            filters.append(LiquidityFilter(
+                min_avg_dollar_volume=liq.min_avg_dollar_volume,
+                min_avg_volume=liq.min_avg_volume,
+            ))
+
+        mc = filter_cfg.market_cap
+        if mc.min_usd is not None or mc.max_usd is not None:
+            filters.append(MarketCapFilter(min_usd=mc.min_usd, max_usd=mc.max_usd))
+
+        return filters
 
     # ----------------------------------------------------------------- registry
 
@@ -235,5 +350,7 @@ __all__ = [
     "FilterContext",
     "FilterResult",
     "Filter",
+    "LiquidityFilter",
+    "MarketCapFilter",
     "FilterEngine",
 ]
