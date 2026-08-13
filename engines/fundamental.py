@@ -71,6 +71,13 @@ class FundamentalEngine:
 
                 # 決算関連
                 "eps_forward": info.get("forwardEps"),
+
+                # 市場規模・流動性 (Phase 4.2 additive fields — filters)
+                "market_cap": info.get("marketCap"),
+                "average_volume": info.get("averageVolume"),
+                "average_volume_10d": info.get("averageVolume10days"),
+                "shares_outstanding": info.get("sharesOutstanding"),
+                "float_shares": info.get("floatShares"),
             }
 
             # キャッシュ保存

@@ -166,6 +166,34 @@ class DataEngine:
             return 1.5
 
     @staticmethod
+    def get_liquidity_metrics(df: pd.DataFrame, lookback: int = 20) -> dict:
+        """Compute average dollar volume and average volume from an OHLCV frame.
+
+        Trailing-only and look-ahead-free: metrics use the most recent
+        ``lookback`` bars (``df.tail(lookback)``), so no bar after the
+        evaluation point can influence the result.
+
+        Returns ``{"avg_dollar_volume": float | None, "avg_volume": float | None}``.
+        Values are ``None`` when the frame is empty, lacks ``Close``/``Volume``
+        columns, the lookback is invalid, or every value is NaN (pandas skips
+        NaN rows otherwise). Never raises.
+        """
+        try:
+            if df is None or df.empty or lookback < 1:
+                return {"avg_dollar_volume": None, "avg_volume": None}
+
+            frame = df.tail(lookback)
+            dollar = (frame["Close"] * frame["Volume"]).mean()
+            volume = frame["Volume"].mean()
+
+            return {
+                "avg_dollar_volume": float(dollar) if pd.notna(dollar) else None,
+                "avg_volume": float(volume) if pd.notna(volume) else None,
+            }
+        except Exception:
+            return {"avg_dollar_volume": None, "avg_volume": None}
+
+    @staticmethod
     def get_sector(ticker: str) -> str:
         """セクター情報を取得。JSONキャッシュ付き。"""
         cache_file = CACHE_DIR / "sectors.json"
