@@ -428,6 +428,28 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - **Phase 3 COMPLETE** — all milestones (3.1-3.6) verified and passed
 - Next step: Phase 4 Discovery (await authorization; no Phase 4 details invented here)
 
+### Phase 4 Status (2026-08-13)
+**Phase 4 — Filters & Ranking (roadmap §11: "Liquidity, MarketCap, Sector, Fundamental filters") — IN PROGRESS**
+- Phase 4 Discovery: ✅ COMPLETE (2026-08-13) — recommended scope: library-only `FilterEngine`, NOT wired into sentinel.py (Phase 6 owns the pipeline refactor)
+- Slice 4.1 (Filter framework + config schema): ✅ COMPLETE (committed `d4aed14`)
+- Remaining slices: 4.2 data enrichment, 4.3 Liquidity+MarketCap filters, 4.4 Sector filter, 4.5 Fundamental filters, 4.6 ranking (optional), 4.7 regression gate, 4.8 documentation/closeout
+
+**✅ SLICE 4.1 COMPLETE — Filter framework + filters config schema** (2026-08-13, verified 2026-08-13):
+- Objective: Add the opt-in, disabled-by-default Phase 4 filter framework and its config schema — ACHIEVED
+- `engines/filters.py` (NEW): `Filter` ABC (`name`/`stage`/`check`), `FilterEngine` registry + execution pipeline, `FilterContext`/`FilterResult` value types; `STAGE_UNIVERSE` (before RS ranking) and `STAGE_CANDIDATE` (post-technical) stage constants; `from_config()` reads the Pydantic config; `_build_filters()` currently returns `[]` (concrete filters land in slices 4.3-4.5)
+- Default behavior: `FilterEngine` is an identity pass-through unless `enabled=True`; disabled engines return inputs unchanged with empty rejection lists (golden-safe)
+- `sentinel/config.py`: added `FilterConfig` (+ `LiquidityFilterConfig`, `MarketCapFilterConfig` with min≤max validation, `SectorFilterConfig` with include/exclude disjoint validation, `FundamentalFilterConfig`) wired into `Config.filters` (default factory, disabled)
+- `config.yaml`: NEW additive `filters:` section — `enabled: false`, all thresholds `null`/empty (documented)
+- `config.py` CONFIG dict NOT changed (FilterEngine reads the Pydantic config directly; no legacy bridge key needed)
+- Tests: `tests/test_filters.py` (NEW, 25), `tests/test_config.py` (23→29, +6 FilterConfig), `tests/test_imports.py` CORE_MODULES now includes `engines.filters`
+- Full suite: **200 passed**, 0 failed, 0 skipped (regression 9/9 executed, 100s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION preserved by default; sentinel.py untouched
+- `git diff --check`: CLEAN; committed `d4aed14`
+- Pre-Phase 4 backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase4.tar.gz` (verified, 114KB, 48 files, source-only)
+- Known issues: None
+- Next step: STOP — await authorization for slice 4.2 (data enrichment: FundamentalEngine additive fields + OHLCV liquidity helper)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):
