@@ -150,7 +150,7 @@ Open http://localhost:8501
 pytest                      # or: python -m pytest
 ```
 
-The suite contains 132 tests (offline, no network) covering config loading, FMP client, indicator calculations (RSIndicator + VCPIndicator + VCP pivot/breakout + walk-forward), import checks, and Phase 2.1 golden regression replay.
+The suite contains 169 tests (offline, no network) covering config loading, FMP client, indicator calculations (RSIndicator + VCPIndicator + VCP pivot/breakout + walk-forward), strategy layer (RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate), import checks, and the Phase 2 golden regression replay.
 
 ## Known Limitations
 
@@ -183,7 +183,14 @@ Actively developed.
 - Full suite 132 tests passing; Phase 2.1 golden regression intact (9/9)
 - 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
 
-**Planned (Phase 3)**: Strategies Layer — VCPBreakoutStrategy, MinerviniTrendTemplate, RelativeStrengthRanking
+**Completed (Phase 3)**: Strategies Layer — additive, opt-in strategies implementing the `Strategy` ABC in `engines/strategies/`:
+- `engines/strategies/base.py`: canonical `Strategy` ABC (backward-compatible re-export through `engines.analysis`)
+- `RelativeStrengthRanking`: weighted momentum ranking vs benchmark (SPY default) with percentile ranking — an indicator, not a replacement for `RSIndicator`
+- `VCPBreakoutStrategy`: composes `VCPIndicator(use_contraction_pivot=True)` for contraction-pivot breakout with volume confirmation, plus entry/stop/target
+- `MinerviniTrendTemplate`: Mark Minervini's 9-point trend template, look-ahead-free, configurable criteria
+- The strategies are **opt-in** and are NOT wired into `sentinel.py` — scan behavior is unchanged
+- Full suite **169 tests passing**; regression gate **9/9 passing**; golden baseline `baseline_2026-08-12.json` preserved byte-for-byte
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
 
 ## License
 

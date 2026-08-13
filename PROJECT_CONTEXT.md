@@ -401,14 +401,50 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - **Phase 2 COMPLETE** — all milestones (2.1–2.5) verified and passed
 
 ### Phase 3 Status (2026-08-12)
-**🔄 IN PROGRESS — Strategies Layer**:
+**✅ COMPLETE — Strategies Layer** (closed 2026-08-13):
 - Phase 3 Discovery: ✅ Complete
 - Slice 3.1 (Strategy package structure): ✅ COMPLETE
 - Slice 3.2 (RelativeStrengthRanking): ✅ COMPLETE (committed `f607c76`)
 - Slice 3.3 (VCPBreakoutStrategy): ✅ COMPLETE (committed `f6d11c2`)
-- Slice 3.4 (MinerviniTrendTemplate): ✅ COMPLETE (implementation + tests verified; uncommitted)
-- Slice 3.5 (Regression/test gate): ⏳ Pending
-- Slice 3.6 (Documentation + closeout): ⏳ Pending
+- Slice 3.4 (MinerviniTrendTemplate): ✅ COMPLETE (committed `a3ba4f9`)
+- Slice 3.5 (Regression/test gate): ✅ COMPLETE (verified 2026-08-13)
+- Slice 3.6 (Documentation + closeout): ✅ COMPLETE (committed)
+
+**✅ SLICE 3.6 COMPLETE — Documentation + Phase 3 Closeout** (2026-08-13):
+- Objective: Document verified Phase 3 facts and close out the Strategies Layer — ACHIEVED
+- Phase 3 milestones (all verified):
+  - **3.1 Strategy package**: `engines/strategies/base.py` — canonical `Strategy` ABC; backward-compatible re-export through `engines.analysis`
+  - **3.2 RelativeStrengthRanking**: additive/opt-in `engines/strategies/rs_ranking.py` — weighted momentum ranking, benchmark support (SPY default), percentile ranking (1-99); NOT a replacement for RSIndicator
+  - **3.3 VCPBreakoutStrategy**: additive/opt-in `engines/strategies/vcp_breakout.py` — composes `VCPIndicator(use_contraction_pivot=True)`, contraction pivot detection, breakout confirmation (close > pivot AND volume surge), entry/stop/target, own score scale (never fed into sentinel.py)
+  - **3.4 MinerviniTrendTemplate**: additive/opt-in `engines/strategies/minervini_template.py` — 9-point trend template, configurable criteria, look-ahead-free (trailing-only), minimum historical data requirement (252 bars), entry/stop/target
+  - **3.5 Regression Gate**: full suite **169 passed**, 0 failed, 0 skipped; regression **9/9 passed**; golden unchanged (SHA256 `1bf2f37a...`); 310 scanned / 30 qualified / 15 ACTION; decision fields bit-identical
+- The three new strategy components (RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) are OPT-IN and are NOT wired into sentinel.py — sentinel.py behavior is preserved
+- config.yaml was NOT modified during Phase 3
+- Final test count: **169 tests** passing
+- Golden SHA256: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- Pre-closeout backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_pre-phase3_6.tar.gz` (verified, 6.6MB, 464 files)
+- Final checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3-final.tar.gz` (verified)
+- Known issues: None
+- **Phase 3 COMPLETE** — all milestones (3.1-3.6) verified and passed
+- Next step: Phase 4 Discovery (await authorization; no Phase 4 details invented here)
+
+**✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
+- Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
+- Tests (all executed this session, no existing reports reused):
+  - `tests/test_analysis.py` → **116 passed** (0 failed, 0 skipped)
+  - `tests/test_config.py` → **23 passed**
+  - `tests/test_fmp.py` → **18 passed**
+  - `tests/test_imports.py` → **3 passed**
+  - `tests/test_regression.py -v` → **9/9 passed** (executed, 152s)
+  - Full suite `pytest --tb=short` → **169 passed**, 0 failed, 0 skipped (164s, exit 0)
+- Golden artifact `tests/golden/baseline_2026-08-12.json`: UNCHANGED byte-for-byte (sha256: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`); `git diff` on golden artifact EMPTY
+- Scan output verified: 310 scanned / 30 qualified / 15 ACTION; all required decision fields (status, entry, stop, target, shares, sector, rs, vcp, pf) present in all 30 qualified rows
+- Backward compatibility: VERIFIED programmatically — `RSAnalyzer.get_raw_score`, `RSAnalyzer.assign_percentiles`, `VCPAnalyzer.calculate`, `StrategyValidator.run`, `DataEngine.get_data`, `DataEngine.get_current_price`, `config.TICKERS` (310), `config.CONFIG` all functional; `Strategy` identity identical via `engines.analysis` and `engines.strategies`; all 3 strategies importable
+- No production files modified in this slice (documentation-only)
+- Pre-regression backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3_5-pre-regression.tar.gz` (verified, 6.6MB, 464 files)
+- Final checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase3_5-checkpoint.tar.gz` (verified)
+- Known issues: None
+- Next step: STOP — await authorization for Slice 3.6 (Documentation + closeout)
 
 **✅ SLICE 3.4 COMPLETE — MinerviniTrendTemplate** (2026-08-12, verified 2026-08-13):
 - Objective: Implement `MinerviniTrendTemplate` as an additive, opt-in Strategy implementing the Strategy ABC — ACHIEVED
