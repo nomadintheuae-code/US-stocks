@@ -525,6 +525,30 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — await authorization for slice 4.7 (Phase 4 finalization: commit + phase close record)
 
+### Phase 5 Status (2026-08-14)
+**Phase 5 — Backtesting (roadmap §11: "Walk-forward, purged k-fold, OOS validation") — IN PROGRESS**
+- Phase 5.1 (BacktestEngine): ✅ FINAL VERIFICATION COMPLETE (verified 2026-08-14, HEAD `e848258`)
+- Next slices: 5.2+ (purged k-fold, OOS) — NOT STARTED (await authorization)
+
+**✅ SLICE 5.1 COMPLETE — BacktestEngine (final verification)** (verified 2026-08-14):
+- Objective: Add a walk-forward `BacktestEngine` that uses the Phase 3 Strategy ABC — ACHIEVED
+- `engines/backtest.py` (NEW): `BacktestEngine(lookback_bars=250, min_bars_for_entry=50, risk_pct=0.015, initial_capital=100_000.0)` reading defaults from config.yaml `backtest:` section; `run(strategy, df) -> dict` and `evaluate_at(strategy, df, bar_idx) -> dict`; strict trailing-only (`df.iloc[:t+1]`), deterministic, additive (no wired-in use)
+- Safety: `insufficient_data`/`missing_ohlc_columns` guard → zero-trade safe record (pf 1.0, empty trades); never raises; no input/strategy mutation (strategy deep-copied); same-instant same-index strategy decisions are point-in-time (future bars do not affect past decisions)
+- Stop/target: order = stop (low ≤ stop → −1.0 R) then target (high ≥ target → +R); end-of-data partial exit uses close; per-trade compounding at `risk_pct` of current equity; max drawdown vs running peak
+- Metrics schema (`RESULT_KEYS`): `profit_factor`, `trades`, `n_trades`, `win_rate`, `total_return_pct`, `annualized_return_pct`, `max_drawdown_pct`, `start`, `evaluated_bars`, `insufficient_data`, `reason`
+- Tests: `tests/test_backtest.py` (NEW, 17) — importability, config defaults/overrides/validation, insufficient-data (None/empty/short/missing-OHLC), repeated-run determinism, evaluate_at point-in-time isolation, run-level no-future-bar leakage, stop/target R-multiple correctness, metrics schema, no input/strategy mutation, real `VCPBreakoutStrategy` smoke, `StrategyValidator` backward-compat
+- `tests/test_imports.py`: CORE_MODULES now includes `engines.backtest`
+- NOT committed (awaiting user commit authorization)
+- Full suite (`pytest --tb=short`): **307 passed**, 0 failed, 0 skipped (215s)
+- Regression (`pytest tests/test_regression.py -v --tb=short`): **9/9 passed** (202s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline; all required decision fields (ticker, status, price, entry, stop, target, shares, rs, pf, sector, vcp) present in selected/qualified rows
+- `git diff --check`: CLEAN (3 files: 2 new, 1 modified)
+- Forbidden files untouched: sentinel.py, config.yaml, engines/analysis.py, `StrategyValidator.run()`, golden artifact
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase5_1-checkpoint.tar.gz` (created, gzip OK, contents match working tree: engines/backtest.py, tests/test_backtest.py, tests/test_imports.py)
+- Known issues: None
+- Next step: STOP — report state; Phase 5.2 NOT started (await authorization)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):
@@ -707,7 +731,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Implement VCPBreakoutStrategy with breakout confirmation — DONE 2026-08-12 (Phase 3.3, uncommitted)
 - [x] Implement MinerviniTrendTemplate (8 criteria) — DONE 2026-08-12 (Phase 3.4, uncommitted)
 - [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
-- [ ] BacktestEngine with walk-forward validation
+- [x] BacktestEngine with walk-forward validation — DONE 2026-08-14 (Phase 5.1, engines/backtest.py, uncommitted)
 - [ ] Multi-market support (Crypto, Forex)
 - [ ] CSV/Excel export from dashboard
 

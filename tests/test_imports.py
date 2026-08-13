@@ -13,6 +13,7 @@ CORE_MODULES = [
     "engines.ecr_strategy",
     "engines.sentinel_efficiency",
     "engines.filters",
+    "engines.backtest",
 ]
 
 
