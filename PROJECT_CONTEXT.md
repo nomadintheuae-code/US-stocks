@@ -481,6 +481,21 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — await authorization for slice 4.4 (Sector filter)
 
+**✅ SLICE 4.4 COMPLETE — Sector filter** (verified 2026-08-14):
+- Objective: Implement the universe-stage Sector filter (include/exclude), resolving the "filter before RS ranking" known problem — ACHIEVED
+- `engines/filters.py`: NEW `SectorFilter` (case-insensitive + trimmed include/exclude; reads `ctx.sector`, falls back to `ctx.profile["sector"]`; empty include = all sectors allowed; missing sector default-passes), `STAGE_UNIVERSE`; `_build_filters()` now constructs it when include/exclude non-empty, order: liquidity → market_cap → sector
+- `sentinel/config.py` + `config.yaml`: unchanged (SectorFilterConfig schema with disjoint validation already present from 4.1; filters.enabled remains false)
+- NOT committed (awaiting user commit authorization)
+- Tests: `tests/test_filters.py` 45→62 (+17: SectorFilter unit 11, from_config wiring 6)
+- Full suite: **256 passed**, 0 failed, 0 skipped (regression 9/9 executed)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION preserved by default; sentinel.py, StrategyValidator, golden artifact untouched
+- `git diff --check`: CLEAN (2 files modified: engines/filters.py, tests/test_filters.py)
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase4_4.tar.gz` (verified, 124KB, 52 files)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase4_4-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — await authorization for slice 4.5 (Fundamental filter)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):
