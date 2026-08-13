@@ -450,6 +450,21 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — await authorization for slice 4.2 (data enrichment: FundamentalEngine additive fields + OHLCV liquidity helper)
 
+**✅ SLICE 4.2 COMPLETE — Data enrichment for filters** (verified 2026-08-14):
+- Objective: Add the additive data inputs Phase 4 filters need — `FundamentalEngine` enrichment fields and an OHLCV-derived liquidity helper — without any behavior change — ACHIEVED
+- `engines/fundamental.py`: `FundamentalEngine.get()` now returns 5 additive keys (pre-existing keys/values untouched): `market_cap`, `average_volume`, `average_volume_10d`, `shares_outstanding`, `float_shares` (all `None` when `.info` lacks them; JSON-cached like the rest)
+- `engines/data.py`: NEW `DataEngine.get_liquidity_metrics(df, lookback=20)` — trailing-only, look-ahead-free average dollar volume + average volume from the last N bars; returns `{"avg_dollar_volume", "avg_volume"}` with `None` on empty/missing-column/invalid-lookback; pandas skipna semantics; never raises
+- NOT committed (awaiting user commit authorization per slice 4.2 rules)
+- Tests: `tests/test_data.py` (NEW, 11) + `tests/test_fundamental.py` (NEW, 8)
+- Full suite: **219 passed**, 0 failed, 0 skipped (regression 9/9 executed, 188s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION preserved by default; sentinel.py and StrategyValidator untouched; config.yaml NOT modified this slice
+- `git diff --check`: CLEAN (4 files: 2 modified engines, 2 new test files)
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase4_2.tar.gz` (verified, 121KB, 50 files)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase4_2-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — await authorization for slice 4.3 (Liquidity + MarketCap filters)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):
