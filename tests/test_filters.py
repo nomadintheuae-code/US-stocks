@@ -838,3 +838,239 @@ def test_engine_integration_liquidity_market_cap_sector_fundamental():
     assert kept == ["AAPL"]
     assert [r["ticker"] for r in rejected] == ["MSFT"]
     assert rejected[0]["filter"] == "fundamental"
+
+
+# ---------------------------------------------------------------------------
+# Phase 4.6 — engine execution integration tests
+# ---------------------------------------------------------------------------
+
+def _full_engine():
+    """Engine with all four universe filters configured and enabled."""
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": True,
+        "liquidity": {"min_avg_dollar_volume": 100_000, "min_avg_volume": 1000},
+        "market_cap": {"min_usd": 1e9, "max_usd": 5e11},
+        "sector": {"include": ["Technology", "Healthcare"]},
+        "fundamental": {"min_revenue_growth": 0.10, "min_earnings_growth": 0.05, "max_forward_pe": 40.0, "min_analyst_count": 5},
+    })
+    return FilterEngine.from_config(config=cfg)
+
+
+def _rich_context(ticker, **overrides) -> FilterContext:
+    """A context that passes every threshold of the full engine."""
+    ctx = dict(
+        df=pd.DataFrame({"Close": [100.0, 100.0, 100.0], "Volume": [1000, 1000, 1000]}),
+        sector="Technology",
+        profile={"market_cap": 2e11, "revenue_growth": 0.25, "pe_forward": 25.0},
+    )
+    ctx.update(overrides)
+    return FilterContext(ticker=ticker, **ctx)
+
+
+def test_integration_universe_stage_execution():
+    eng = _full_engine()
+
+    def provider(t: str) -> FilterContext:
+        if t == "LOWLIQ":
+            return _rich_context(t, df=pd.DataFrame({"Close": [1.0, 1.0, 1.0], "Volume": [10, 10, 10]}))
+        return _rich_context(t)
+
+    kept, rejected = eng.filter_universe(["LOWLIQ", "AAPL"], provider=provider)
+    assert kept == ["AAPL"]
+    assert [r["ticker"] for r in rejected] == ["LOWLIQ"]
+    assert rejected[0]["filter"] == "liquidity"
+
+
+def test_integration_filter_order_liquidity_market_cap_sector_fundamental():
+    eng = _full_engine()
+
+    def provider(t: str) -> FilterContext:
+        if t == "LOWLIQ":
+            return _rich_context(t, df=pd.DataFrame({"Close": [1.0, 1.0, 1.0], "Volume": [10, 10, 10]}))
+        if t == "SMALLCAP":
+            return _rich_context(t, profile={"market_cap": 5e8, "revenue_growth": 0.25, "pe_forward": 25.0})
+        if t == "BADSEC":
+            return _rich_context(t, sector="Energy")
+        if t == "NOGROW":
+            return _rich_context(t, profile={"market_cap": 2e11, "revenue_growth": 0.01, "pe_forward": 25.0})
+        return _rich_context(t)
+
+    kept, rejected = eng.filter_universe(["LOWLIQ", "SMALLCAP", "BADSEC", "NOGROW", "GOOD"], provider=provider)
+    assert kept == ["GOOD"]
+    assert [r["ticker"] for r in rejected] == ["LOWLIQ", "SMALLCAP", "BADSEC", "NOGROW"]
+    assert [r["filter"] for r in rejected] == ["liquidity", "market_cap", "sector", "fundamental"]
+
+
+def test_integration_filter_short_circuits_on_first_failure():
+    eng = _full_engine()
+    bad_all = _rich_context(
+        "BROKENALL",
+        df=pd.DataFrame({"Close": [1.0, 1.0, 1.0], "Volume": [10, 10, 10]}),
+        sector="Energy",
+        profile={"market_cap": 5e8, "revenue_growth": 0.01, "pe_forward": 60.0},
+    )
+    kept, rejected = eng.filter_universe(["BROKENALL"], provider=lambda t: bad_all)
+    assert kept == []
+    assert len(rejected) == 1
+    assert rejected[0]["ticker"] == "BROKENALL"
+    assert rejected[0]["filter"] == "liquidity"
+    assert "avg_dollar_volume" in rejected[0]["reason"] and "avg_volume" in rejected[0]["reason"]
+
+
+def test_integration_universe_before_candidate_stage():
+    eng = FilterEngine(
+        enabled=True,
+        filters=[_RequireTechSector(), _CandidateMinScore()],
+    )
+
+    def provider(t: str) -> FilterContext:
+        if t == "XOM":
+            return FilterContext(ticker=t, sector="Energy")
+        return FilterContext(ticker=t, sector="Technology", profile={"score": 80})
+
+    universe = ["AAPL", "MSFT", "XOM"]
+    kept_u, rejected_u = eng.filter_universe(universe, provider=provider)
+    assert kept_u == ["AAPL", "MSFT"]
+    assert rejected_u == [{"ticker": "XOM", "filter": "require_tech", "reason": "sector 'Energy'"}]
+
+    kept_c, rejected_c = eng.filter_candidates(kept_u, provider=lambda t: FilterContext(ticker=t, sector="Technology", profile={"score": 30}))
+    assert kept_c == []
+    assert rejected_c == [{"ticker": "AAPL", "filter": "candidate_min_score", "reason": "score 30 < 50"},
+                          {"ticker": "MSFT", "filter": "candidate_min_score", "reason": "score 30 < 50"}]
+
+
+def test_integration_candidate_stage_isolated_from_universe_stage():
+    eng = FilterEngine(enabled=True, filters=[_RequireTechSector(), _CandidateMinScore()])
+
+    universe_only = eng.filter_universe(["MSFT"], provider=lambda t: FilterContext(ticker=t, sector="Technology", profile={"score": 30}))
+    assert universe_only == (["MSFT"], [])  # universe stage ignores candidate filter
+
+    kept_c, rejected_c = eng.filter_candidates(["MSFT"], provider=lambda t: FilterContext(ticker=t, sector="Energy", profile={"score": 80}))
+    assert kept_c == ["MSFT"]  # universe filter (sector=Energy) ignored at candidate stage
+    assert rejected_c == []
+
+    kept_c2, rejected_c2 = eng.filter_candidates(["MSFT"], provider=lambda t: FilterContext(ticker=t, sector="Energy", profile={"score": 30}))
+    assert kept_c2 == []
+    assert rejected_c2[0]["filter"] == "candidate_min_score"
+
+
+def test_integration_disabled_engine_exact_identity():
+    cfg = None
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": False,
+        "liquidity": {"min_avg_dollar_volume": 1e12},
+        "market_cap": {"min_usd": 1e15},
+        "sector": {"include": ["OnlyMadeUp"]},
+        "fundamental": {"min_revenue_growth": 5.0},
+    })
+    eng = FilterEngine.from_config(config=cfg)
+
+    universe = ["MSFT", "AAPL", "XOM"]
+    kept, rejected = eng.filter_universe(universe, provider=_rich_context)
+    assert kept == universe
+    assert rejected == []
+
+    kept_c, rejected_c = eng.filter_candidates(universe, provider=_rich_context)
+    assert kept_c == universe
+    assert rejected_c == []
+
+
+def test_integration_enabled_no_filters_is_identity():
+    eng = FilterEngine(enabled=True)
+    universe = ["MSFT", "AAPL"]
+    assert eng.filter_universe(universe, provider=_rich_context) == (["MSFT", "AAPL"], [])
+    assert eng.filter_candidates(universe, provider=_rich_context) == (["MSFT", "AAPL"], [])
+
+
+def test_integration_missing_data_default_passes_all_filters():
+    eng = _full_engine()
+    universe = ["MSFT", "AAPL", "XOM"]
+
+    bare = eng.filter_universe(universe, provider=lambda t: FilterContext(ticker=t))
+    assert bare == (universe, [])
+
+    empty_df = eng.filter_universe(universe, provider=lambda t: FilterContext(ticker=t, df=pd.DataFrame()))
+    assert empty_df == (universe, [])
+
+    empty_profile = eng.filter_universe(universe, provider=lambda t: FilterContext(ticker=t, profile={}))
+    assert empty_profile == (universe, [])
+
+    no_provider = eng.filter_universe(universe)
+    assert no_provider == (universe, [])
+
+
+def test_integration_rejection_reasons_aggregated_and_deterministic():
+    eng = _full_engine()
+
+    def provider(t: str) -> FilterContext:
+        if t == "LIQUIDITYBOTH":
+            return _rich_context(t, df=pd.DataFrame({"Close": [1.0, 1.0, 1.0], "Volume": [10, 10, 10]}))
+        if t == "FUNDALL":
+            return _rich_context(t, profile={"market_cap": 2e11, "revenue_growth": 0.01, "earnings_growth": 0.00, "pe_forward": 60.0, "analyst_count": 1})
+        return _rich_context(t)
+
+    _, rejected = eng.filter_universe(["LIQUIDITYBOTH", "FUNDALL"], provider=provider)
+    liq_reason = rejected[0]["reason"]
+    assert "avg_dollar_volume" in liq_reason and "avg_volume" in liq_reason and "; " in liq_reason
+    fund_reason = rejected[1]["reason"]
+    assert all(k in fund_reason for k in ("revenue_growth", "earnings_growth", "forward_pe", "analyst_count"))
+    assert "; " in fund_reason
+
+    _, rejected_again = eng.filter_universe(["LIQUIDITYBOTH", "FUNDALL"], provider=provider)
+    assert rejected_again == rejected
+
+
+def test_integration_no_input_mutation():
+    eng = _full_engine()
+
+    def provider(t: str) -> FilterContext:
+        if t == "LOWLIQ":
+            return _rich_context(t, df=pd.DataFrame({"Close": [1.0, 1.0, 1.0], "Volume": [10, 10, 10]}))
+        return _rich_context(t)
+
+    universe = ["LOWLIQ", "GOOD"]
+    snapshot = list(universe)
+    eng.filter_universe(universe, provider=provider)
+    assert universe == snapshot
+
+    tup = ("LOWLIQ", "GOOD")
+    eng.filter_universe(tup, provider=provider)
+    assert tup == ("LOWLIQ", "GOOD")
+
+
+def test_integration_deterministic_repeated_execution():
+    eng = _full_engine()
+
+    def provider(t: str) -> FilterContext:
+        if t == "LOWLIQ":
+            return _rich_context(t, df=pd.DataFrame({"Close": [1.0, 1.0, 1.0], "Volume": [10, 10, 10]}))
+        if t == "SMALLCAP":
+            return _rich_context(t, profile={"market_cap": 5e8, "revenue_growth": 0.25, "pe_forward": 25.0})
+        if t == "BADSEC":
+            return _rich_context(t, sector="Energy")
+        return _rich_context(t)
+
+    universe = ["LOWLIQ", "SMALLCAP", "BADSEC", "GOOD"]
+    first = eng.filter_universe(universe, provider=provider)
+    second = eng.filter_universe(universe, provider=provider)
+    third = eng.filter_universe(universe, provider=provider)
+    assert second == first == third
+
+
+def test_integration_default_config_engine_is_disabled_noop():
+    from sentinel.config import get_config
+
+    cfg = get_config()
+    assert cfg.filters.enabled is False
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.enabled is False
+
+    universe = ["AAPL", "MSFT", "XOM"]
+    kept, rejected = eng.filter_universe(universe, provider=_rich_context)
+    assert kept == universe and rejected == []
+    kept_c, rejected_c = eng.filter_candidates(universe, provider=_rich_context)
+    assert kept_c == universe and rejected_c == []

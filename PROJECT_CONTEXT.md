@@ -511,6 +511,20 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — await authorization for slice 4.6 (Phase 4 closure: engine execution integration tests)
 
+**✅ SLICE 4.6 COMPLETE — Phase 4 closure: integration tests** (verified 2026-08-14):
+- Objective: Add engine-execution integration tests proving universe/candidate-stage semantics and framework guarantees — ACHIEVED (additive only; no engine code change required)
+- `engines/filters.py`: UNCHANGED — integration tests exposed no defects; hardening policy ("fix only test-exposed issues") triggered no changes, so default behavior is byte-identical
+- `tests/test_filters.py` 84→96 (+12 integration tests covering the full 10-item scope: universe-stage execution, filter ordering liquidity→market_cap→sector→fundamental, short-circuit on first failure, universe-before-candidate stage semantics, candidate-stage isolation, disabled-engine exact identity, enabled-no-filters identity, missing-data default-pass (bare/empty-df/empty-profile/no-provider), deterministic aggregated rejection reasons, no input mutation (list+tuple), deterministic repeated execution (3 runs deep-equal), default config.yaml engine is disabled no-op)
+- NOT committed (awaiting user commit authorization)
+- Full suite: **290 passed**, 0 failed, 0 skipped (regression 9/9 executed, 178s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION preserved; sentinel.py, StrategyValidator, config.yaml, golden artifact untouched
+- `git diff --check`: CLEAN (1 file modified: tests/test_filters.py)
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase4_6.tar.gz` (verified, 124KB, 52 files)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase4_6-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — await authorization for slice 4.7 (Phase 4 finalization: commit + phase close record)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):
