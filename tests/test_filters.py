@@ -9,6 +9,7 @@ from engines.filters import (
     FilterContext,
     FilterEngine,
     FilterResult,
+    FundamentalFilter,
     LiquidityFilter,
     MarketCapFilter,
     SectorFilter,
@@ -631,3 +632,209 @@ def test_engine_integration_liquidity_market_cap_sector():
     assert kept == ["AAPL"]
     assert [r["ticker"] for r in rejected] == ["XOM"]
     assert rejected[0]["filter"] == "sector"
+
+
+# ---------------------------------------------------------------------------
+# FundamentalFilter (Phase 4.5)
+# ---------------------------------------------------------------------------
+
+def test_fundamental_filter_no_thresholds_passes():
+    assert FundamentalFilter().check(FilterContext(ticker="AAPL")).passed is True
+
+
+def test_fundamental_filter_rejects_low_revenue_growth():
+    f = FundamentalFilter(min_revenue_growth=0.10)
+    res = f.check(FilterContext(ticker="AAPL", profile={"revenue_growth": 0.05}))
+    assert res.passed is False
+    assert "revenue_growth" in res.reason
+
+
+def test_fundamental_filter_passes_high_revenue_growth():
+    f = FundamentalFilter(min_revenue_growth=0.10)
+    assert f.check(FilterContext(ticker="AAPL", profile={"revenue_growth": 0.25})).passed is True
+
+
+def test_fundamental_filter_revenue_growth_boundary_inclusive():
+    f = FundamentalFilter(min_revenue_growth=0.10)
+    assert f.check(FilterContext(ticker="AAPL", profile={"revenue_growth": 0.10})).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={"revenue_growth": 0.099})).passed is False
+
+
+def test_fundamental_filter_rejects_low_earnings_growth():
+    f = FundamentalFilter(min_earnings_growth=0.05)
+    res = f.check(FilterContext(ticker="AAPL", profile={"earnings_growth": -0.02}))
+    assert res.passed is False
+    assert "earnings_growth" in res.reason
+
+
+def test_fundamental_filter_passes_high_earnings_growth():
+    f = FundamentalFilter(min_earnings_growth=0.05)
+    assert f.check(FilterContext(ticker="AAPL", profile={"earnings_growth": 0.30})).passed is True
+
+
+def test_fundamental_filter_rejects_high_forward_pe():
+    f = FundamentalFilter(max_forward_pe=40.0)
+    res = f.check(FilterContext(ticker="AAPL", profile={"pe_forward": 55.0}))
+    assert res.passed is False
+    assert "forward_pe" in res.reason
+
+
+def test_fundamental_filter_passes_acceptable_forward_pe():
+    f = FundamentalFilter(max_forward_pe=40.0)
+    assert f.check(FilterContext(ticker="AAPL", profile={"pe_forward": 25.0})).passed is True
+
+
+def test_fundamental_filter_forward_pe_boundary_inclusive():
+    f = FundamentalFilter(max_forward_pe=40.0)
+    assert f.check(FilterContext(ticker="AAPL", profile={"pe_forward": 40.0})).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={"pe_forward": 40.01})).passed is False
+
+
+def test_fundamental_filter_rejects_negative_forward_pe():
+    f = FundamentalFilter(max_forward_pe=40.0)
+    res = f.check(FilterContext(ticker="AAPL", profile={"pe_forward": -5.0}))
+    assert res.passed is False
+    assert "forward_pe" in res.reason
+
+
+def test_fundamental_filter_negative_pe_ignored_when_unconfigured():
+    f = FundamentalFilter(min_revenue_growth=0.10)
+    assert f.check(FilterContext(ticker="AAPL", profile={"pe_forward": -5.0, "revenue_growth": 0.20})).passed is True
+
+
+def test_fundamental_filter_rejects_low_analyst_count():
+    f = FundamentalFilter(min_analyst_count=5)
+    res = f.check(FilterContext(ticker="AAPL", profile={"analyst_count": 2}))
+    assert res.passed is False
+    assert "analyst_count" in res.reason
+
+
+def test_fundamental_filter_passes_sufficient_analyst_count():
+    f = FundamentalFilter(min_analyst_count=5)
+    assert f.check(FilterContext(ticker="AAPL", profile={"analyst_count": 12})).passed is True
+
+
+def test_fundamental_filter_analyst_count_boundary_inclusive():
+    f = FundamentalFilter(min_analyst_count=5)
+    assert f.check(FilterContext(ticker="AAPL", profile={"analyst_count": 5})).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={"analyst_count": 4})).passed is False
+
+
+def test_fundamental_filter_missing_data_passes():
+    f = FundamentalFilter(min_revenue_growth=0.10, min_earnings_growth=0.05, max_forward_pe=40.0, min_analyst_count=5)
+    assert f.check(FilterContext(ticker="AAPL")).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={})).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={"revenue_growth": None})).passed is True
+
+
+def test_fundamental_filter_partial_data_passes():
+    f = FundamentalFilter(min_revenue_growth=0.10, max_forward_pe=40.0)
+    assert f.check(FilterContext(ticker="AAPL", profile={"revenue_growth": 0.20})).passed is True
+
+
+def test_fundamental_filter_reports_all_failures():
+    f = FundamentalFilter(min_revenue_growth=0.10, min_earnings_growth=0.05, max_forward_pe=40.0, min_analyst_count=5)
+    res = f.check(FilterContext(ticker="AAPL", profile={
+        "revenue_growth": 0.01,
+        "earnings_growth": 0.00,
+        "pe_forward": 60.0,
+        "analyst_count": 1,
+    }))
+    assert res.passed is False
+    assert "revenue_growth" in res.reason
+    assert "earnings_growth" in res.reason
+    assert "forward_pe" in res.reason
+    assert "analyst_count" in res.reason
+
+
+# ---------------------------------------------------------------------------
+# from_config wiring for FundamentalFilter (Phase 4.5)
+# ---------------------------------------------------------------------------
+
+def test_from_config_builds_fundamental_filter():
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": True,
+        "fundamental": {"min_revenue_growth": 0.1, "min_earnings_growth": 0.05, "max_forward_pe": 40.0, "min_analyst_count": 5},
+    })
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.names == ("fundamental",)
+    assert isinstance(eng.filters[0], FundamentalFilter)
+    assert eng.filters[0].min_revenue_growth == 0.1
+    assert eng.filters[0].min_analyst_count == 5
+
+
+def test_from_config_all_none_yields_no_fundamental_filter():
+    from sentinel.config import Config
+
+    cfg = Config(filters={"enabled": True, "fundamental": {}})
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.filters == ()
+
+
+def test_from_config_order_liquidity_market_cap_sector_fundamental():
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": True,
+        "liquidity": {"min_avg_volume": 100_000},
+        "market_cap": {"max_usd": 5e11},
+        "sector": {"include": ["Technology"]},
+        "fundamental": {"min_revenue_growth": 0.1},
+    })
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.names == ("liquidity", "market_cap", "sector", "fundamental")
+
+
+def test_from_config_disabled_fundamental_identity():
+    from sentinel.config import Config
+
+    cfg = Config(filters={"enabled": False, "fundamental": {"max_forward_pe": 40.0}})
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.enabled is False
+    kept, rejected = eng.filter_universe(["AAPL"], provider=lambda t: FilterContext(ticker=t, profile={"pe_forward": 100.0}))
+    assert kept == ["AAPL"]
+    assert rejected == []
+
+
+def test_engine_integration_liquidity_market_cap_sector_fundamental():
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": True,
+        "liquidity": {"min_avg_dollar_volume": 100_000},
+        "market_cap": {"min_usd": 1e9, "max_usd": 5e11},
+        "sector": {"include": ["Technology"]},
+        "fundamental": {"min_revenue_growth": 0.10},
+    })
+    eng = FilterEngine.from_config(config=cfg)
+
+    def provider(t: str) -> FilterContext:
+        profile = {
+            "market_cap": 2e11,
+            "revenue_growth": 0.25,
+        }
+        return FilterContext(
+            ticker=t,
+            df=pd.DataFrame({"Close": [100, 110, 120], "Volume": [1000, 1000, 1000]}),
+            profile=profile,
+            sector="Technology",
+        )
+
+    def provider_no_growth(t: str) -> FilterContext:
+        profile = {
+            "market_cap": 2e11,
+            "revenue_growth": 0.01,
+        }
+        return FilterContext(
+            ticker=t,
+            df=pd.DataFrame({"Close": [100, 110, 120], "Volume": [1000, 1000, 1000]}),
+            profile=profile,
+            sector="Technology",
+        )
+
+    kept, rejected = eng.filter_universe(["AAPL", "MSFT"], provider=lambda t: provider(t) if t == "AAPL" else provider_no_growth(t))
+    assert kept == ["AAPL"]
+    assert [r["ticker"] for r in rejected] == ["MSFT"]
+    assert rejected[0]["filter"] == "fundamental"

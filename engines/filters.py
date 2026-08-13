@@ -19,8 +19,7 @@ Concrete filters:
 - ``LiquidityFilter`` — average dollar volume / average volume (universe stage).
 - ``MarketCapFilter`` — market-capitalization range (universe stage).
 - ``SectorFilter`` — sector include / exclude (universe stage, before RS ranking).
-
-Fundamental filters are added in a later Phase 4 slice.
+- ``FundamentalFilter`` — growth / valuation thresholds (universe stage).
 Default behavior: a ``FilterEngine`` constructed without filters, or one built
 from config while ``filters.enabled`` is false, is an identity pass-through:
 ``filter_universe(tickers) -> (list(tickers), [])`` and
@@ -226,6 +225,70 @@ class SectorFilter(Filter):
         return FilterResult(passed=True)
 
 
+class FundamentalFilter(Filter):
+    """Universe-stage fundamental quality filter.
+
+    Applies growth and valuation thresholds to ``ctx.profile`` fields
+    populated by ``FundamentalEngine.get`` (the enriched ``.info`` dict):
+    ``revenue_growth`` / ``earnings_growth`` (decimal ratios, e.g. 0.1 = 10%),
+    ``pe_forward`` and ``analyst_count``.
+
+    Missing fields are default-permissive. When ``max_forward_pe`` is set, a
+    present non-positive ``pe_forward`` is rejected as an invalid valuation (a
+    loss-making forward multiple is not a valid growth candidate).
+    """
+
+    name = "fundamental"
+    stage = STAGE_UNIVERSE
+
+    def __init__(
+        self,
+        min_revenue_growth: Optional[float] = None,
+        min_earnings_growth: Optional[float] = None,
+        max_forward_pe: Optional[float] = None,
+        min_analyst_count: Optional[int] = None,
+    ) -> None:
+        self.min_revenue_growth = min_revenue_growth
+        self.min_earnings_growth = min_earnings_growth
+        self.max_forward_pe = max_forward_pe
+        self.min_analyst_count = min_analyst_count
+
+    def check(self, ctx: FilterContext) -> FilterResult:
+        if (
+            self.min_revenue_growth is None
+            and self.min_earnings_growth is None
+            and self.max_forward_pe is None
+            and self.min_analyst_count is None
+        ):
+            return FilterResult(passed=True)
+
+        profile = ctx.profile or {}
+        reasons: List[str] = []
+
+        rev = profile.get("revenue_growth")
+        if self.min_revenue_growth is not None and rev is not None and rev < self.min_revenue_growth:
+            reasons.append(f"revenue_growth {rev:.2f} < {self.min_revenue_growth:.2f}")
+
+        earn = profile.get("earnings_growth")
+        if self.min_earnings_growth is not None and earn is not None and earn < self.min_earnings_growth:
+            reasons.append(f"earnings_growth {earn:.2f} < {self.min_earnings_growth:.2f}")
+
+        pe = profile.get("pe_forward")
+        if self.max_forward_pe is not None and pe is not None:
+            if pe <= 0:
+                reasons.append(f"forward_pe {pe:.2f} invalid (<= 0)")
+            elif pe > self.max_forward_pe:
+                reasons.append(f"forward_pe {pe:.2f} > {self.max_forward_pe:.2f}")
+
+        ac = profile.get("analyst_count")
+        if self.min_analyst_count is not None and ac is not None and ac < self.min_analyst_count:
+            reasons.append(f"analyst_count {ac} < {self.min_analyst_count}")
+
+        if reasons:
+            return FilterResult(passed=False, reason="; ".join(reasons))
+        return FilterResult(passed=True)
+
+
 class FilterEngine:
     """Registry + execution pipeline for scan filters.
 
@@ -286,8 +349,8 @@ class FilterEngine:
 
         A filter is constructed only when at least one of its thresholds is
         configured (all-None sections yield no filter). Order: liquidity,
-        market cap, sector — each remains disabled unless ``filters.enabled``
-        is set.
+        market cap, sector, fundamental — each remains disabled unless
+        ``filters.enabled`` is set.
         """
         filters: List[Filter] = []
 
@@ -305,6 +368,20 @@ class FilterEngine:
         sector = filter_cfg.sector
         if sector.include or sector.exclude:
             filters.append(SectorFilter(include=sector.include, exclude=sector.exclude))
+
+        fund = filter_cfg.fundamental
+        if (
+            fund.min_revenue_growth is not None
+            or fund.min_earnings_growth is not None
+            or fund.max_forward_pe is not None
+            or fund.min_analyst_count is not None
+        ):
+            filters.append(FundamentalFilter(
+                min_revenue_growth=fund.min_revenue_growth,
+                min_earnings_growth=fund.min_earnings_growth,
+                max_forward_pe=fund.max_forward_pe,
+                min_analyst_count=fund.min_analyst_count,
+            ))
 
         return filters
 
@@ -412,5 +489,6 @@ __all__ = [
     "LiquidityFilter",
     "MarketCapFilter",
     "SectorFilter",
+    "FundamentalFilter",
     "FilterEngine",
 ]
