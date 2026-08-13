@@ -5,6 +5,7 @@ import pytest
 
 from engines.analysis import RSAnalyzer, RSIndicator, StrategyValidator, VCPAnalyzer, VCPIndicator
 from engines.strategies.base import Strategy
+from engines.strategies.minervini_template import MinerviniTrendTemplate
 from engines.strategies.rs_ranking import RelativeStrengthRanking
 from engines.strategies.vcp_breakout import VCPBreakoutStrategy
 
@@ -52,6 +53,16 @@ def _pivot_base_frame(
 
     volume = np.full(n, base_volume).astype(float)
     volume[180:] = handle_volume
+    return pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
+
+
+def _trend_frame(n=300, slope=0.3, start=50.0, seed=0):
+    """n-bar deterministic trend frame: rising (slope>0) or falling (slope<0)."""
+    rng = np.random.default_rng(seed)
+    close = np.maximum(start + np.arange(n) * slope + rng.normal(0, 0.5, n), 1.0)
+    high = close + 0.5 + np.abs(rng.normal(0, 0.3, n))
+    low = np.maximum(close - 0.5 - np.abs(rng.normal(0, 0.3, n)), 0.1)
+    volume = np.full(n, 1_000_000.0)
     return pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume})
 
 
@@ -1092,6 +1103,169 @@ def test_vcpbreakout_backward_compat():
 
     assert VCPAnalyzer.calculate(df) == expected_vcp
     assert StrategyValidator.run(df) == expected_pf
+
+
+# --- MinerviniTrendTemplate --------------------------------------------------
+
+def test_minervini_importable():
+    """Test that MinerviniTrendTemplate is importable from the strategies package."""
+    from engines.strategies import MinerviniTrendTemplate as MTT
+    assert MTT is MinerviniTrendTemplate
+
+
+def test_minervini_strategy_abc_compliance():
+    """Test that MinerviniTrendTemplate implements the Strategy ABC."""
+    assert issubclass(MinerviniTrendTemplate, Strategy)
+    s = MinerviniTrendTemplate()
+    assert callable(s.calculate)
+    assert callable(s.get_score)
+    assert callable(s.get_signals)
+    assert callable(s.get_entry_stop_target)
+    assert s.get_score() == 0
+    assert s.get_signals() == []
+    assert s.get_entry_stop_target() == (0.0, 0.0, 0.0)
+    assert s.is_actionable() is False
+
+
+def test_minervini_qualifying_uptrend():
+    """A rising trend passes all 8 non-RS criteria → actionable."""
+    s = MinerviniTrendTemplate()
+    res = s.calculate(_trend_frame())
+    assert res["total_count"] == 8
+    assert res["passed_count"] == 8
+    assert res["score"] == 8
+    assert res["actionable"] is True
+    assert s.is_actionable() is True
+    assert res["signals"][-1] == "Trend Template Pass"
+    assert all(res["criteria"][k] is True for k in (
+        "price_above_150ma", "price_above_200ma", "ma150_above_ma200",
+        "ma200_uptrend", "ma50_above_ma150_ma200", "price_above_50ma",
+        "above_30pct_52w_low", "within_25pct_52w_high",
+    ))
+
+
+def test_minervini_non_qualifying_downtrend():
+    """A falling trend fails all criteria → score 0, not actionable."""
+    s = MinerviniTrendTemplate()
+    res = s.calculate(_trend_frame(slope=-0.3, start=200.0))
+    assert res["score"] == 0
+    assert res["actionable"] is False
+    assert s.is_actionable() is False
+    assert res["signals"][-1] == "Trend Template Fail"
+    assert all(res["criteria"][k] is False for k in (
+        "price_above_150ma", "price_above_200ma", "ma150_above_ma200",
+        "ma200_uptrend", "ma50_above_ma150_ma200", "price_above_50ma",
+        "above_30pct_52w_low", "within_25pct_52w_high",
+    ))
+
+
+def test_minervini_criteria_52week_bounds():
+    """52-week criteria reflect the price vs trailing extremes relationship."""
+    s = MinerviniTrendTemplate()
+    up = s.calculate(_trend_frame())["criteria"]
+    assert up["above_30pct_52w_low"] is True
+    assert up["within_25pct_52w_high"] is True
+    down = s.calculate(_trend_frame(slope=-0.3, start=200.0))["criteria"]
+    assert down["above_30pct_52w_low"] is False
+    assert down["within_25pct_52w_high"] is False
+
+
+def test_minervini_rs_criterion():
+    """RS criterion is assessed only when rs_rating is provided."""
+    s = MinerviniTrendTemplate()
+    none = s.calculate(_trend_frame())
+    assert none["criteria"]["rs_rating_ge_70"] is None
+    assert none["total_count"] == 8
+
+    pass_ = s.calculate(_trend_frame(), rs_rating=85)
+    assert pass_["criteria"]["rs_rating_ge_70"] is True
+    assert pass_["total_count"] == 9
+    assert pass_["score"] == 9
+    assert pass_["actionable"] is True
+
+    fail_ = s.calculate(_trend_frame(), rs_rating=50)
+    assert fail_["criteria"]["rs_rating_ge_70"] is False
+    assert fail_["total_count"] == 9
+    assert fail_["score"] == 8
+    assert fail_["actionable"] is False
+
+
+def test_minervini_entry_stop_target_exactness():
+    """Entry/stop/target match the strategy formulas exactly."""
+    s = MinerviniTrendTemplate()
+    df = _trend_frame()
+    res = s.calculate(df)
+
+    close = df["Close"]
+    high = df["High"]
+    low = df["Low"]
+    tr = pd.concat([
+        high - low,
+        (high - close.shift()).abs(),
+        (low - close.shift()).abs(),
+    ], axis=1).max(axis=1)
+    atr = float(tr.rolling(14).mean().iloc[-1])
+
+    entry = round(float(df["Close"].iloc[-1]), 2)
+    stop = round(entry - atr * 2.0, 2)
+    target = round(entry + (entry - stop) * 2.5, 2)
+    assert res["entry"] == entry
+    assert res["stop"] == stop
+    assert res["target"] == target
+    assert entry > stop > 0
+
+
+def test_minervini_insufficient_data():
+    """Fewer than 252 bars → safe non-actionable result."""
+    s = MinerviniTrendTemplate()
+    short = _trend_frame(n=100)
+    res = s.calculate(short)
+    assert res["score"] == 0
+    assert res["signals"] == []
+    assert (res["entry"], res["stop"], res["target"]) == (0.0, 0.0, 0.0)
+    assert res["actionable"] is False
+    assert s.get_score() == 0
+    assert s.get_entry_stop_target() == (0.0, 0.0, 0.0)
+
+
+def test_minervini_deterministic():
+    """Repeated calculate() calls produce identical results."""
+    s = MinerviniTrendTemplate()
+    df = _trend_frame()
+    r1 = s.calculate(df, rs_rating=90)
+    r2 = s.calculate(df, rs_rating=90)
+    assert r1 == r2
+    assert s.get_score() == r2["score"]
+    assert s.get_signals() == r2["signals"]
+
+
+def test_minervini_no_input_mutation():
+    """Input DataFrame columns, length and values remain unchanged."""
+    s = MinerviniTrendTemplate()
+    df = _trend_frame()
+    before = df.copy(deep=True)
+    _ = s.calculate(df, rs_rating=90)
+    assert df.columns.tolist() == before.columns.tolist()
+    assert len(df) == len(before)
+    assert (df.values == before.values).all()
+
+
+def test_minervini_backward_compat():
+    """Existing strategy outputs are unchanged by the new export."""
+    df = _pivot_base_frame(breakout_close=102.0, base_volume=1_000_000.0, handle_volume=4_000_000.0)
+    expected_vcp = VCPAnalyzer.calculate(df)
+    expected_pf = StrategyValidator.run(df)
+    expected_rs = RSAnalyzer.get_raw_score(df)
+    expected_breakout = VCPBreakoutStrategy().calculate(df)
+    expected_rsrank = RelativeStrengthRanking().compute_raw(df)
+
+    _ = MinerviniTrendTemplate().calculate(df)
+
+    assert VCPAnalyzer.calculate(df) == expected_vcp
+    assert StrategyValidator.run(df) == expected_pf
+    assert RSAnalyzer.get_raw_score(df) == expected_rs
+    assert VCPBreakoutStrategy().calculate(df) == expected_breakout
+    assert RelativeStrengthRanking().compute_raw(df) == expected_rsrank
 
 
 def test_cachmanager_backward_compat_existing():
