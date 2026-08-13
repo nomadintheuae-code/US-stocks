@@ -465,6 +465,22 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — await authorization for slice 4.3 (Liquidity + MarketCap filters)
 
+**✅ SLICE 4.3 COMPLETE — Liquidity + MarketCap filters** (verified 2026-08-14):
+- Objective: Implement the first two concrete universe-stage filters (liquidity, market cap) and wire them into `FilterEngine.from_config()` — ACHIEVED
+- `engines/filters.py`: NEW `LiquidityFilter` (min avg dollar volume + min avg volume; OHLCV-derived via `DataEngine.get_liquidity_metrics`, volume falls back to profile `average_volume`; missing data default-passes) and `MarketCapFilter` (min/max USD, inclusive bounds, applied to `ctx.profile["market_cap"]`; missing data default-passes), both `STAGE_UNIVERSE`; `_build_filters()` now constructs a filter only when a threshold is configured (all-None sections yield none), order: liquidity → market cap
+- `config.yaml`: unchanged this slice (existing `filters:` section from 4.1 already covers both)
+- Filters remain disabled by default (`filters.enabled: false`) — identity pass-through preserved
+- NOT committed (awaiting user commit authorization)
+- Tests: `tests/test_filters.py` 25→45 (+20: LiquidityFilter 8, MarketCapFilter 7, from_config wiring 5)
+- Full suite: **239 passed**, 0 failed, 0 skipped (regression 9/9 executed, 194s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION preserved by default; sentinel.py, StrategyValidator, golden artifact untouched
+- `git diff --check`: CLEAN (2 files modified: engines/filters.py, tests/test_filters.py)
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase4_3.tar.gz` (verified, 124KB, 52 files)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase4_3-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — await authorization for slice 4.4 (Sector filter)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):
