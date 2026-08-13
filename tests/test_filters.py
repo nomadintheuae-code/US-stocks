@@ -11,6 +11,7 @@ from engines.filters import (
     FilterResult,
     LiquidityFilter,
     MarketCapFilter,
+    SectorFilter,
 )
 
 
@@ -461,3 +462,172 @@ def test_engine_integration_liquidity_and_market_cap():
     assert [r["ticker"] for r in rejected] == ["SMALLCAP", "LOWLIQ"]
     assert rejected[0]["filter"] == "market_cap"
     assert rejected[1]["filter"] == "liquidity"
+
+
+# ---------------------------------------------------------------------------
+# SectorFilter (Phase 4.4)
+# ---------------------------------------------------------------------------
+
+def test_sector_filter_no_rules_passes():
+    assert SectorFilter().check(FilterContext(ticker="AAPL")).passed is True
+    assert SectorFilter(include=[], exclude=[]).check(FilterContext(ticker="AAPL")).passed is True
+
+
+def test_sector_filter_include_matches():
+    f = SectorFilter(include=["Technology", "Healthcare"])
+    assert f.check(FilterContext(ticker="AAPL", sector="Technology")).passed is True
+    assert f.check(FilterContext(ticker="JNJ", sector="Healthcare")).passed is True
+
+
+def test_sector_filter_include_rejects():
+    f = SectorFilter(include=["Technology"])
+    res = f.check(FilterContext(ticker="XOM", sector="Energy"))
+    assert res.passed is False
+    assert "not in include" in res.reason
+
+
+def test_sector_filter_exclude_rejects():
+    f = SectorFilter(exclude=["Energy"])
+    res = f.check(FilterContext(ticker="XOM", sector="Energy"))
+    assert res.passed is False
+    assert "in exclude" in res.reason
+
+
+def test_sector_filter_exclude_allows_others():
+    f = SectorFilter(exclude=["Energy"])
+    assert f.check(FilterContext(ticker="AAPL", sector="Technology")).passed is True
+
+
+def test_sector_filter_both_include_and_exclude():
+    f = SectorFilter(include=["Technology", "Healthcare"], exclude=["Biotech"])
+    assert f.check(FilterContext(ticker="AAPL", sector="Technology")).passed is True
+    assert f.check(FilterContext(ticker="JNJ", sector="Healthcare")).passed is True
+    assert f.check(FilterContext(ticker="XOM", sector="Energy")).passed is False
+    assert f.check(FilterContext(ticker="PFE", sector="Healthcare")).passed is True
+
+
+def test_sector_filter_case_insensitive_and_trimmed():
+    f = SectorFilter(include=["  Technology "])
+    assert f.check(FilterContext(ticker="AAPL", sector="technology")).passed is True
+    assert f.check(FilterContext(ticker="AAPL", sector="  Technology  ")).passed is True
+    assert f.check(FilterContext(ticker="XOM", sector="energy")).passed is False
+
+    f2 = SectorFilter(exclude=[" ENERGY "])
+    res = f2.check(FilterContext(ticker="XOM", sector="energy"))
+    assert res.passed is False
+    assert "in exclude" in res.reason
+
+
+def test_sector_filter_missing_data_passes():
+    f = SectorFilter(include=["Technology"], exclude=["Energy"])
+    assert f.check(FilterContext(ticker="AAPL")).passed is True
+    assert f.check(FilterContext(ticker="AAPL", sector=None)).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={})).passed is True
+    assert f.check(FilterContext(ticker="AAPL", profile={"sector": None})).passed is True
+
+
+def test_sector_filter_prefers_ctx_sector_over_profile():
+    f = SectorFilter(include=["Technology"])
+    ctx = FilterContext(ticker="AAPL", sector="Technology", profile={"sector": "Energy"})
+    assert f.check(ctx).passed is True
+
+
+def test_sector_filter_falls_back_to_profile_sector():
+    f = SectorFilter(include=["Technology"])
+    ctx = FilterContext(ticker="AAPL", profile={"sector": "Technology"})
+    assert f.check(ctx).passed is True
+    res = f.check(FilterContext(ticker="XOM", profile={"sector": "Energy"}))
+    assert res.passed is False
+
+
+def test_sector_filter_empty_include_means_all_allowed():
+    f = SectorFilter(exclude=["Energy"])
+    assert f.check(FilterContext(ticker="AAPL", sector="Technology")).passed is True
+    assert f.check(FilterContext(ticker="MSFT", sector="Consumer Cyclical")).passed is True
+
+
+# ---------------------------------------------------------------------------
+# from_config wiring for SectorFilter (Phase 4.4)
+# ---------------------------------------------------------------------------
+
+def test_from_config_builds_sector_filter_include():
+    from sentinel.config import Config
+
+    cfg = Config(filters={"enabled": True, "sector": {"include": ["Technology", "Healthcare"]}})
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.names == ("sector",)
+    assert isinstance(eng.filters[0], SectorFilter)
+
+
+def test_from_config_builds_sector_filter_exclude():
+    from sentinel.config import Config
+
+    cfg = Config(filters={"enabled": True, "sector": {"exclude": ["Energy"]}})
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.names == ("sector",)
+    assert eng.filters[0].exclude == ["energy"]
+
+
+def test_from_config_empty_sector_yields_no_filter():
+    from sentinel.config import Config
+
+    cfg = Config(filters={"enabled": True, "sector": {"include": [], "exclude": []}})
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.filters == ()
+
+
+def test_from_config_order_liquidity_market_cap_sector():
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": True,
+        "liquidity": {"min_avg_volume": 100_000},
+        "market_cap": {"max_usd": 5e11},
+        "sector": {"include": ["Technology"]},
+    })
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.names == ("liquidity", "market_cap", "sector")
+
+
+def test_from_config_disabled_sector_identity():
+    from sentinel.config import Config
+
+    cfg = Config(filters={"enabled": False, "sector": {"include": ["Technology"]}})
+    eng = FilterEngine.from_config(config=cfg)
+    assert eng.enabled is False
+    kept, rejected = eng.filter_universe(["AAPL", "XOM"], provider=lambda t: FilterContext(ticker=t, sector="Energy"))
+    assert kept == ["AAPL", "XOM"]
+    assert rejected == []
+
+
+def test_engine_integration_liquidity_market_cap_sector():
+    from sentinel.config import Config
+
+    cfg = Config(filters={
+        "enabled": True,
+        "liquidity": {"min_avg_dollar_volume": 100_000},
+        "market_cap": {"min_usd": 1e9, "max_usd": 5e11},
+        "sector": {"include": ["Technology", "Healthcare"]},
+    })
+    eng = FilterEngine.from_config(config=cfg)
+
+    def provider(t: str) -> FilterContext:
+        return FilterContext(
+            ticker=t,
+            df=pd.DataFrame({"Close": [100, 110, 120], "Volume": [1000, 1000, 1000]}),
+            profile={"market_cap": 2e11},
+            sector="Technology",
+        )
+
+    def provider_energy(t: str) -> FilterContext:
+        return FilterContext(
+            ticker=t,
+            df=pd.DataFrame({"Close": [100, 110, 120], "Volume": [1000, 1000, 1000]}),
+            profile={"market_cap": 2e11},
+            sector="Energy",
+        )
+
+    kept, rejected = eng.filter_universe(["AAPL", "XOM"], provider=lambda t: provider(t) if t == "AAPL" else provider_energy(t))
+    assert kept == ["AAPL"]
+    assert [r["ticker"] for r in rejected] == ["XOM"]
+    assert rejected[0]["filter"] == "sector"

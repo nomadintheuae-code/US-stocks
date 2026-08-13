@@ -18,8 +18,9 @@ from config while ``filters.enabled`` is false, is an identity pass-through:
 Concrete filters:
 - ``LiquidityFilter`` — average dollar volume / average volume (universe stage).
 - ``MarketCapFilter`` — market-capitalization range (universe stage).
+- ``SectorFilter`` — sector include / exclude (universe stage, before RS ranking).
 
-Sector and fundamental filters are added in later Phase 4 slices.
+Fundamental filters are added in a later Phase 4 slice.
 Default behavior: a ``FilterEngine`` constructed without filters, or one built
 from config while ``filters.enabled`` is false, is an identity pass-through:
 ``filter_universe(tickers) -> (list(tickers), [])`` and
@@ -172,6 +173,59 @@ class MarketCapFilter(Filter):
         return FilterResult(passed=True)
 
 
+class SectorFilter(Filter):
+    """Universe-stage sector include / exclude filter.
+
+    Passes when the ticker's sector is in ``include`` (when ``include`` is
+    non-empty) and not in ``exclude`` (when ``exclude`` is non-empty).
+    Matching is case-insensitive and whitespace-trimmed. The sector is read
+    from ``ctx.sector``, falling back to ``ctx.profile["sector"]``. An empty
+    ``include`` means "all sectors allowed"; missing sector data is
+    default-permissive (consistent with the other filters).
+    """
+
+    name = "sector"
+    stage = STAGE_UNIVERSE
+
+    def __init__(
+        self,
+        include: Optional[Sequence[str]] = None,
+        exclude: Optional[Sequence[str]] = None,
+    ) -> None:
+        self.include = self._normalize(include)
+        self.exclude = self._normalize(exclude)
+
+    @staticmethod
+    def _normalize(values: Optional[Sequence[str]]) -> List[str]:
+        if not values:
+            return []
+        return sorted({str(v).strip().lower() for v in values if str(v).strip()})
+
+    @staticmethod
+    def _sector(ctx: FilterContext) -> Optional[str]:
+        if ctx.sector is not None:
+            return ctx.sector.strip().lower() or None
+        profile = ctx.profile or {}
+        raw = profile.get("sector")
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip().lower()
+        return None
+
+    def check(self, ctx: FilterContext) -> FilterResult:
+        if not self.include and not self.exclude:
+            return FilterResult(passed=True)
+
+        sector = self._sector(ctx)
+        if sector is None:
+            return FilterResult(passed=True)
+
+        if self.include and sector not in self.include:
+            return FilterResult(passed=False, reason=f"sector {sector!r} not in include")
+        if self.exclude and sector in self.exclude:
+            return FilterResult(passed=False, reason=f"sector {sector!r} in exclude")
+        return FilterResult(passed=True)
+
+
 class FilterEngine:
     """Registry + execution pipeline for scan filters.
 
@@ -232,7 +286,8 @@ class FilterEngine:
 
         A filter is constructed only when at least one of its thresholds is
         configured (all-None sections yield no filter). Order: liquidity,
-        market cap — each remains disabled unless ``filters.enabled`` is set.
+        market cap, sector — each remains disabled unless ``filters.enabled``
+        is set.
         """
         filters: List[Filter] = []
 
@@ -246,6 +301,10 @@ class FilterEngine:
         mc = filter_cfg.market_cap
         if mc.min_usd is not None or mc.max_usd is not None:
             filters.append(MarketCapFilter(min_usd=mc.min_usd, max_usd=mc.max_usd))
+
+        sector = filter_cfg.sector
+        if sector.include or sector.exclude:
+            filters.append(SectorFilter(include=sector.include, exclude=sector.exclude))
 
         return filters
 
@@ -352,5 +411,6 @@ __all__ = [
     "Filter",
     "LiquidityFilter",
     "MarketCapFilter",
+    "SectorFilter",
     "FilterEngine",
 ]
