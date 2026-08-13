@@ -1,10 +1,16 @@
-"""Phase 5.1 BacktestEngine tests (no network, synthetic data only)."""
+"""Phase 5.1 BacktestEngine + Phase 5.2 purged k-fold CV tests (no network, synthetic data only)."""
 import copy
+import math
 
 import pandas as pd
 import pytest
 
-from engines.backtest import BacktestEngine, RESULT_KEYS
+from engines.backtest import (
+    BacktestEngine,
+    RESULT_KEYS,
+    CV_KEYS,
+    FOLD_RECORD_KEYS,
+)
 from engines.analysis import StrategyValidator
 from engines.strategies.base import Strategy
 from engines.strategies.vcp_breakout import VCPBreakoutStrategy
@@ -19,6 +25,22 @@ def _frame(n: int, base: float = 100.0) -> pd.DataFrame:
     idx = pd.date_range("2024-01-01", periods=n, freq="B")
     return pd.DataFrame(
         {"Open": base, "High": base, "Low": base, "Close": base, "Volume": 1_000_000},
+        index=idx,
+    )
+
+
+def _wavy_frame(n: int = 160, base: float = 100.0) -> pd.DataFrame:
+    """Deterministic OHLCV frame with a mild sine drift."""
+    close = [base + math.sin(i / 10.0) * 3.0 for i in range(n)]
+    idx = pd.date_range("2024-01-01", periods=n, freq="B")
+    return pd.DataFrame(
+        {
+            "Open": close,
+            "High": [c + 1.0 for c in close],
+            "Low": [c - 1.0 for c in close],
+            "Close": close,
+            "Volume": [1_000_000] * n,
+        },
         index=idx,
     )
 
@@ -288,3 +310,251 @@ def test_backtest_strategy_validator_backward_compat():
 
     rec = StrategyValidator.evaluate_walk_forward(_frame(n=300))
     assert isinstance(rec, dict) and "profit_factor" in rec
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.2 — purged k-fold CV: importability / schema / validation
+# ---------------------------------------------------------------------------
+
+def test_cv_importable():
+    from engines import backtest as m
+
+    assert hasattr(m, "CV_KEYS")
+    assert hasattr(m, "FOLD_RECORD_KEYS")
+    assert callable(BacktestEngine.cross_validate)
+    assert callable(BacktestEngine.fold_bounds)
+
+
+def test_cv_param_validation():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    stub = _BarTriggeredStrategy({})
+    with pytest.raises(ValueError):
+        eng.cross_validate(stub, _frame(100), n_folds=1)
+    with pytest.raises(ValueError):
+        eng.cross_validate(stub, _frame(100), purge_gap=-1)
+    with pytest.raises(ValueError):
+        eng.cross_validate(stub, _frame(100), embargo=-1)
+
+
+def test_cv_insufficient_data_safe_record():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    stub = _BarTriggeredStrategy({})
+    for bad in (None, pd.DataFrame(), _frame(n=30)):
+        cv = eng.cross_validate(stub, bad, n_folds=5, purge_gap=1, embargo=1)
+        assert cv["insufficient_data"] is True
+        assert cv["reason"] == "insufficient_data"
+        assert cv["n_folds"] == 5
+        assert cv["purge_gap"] == 1
+        assert cv["embargo"] == 1
+        assert cv["fold_bounds"] == []
+        assert cv["folds"] == []
+        assert cv["mean_profit_factor"] is None
+        assert cv["mean_total_return_pct"] is None
+
+
+def test_cv_missing_ohlc_columns_safe_record():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    df = pd.DataFrame({"Close": [100.0] * 100, "Volume": [1000] * 100})
+    cv = eng.cross_validate(_BarTriggeredStrategy({}), df, n_folds=5)
+    assert cv["insufficient_data"] is True
+    assert cv["reason"] == "missing_ohlc_columns"
+    assert cv["folds"] == []
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.2 — fold count / boundaries / purge / embargo
+# ---------------------------------------------------------------------------
+
+def test_cv_fold_count_and_boundaries():
+    bounds = BacktestEngine.fold_bounds(
+        100, 5, purge_gap=2, embargo=3, min_bars_for_entry=10
+    )
+    assert len(bounds) == 5
+    expected = [
+        {"fold": 0, "test_start": 0, "test_end": 19, "eval_start": 10, "eval_end": 16},
+        {"fold": 1, "test_start": 20, "test_end": 39, "eval_start": 22, "eval_end": 36},
+        {"fold": 2, "test_start": 40, "test_end": 59, "eval_start": 42, "eval_end": 56},
+        {"fold": 3, "test_start": 60, "test_end": 79, "eval_start": 62, "eval_end": 76},
+        {"fold": 4, "test_start": 80, "test_end": 99, "eval_start": 82, "eval_end": 96},
+    ]
+    assert bounds == expected
+
+
+def test_cv_default_fold_boundaries():
+    bounds = BacktestEngine.fold_bounds(100, 4)
+    assert len(bounds) == 4
+    assert [b["test_start"] for b in bounds] == [0, 25, 50, 75]
+    assert [b["test_end"] for b in bounds] == [24, 49, 74, 99]
+    for b in bounds:
+        assert b["eval_start"] == b["test_start"]
+        assert b["eval_end"] == b["test_end"]
+
+
+def test_cv_purge_gap_enforced():
+    bounds = BacktestEngine.fold_bounds(
+        200, 5, purge_gap=10, embargo=0, min_bars_for_entry=5
+    )
+    for b in bounds:
+        # Every fold's first evaluated bar is at least purge_gap past fold start.
+        assert b["eval_start"] >= b["test_start"] + 10
+        # When the warm-up bound does not override, it is exactly purge_gap.
+        if b["test_start"] + 10 >= 5:
+            assert b["eval_start"] == b["test_start"] + 10
+
+
+def test_cv_embargo_enforced():
+    bounds = BacktestEngine.fold_bounds(
+        200, 5, purge_gap=0, embargo=7, min_bars_for_entry=0
+    )
+    for b in bounds:
+        assert b["eval_end"] == b["test_end"] - 7
+
+
+def test_cv_no_overlap_between_folds():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    cv = eng.cross_validate(
+        _BarTriggeredStrategy({10}), _frame(200), n_folds=5, purge_gap=5, embargo=4
+    )
+    assert cv["insufficient_data"] is False
+    windows = [(b["eval_start"], b["eval_end"]) for b in cv["fold_bounds"]]
+    prev_end = None
+    for es, ee in windows:
+        assert es <= ee
+        if prev_end is not None:
+            assert es > prev_end  # strictly non-overlapping
+            assert es - prev_end - 1 == 9  # gap == purge_gap + embargo
+        prev_end = ee
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.2 — determinism / leakage confinement / fold records
+# ---------------------------------------------------------------------------
+
+def test_cv_deterministic_repeated_runs():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    stub = _BarTriggeredStrategy({10, 12})
+    first = eng.cross_validate(stub, _frame(300), n_folds=5, purge_gap=4, embargo=3)
+    second = eng.cross_validate(stub, _frame(300), n_folds=5, purge_gap=4, embargo=3)
+    assert second == first
+
+
+def test_cv_schema():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    cv = eng.cross_validate(
+        _BarTriggeredStrategy({10}), _frame(300), n_folds=5, purge_gap=4, embargo=3
+    )
+    assert set(cv.keys()) == set(CV_KEYS)
+    assert len(cv["folds"]) == 5
+    assert isinstance(cv["mean_profit_factor"], float)
+    assert isinstance(cv["mean_total_return_pct"], float)
+    for rec in cv["folds"]:
+        assert set(rec.keys()) == set(FOLD_RECORD_KEYS)
+        assert isinstance(rec["profit_factor"], float)
+        assert isinstance(rec["trades"], list)
+        assert isinstance(rec["n_trades"], int)
+        assert rec["insufficient_data"] is False
+        assert rec["reason"] is None
+
+
+def test_cv_end_of_window_partial_exit_confines_label():
+    # k=2 over 100 bars: fold0 eval [10, 49], fold1 eval [50, 99].
+    eng = BacktestEngine(min_bars_for_entry=10)
+    stub = _BarTriggeredStrategy({10})  # actionable only at bar 10
+    cv = eng.cross_validate(stub, _frame(100), n_folds=2, purge_gap=0, embargo=0)
+
+    fold0 = cv["folds"][0]
+    assert fold0["trades"] == [0.0]  # partial exit AT eval_end (bar 49)
+    assert fold0["n_trades"] == 1
+    assert fold0["start"] == 10
+    assert fold0["evaluated_bars"] == 40
+    assert fold0["eval_start"] == 10 and fold0["eval_end"] == 49
+
+    fold1 = cv["folds"][1]
+    assert fold1["trades"] == []  # no trade leaks past fold0's eval_end
+    assert fold1["n_trades"] == 0
+
+
+def test_cv_end_of_window_exit_respects_embargo():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    stub = _BarTriggeredStrategy({10})
+    cv = eng.cross_validate(stub, _frame(100), n_folds=2, purge_gap=0, embargo=3)
+    fold0 = cv["folds"][0]
+    assert fold0["eval_start"] == 10
+    assert fold0["eval_end"] == 46
+    assert fold0["evaluated_bars"] == 37
+    assert fold0["trades"] == [0.0]  # closed at bar 46, the embargo-shortened end
+
+
+def test_cv_stop_inside_fold():
+    # Stub stops (price < stop) quickly inside fold0; no leakage into fold1.
+    eng = BacktestEngine(min_bars_for_entry=10)
+    df = _frame(n=100, base=80.0)  # price 80 <= stop 90 -> -1.0 R
+    stub = _BarTriggeredStrategy({10, 12})
+    cv = eng.cross_validate(stub, df, n_folds=2, purge_gap=0, embargo=0)
+    assert cv["folds"][0]["trades"] == [-1.0, -1.0]
+    assert cv["folds"][1]["trades"] == []
+    assert cv["folds"][0]["profit_factor"] == 0.0
+    assert cv["folds"][1]["profit_factor"] == 1.0  # no trades -> flat pf 1.0
+    assert cv["mean_profit_factor"] == 0.5  # (0.0 + 1.0) / 2
+
+
+def test_cv_fold_too_small_is_safe():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    cv = eng.cross_validate(
+        _BarTriggeredStrategy({10}), _frame(100), n_folds=5, purge_gap=60, embargo=60
+    )
+    assert len(cv["folds"]) == 5
+    for rec in cv["folds"]:
+        assert rec["insufficient_data"] is True
+        assert rec["reason"] == "fold_too_small"
+        assert rec["trades"] == []
+    assert cv["mean_profit_factor"] is None
+    assert cv["mean_total_return_pct"] is None
+
+
+def test_cv_mixed_valid_and_too_small_folds():
+    # min_bars=60 makes the first (short) fold invalid; the second fold is valid.
+    eng = BacktestEngine(min_bars_for_entry=60)
+    cv = eng.cross_validate(
+        _BarTriggeredStrategy({}), _frame(100), n_folds=2, purge_gap=0, embargo=0
+    )
+    assert cv["folds"][0]["reason"] == "fold_too_small"
+    assert cv["folds"][0]["insufficient_data"] is True
+    assert cv["folds"][1]["insufficient_data"] is False
+    assert isinstance(cv["mean_profit_factor"], float)
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.2 — no input mutation / real strategy
+# ---------------------------------------------------------------------------
+
+def test_cv_no_input_mutation():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    df = _frame(n=100)
+    df_snapshot = df.copy(deep=True)
+    stub = _BarTriggeredStrategy({10, 12})
+    eng.cross_validate(stub, df, n_folds=3, purge_gap=2, embargo=1)
+    pd.testing.assert_frame_equal(df, df_snapshot)
+    assert stub._bar == -1
+    assert stub._last_slice is None
+
+
+def test_cv_real_strategy_smoke():
+    eng = BacktestEngine(min_bars_for_entry=130)
+    cv = eng.cross_validate(
+        VCPBreakoutStrategy(), _wavy_frame(1000), n_folds=4, purge_gap=20, embargo=10
+    )
+    assert set(cv.keys()) == set(CV_KEYS)
+    assert cv["insufficient_data"] is False
+    assert len(cv["folds"]) == 4
+    for rec in cv["folds"]:
+        assert rec["insufficient_data"] is False
+        assert rec["eval_start"] <= rec["eval_end"]
+        assert rec["eval_start"] - rec["test_start"] >= 20
+        assert rec["test_end"] - rec["eval_end"] >= 10
+    assert isinstance(cv["mean_profit_factor"], float)
+
+    rerun = eng.cross_validate(
+        VCPBreakoutStrategy(), _wavy_frame(1000), n_folds=4, purge_gap=20, embargo=10
+    )
+    assert rerun == cv

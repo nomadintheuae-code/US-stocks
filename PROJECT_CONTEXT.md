@@ -527,27 +527,36 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 
 ### Phase 5 Status (2026-08-14)
 **Phase 5 — Backtesting (roadmap §11: "Walk-forward, purged k-fold, OOS validation") — IN PROGRESS**
-- Phase 5.1 (BacktestEngine): ✅ FINAL VERIFICATION COMPLETE (verified 2026-08-14, HEAD `e848258`)
-- Next slices: 5.2+ (purged k-fold, OOS) — NOT STARTED (await authorization)
+- Phase 5.1 (BacktestEngine): ✅ COMPLETE (verified 2026-08-14, committed `dc1c775`)
+- Phase 5.2 (Purged K-Fold CV): ✅ FINAL VERIFICATION COMPLETE (verified 2026-08-14, NOT yet committed)
+- Next slices: 5.3+ (OOS validation) — NOT STARTED (await authorization)
 
-**✅ SLICE 5.1 COMPLETE — BacktestEngine (final verification)** (verified 2026-08-14):
-- Objective: Add a walk-forward `BacktestEngine` that uses the Phase 3 Strategy ABC — ACHIEVED
+**✅ SLICE 5.1 COMPLETE — BacktestEngine** (verified 2026-08-14, committed `dc1c775`):
 - `engines/backtest.py` (NEW): `BacktestEngine(lookback_bars=250, min_bars_for_entry=50, risk_pct=0.015, initial_capital=100_000.0)` reading defaults from config.yaml `backtest:` section; `run(strategy, df) -> dict` and `evaluate_at(strategy, df, bar_idx) -> dict`; strict trailing-only (`df.iloc[:t+1]`), deterministic, additive (no wired-in use)
 - Safety: `insufficient_data`/`missing_ohlc_columns` guard → zero-trade safe record (pf 1.0, empty trades); never raises; no input/strategy mutation (strategy deep-copied); same-instant same-index strategy decisions are point-in-time (future bars do not affect past decisions)
 - Stop/target: order = stop (low ≤ stop → −1.0 R) then target (high ≥ target → +R); end-of-data partial exit uses close; per-trade compounding at `risk_pct` of current equity; max drawdown vs running peak
-- Metrics schema (`RESULT_KEYS`): `profit_factor`, `trades`, `n_trades`, `win_rate`, `total_return_pct`, `annualized_return_pct`, `max_drawdown_pct`, `start`, `evaluated_bars`, `insufficient_data`, `reason`
-- Tests: `tests/test_backtest.py` (NEW, 17) — importability, config defaults/overrides/validation, insufficient-data (None/empty/short/missing-OHLC), repeated-run determinism, evaluate_at point-in-time isolation, run-level no-future-bar leakage, stop/target R-multiple correctness, metrics schema, no input/strategy mutation, real `VCPBreakoutStrategy` smoke, `StrategyValidator` backward-compat
-- `tests/test_imports.py`: CORE_MODULES now includes `engines.backtest`
+- Metrics schema (`RESULT_KEYS`): profit_factor, trades, n_trades, win_rate, total_return_pct, annualized_return_pct, max_drawdown_pct, start, evaluated_bars, insufficient_data, reason
+- Tests: `tests/test_backtest.py` (NEW, 17); `tests/test_imports.py` CORE_MODULES now includes `engines.backtest`
+- Full suite **307 passed**; regression **9/9 passed**; golden SHA256 unchanged `1bf2f37ab...`; 310/30/15 preserved
+
+**✅ SLICE 5.2 COMPLETE — Purged K-Fold CV** (verified 2026-08-14):
+- Objective: Add purged k-fold cross-validation to `BacktestEngine` — deterministic folds, configurable purge gap, configurable embargo window, strictly no train/test temporal leakage, additive (existing `run()`/`evaluate_at` unchanged) — ACHIEVED
+- `engines/backtest.py`: `run()` refactored to delegate its simulation loop to internal `_simulate(local, df, start_bar, end_bar)` — behavior byte-identical (17 Phase 5.1 tests still green). NEW `fold_bounds(n_bars, n_folds, purge_gap, embargo, min_bars_for_entry)` — deterministic contiguous test blocks; fold i covers `[i*n//k, (i+1)*n//k - 1]`, eval window `[max(fold_start + purge_gap, min_bars_for_entry), fold_end - embargo]`. NEW `cross_validate(strategy, df, n_folds=5, purge_gap=0, embargo=0)` — runs each fold on a fresh deep copy of the strategy, closes positions still open at `eval_end` with an end-of-window partial exit (labels confined to the fold), marks undersized folds `fold_too_small`, returns per-fold records + `mean_profit_factor`/`mean_total_return_pct`
+- No-leakage guarantees (all test-verified): consecutive folds' evaluated bars are strictly non-overlapping and separated by exactly `purge_gap + embargo` bars; a trade entered in one fold is always closed at or before that fold's `eval_end`; no strategy state flows between folds (per-fold deepcopy)
+- Schema: `CV_KEYS` (n_folds, purge_gap, embargo, insufficient_data, reason, fold_bounds, folds, mean_profit_factor, mean_total_return_pct); each fold record = `RESULT_KEYS` + (fold, test_start, test_end, eval_start, eval_end) via `FOLD_RECORD_KEYS`
+- Validation: `n_folds >= 2`, `purge_gap >= 0`, `embargo >= 0` (else ValueError); `None`/short/empty/missing-OHLC inputs return a safe `insufficient_data`/`missing_ohlc_columns` record
+- Tests: `tests/test_backtest.py` 17→35 (+18: importability, param validation, insufficient-data safety, fold count/boundaries, purge-gap enforcement, embargo enforcement, no-overlap between folds, determinism, schema, end-of-window partial-exit label confinement, embargo-shortened exit, in-fold stop, fold-too-small safety, mixed valid/too-small, no input/strategy mutation, real `VCPBreakoutStrategy` smoke)
 - NOT committed (awaiting user commit authorization)
-- Full suite (`pytest --tb=short`): **307 passed**, 0 failed, 0 skipped (215s)
-- Regression (`pytest tests/test_regression.py -v --tb=short`): **9/9 passed** (202s)
+- Full suite (`pytest --tb=short`): **325 passed**, 0 failed, 0 skipped (243s)
+- Regression (`pytest tests/test_regression.py -v --tb=short`): **9/9 passed** (207s)
 - Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
-- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline; all required decision fields (ticker, status, price, entry, stop, target, shares, rs, pf, sector, vcp) present in selected/qualified rows
-- `git diff --check`: CLEAN (3 files: 2 new, 1 modified)
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- `git diff --check`: CLEAN (2 files: engines/backtest.py modified, tests/test_backtest.py modified)
 - Forbidden files untouched: sentinel.py, config.yaml, engines/analysis.py, `StrategyValidator.run()`, golden artifact
-- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-12_phase5_1-checkpoint.tar.gz` (created, gzip OK, contents match working tree: engines/backtest.py, tests/test_backtest.py, tests/test_imports.py)
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase5_2.tar.gz` (verified, gzip OK)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase5_2-checkpoint.tar.gz` (verified, gzip OK)
 - Known issues: None
-- Next step: STOP — report state; Phase 5.2 NOT started (await authorization)
+- Next step: STOP — report state; Phase 5.3 NOT started (await authorization)
 
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
@@ -731,7 +740,8 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Implement VCPBreakoutStrategy with breakout confirmation — DONE 2026-08-12 (Phase 3.3, uncommitted)
 - [x] Implement MinerviniTrendTemplate (8 criteria) — DONE 2026-08-12 (Phase 3.4, uncommitted)
 - [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
-- [x] BacktestEngine with walk-forward validation — DONE 2026-08-14 (Phase 5.1, engines/backtest.py, uncommitted)
+- [x] BacktestEngine with walk-forward validation — DONE 2026-08-14 (Phase 5.1, engines/backtest.py, committed `dc1c775`)
+- [x] Purged k-fold CV on BacktestEngine (purge gap + embargo) — DONE 2026-08-14 (Phase 5.2, engines/backtest.py, uncommitted)
 - [ ] Multi-market support (Crypto, Forex)
 - [ ] CSV/Excel export from dashboard
 
