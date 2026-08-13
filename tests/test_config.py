@@ -189,3 +189,70 @@ def test_universemanager_external_empty_file_falls_back(tmp_path):
     f.write_text("", encoding="utf-8")
     m = UniverseManager(universe_file=str(f))
     assert m.load() == UniverseManager().load()
+
+
+# --- FilterConfig (Phase 4.1) ------------------------------------------------
+
+def test_filters_config_default_disabled():
+    cfg = get_config()
+    assert cfg.filters.enabled is False
+    assert cfg.filters.liquidity.min_avg_dollar_volume is None
+    assert cfg.filters.liquidity.min_avg_volume is None
+    assert cfg.filters.market_cap.min_usd is None
+    assert cfg.filters.market_cap.max_usd is None
+    assert cfg.filters.sector.include == []
+    assert cfg.filters.sector.exclude == []
+    assert cfg.filters.fundamental.min_revenue_growth is None
+    assert cfg.filters.fundamental.min_earnings_growth is None
+    assert cfg.filters.fundamental.max_forward_pe is None
+    assert cfg.filters.fundamental.min_analyst_count is None
+
+
+def test_filters_config_loads_values():
+    cfg = Config(filters={
+        "enabled": True,
+        "liquidity": {"min_avg_dollar_volume": 5_000_000, "min_avg_volume": 100_000},
+        "market_cap": {"min_usd": 1e9, "max_usd": 5e11},
+        "sector": {"include": ["Technology"], "exclude": ["Energy"]},
+        "fundamental": {"min_revenue_growth": 0.1, "max_forward_pe": 40.0, "min_analyst_count": 5},
+    })
+    assert cfg.filters.enabled is True
+    assert cfg.filters.liquidity.min_avg_dollar_volume == 5_000_000
+    assert cfg.filters.liquidity.min_avg_volume == 100_000
+    assert cfg.filters.market_cap.min_usd == 1e9
+    assert cfg.filters.market_cap.max_usd == 5e11
+    assert cfg.filters.sector.include == ["Technology"]
+    assert cfg.filters.sector.exclude == ["Energy"]
+    assert cfg.filters.fundamental.min_revenue_growth == 0.1
+    assert cfg.filters.fundamental.min_earnings_growth is None
+    assert cfg.filters.fundamental.max_forward_pe == 40.0
+    assert cfg.filters.fundamental.min_analyst_count == 5
+
+
+def test_filters_market_cap_range_validation():
+    with pytest.raises(Exception):
+        Config(filters={"market_cap": {"min_usd": 1e12, "max_usd": 1e9}})
+
+
+def test_filters_sector_include_exclude_overlap():
+    with pytest.raises(Exception):
+        Config(filters={"sector": {"include": ["Technology"], "exclude": ["Technology"]}})
+
+
+def test_filters_fundamental_bounds():
+    with pytest.raises(Exception):
+        Config(filters={"fundamental": {"max_forward_pe": 0}})
+    with pytest.raises(Exception):
+        Config(filters={"fundamental": {"min_revenue_growth": 15}})
+    with pytest.raises(Exception):
+        Config(filters={"fundamental": {"min_earnings_growth": -2}})
+    with pytest.raises(Exception):
+        Config(filters={"fundamental": {"min_analyst_count": 500}})
+
+
+def test_filters_config_optional_null_accepted():
+    cfg = Config(filters={
+        "liquidity": {"min_avg_dollar_volume": None, "min_avg_volume": None},
+    })
+    assert cfg.filters.liquidity.min_avg_dollar_volume is None
+    assert cfg.filters.liquidity.min_avg_volume is None

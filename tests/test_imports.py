@@ -12,6 +12,7 @@ CORE_MODULES = [
     "engines.notify",
     "engines.ecr_strategy",
     "engines.sentinel_efficiency",
+    "engines.filters",
 ]
 
 

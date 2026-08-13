@@ -164,6 +164,49 @@ class DataConfig(BaseModel):
     filter_delisted: bool = Field(default=True, description="上場廃止銘柄除外")
 
 
+class LiquidityFilterConfig(BaseModel):
+    min_avg_dollar_volume: Optional[float] = Field(default=None, ge=0, description="最低平均出来高(USD/日)")
+    min_avg_volume: Optional[float] = Field(default=None, ge=0, description="最低平均出来高(株/日)")
+
+
+class MarketCapFilterConfig(BaseModel):
+    min_usd: Optional[float] = Field(default=None, ge=0, description="最低時価総額(USD)")
+    max_usd: Optional[float] = Field(default=None, ge=0, description="最高時価総額(USD)")
+
+    @model_validator(mode="after")
+    def check_range(self) -> "MarketCapFilterConfig":
+        if self.min_usd is not None and self.max_usd is not None and self.min_usd > self.max_usd:
+            raise ValueError("market_cap.min_usd must be <= market_cap.max_usd")
+        return self
+
+
+class SectorFilterConfig(BaseModel):
+    include: List[str] = Field(default_factory=list, description="許可セクター（空なら全て）")
+    exclude: List[str] = Field(default_factory=list, description="除外セクター")
+
+    @model_validator(mode="after")
+    def check_disjoint(self) -> "SectorFilterConfig":
+        overlap = set(self.include) & set(self.exclude)
+        if overlap:
+            raise ValueError(f"ambiguous sectors in both include and exclude: {sorted(overlap)}")
+        return self
+
+
+class FundamentalFilterConfig(BaseModel):
+    min_revenue_growth: Optional[float] = Field(default=None, ge=-1, le=10, description="最低売上成長率")
+    min_earnings_growth: Optional[float] = Field(default=None, ge=-1, le=10, description="最低利益成長率")
+    max_forward_pe: Optional[float] = Field(default=None, gt=0, le=1000, description="最高予想PER")
+    min_analyst_count: Optional[int] = Field(default=None, ge=0, le=100, description="最低アナリスト数")
+
+
+class FilterConfig(BaseModel):
+    enabled: bool = Field(default=False, description="フィルタ有効化（既定で無効）")
+    liquidity: LiquidityFilterConfig = Field(default_factory=LiquidityFilterConfig)
+    market_cap: MarketCapFilterConfig = Field(default_factory=MarketCapFilterConfig)
+    sector: SectorFilterConfig = Field(default_factory=SectorFilterConfig)
+    fundamental: FundamentalFilterConfig = Field(default_factory=FundamentalFilterConfig)
+
+
 class NotificationConfig(BaseModel):
     line_enabled: bool = Field(default=False, description="LINE通知有効化")
     line_chunk_size: int = Field(default=4000, ge=100, le=5000, description="メッセージ分割サイズ")
@@ -188,6 +231,7 @@ class Config(BaseModel):
     cache: CacheConfig = Field(default_factory=CacheConfig)
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     data: DataConfig = Field(default_factory=DataConfig)
+    filters: FilterConfig = Field(default_factory=FilterConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     ui: UIConfig = Field(default_factory=UIConfig)
 

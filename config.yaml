@@ -141,6 +141,28 @@ data:
   filter_delisted: true          # 上場廃止銘柄を除外
 
 # ==============================================================================
+# FILTERS & RANKING (Phase 4) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# All filters are additive and OFF unless `enabled: true`. While disabled, the
+# scanner's default behavior (310/30/15) is byte-for-byte unchanged.
+filters:
+  enabled: false                 # 既定で無効（有効化は明示的なオプトインのみ）
+  liquidity:
+    min_avg_dollar_volume: null  # 最低平均出来高 (USD/日)
+    min_avg_volume: null         # 最低平均出来高 (株/日)
+  market_cap:
+    min_usd: null                # 最低時価総額 (USD)
+    max_usd: null                # 最高時価総額 (USD)
+  sector:
+    include: []                  # 許可セクター（空なら全て）
+    exclude: []                  # 除外セクター
+  fundamental:
+    min_revenue_growth: null     # 最低売上成長率 (revenueGrowth)
+    min_earnings_growth: null    # 最低利益成長率 (earningsGrowth)
+    max_forward_pe: null         # 最高予想PER (forwardPE)
+    min_analyst_count: null      # 最低アナリスト数
+
+# ==============================================================================
 # NOTIFICATION SETTINGS
 # ==============================================================================
 notification:
