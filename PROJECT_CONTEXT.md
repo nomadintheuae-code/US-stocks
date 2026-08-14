@@ -608,6 +608,27 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — report; commit authorization pending; no Phase 5.6
 
+### Phase 6 Status (2026-08-14)
+**Phase 6 — Pipeline Integration (roadmap §11: filter → RS → strategies → selection pipeline refactor) — IN PROGRESS**
+- Phase 6 Discovery: ✅ COMPLETE (2026-08-14) — golden path is `sentinel.run()`; plan: additive `engines/pipeline.py` + config-gated opt-in features, all OFF by default; sentinel.py untouched until the final dispatch slice
+- Slice 6.1 (PipelineConfig schema): ✅ COMPLETE (verified 2026-08-14, NOT committed — commit authorization pending)
+
+**✅ SLICE 6.1 COMPLETE — Pipeline configuration schema** (verified 2026-08-14, NOT committed):
+- Objective: Add the opt-in, disabled-by-default Phase 6 pipeline config schema — ACHIEVED
+- `sentinel/config.py`: NEW `PipelineConfig` (+ `PipelineStrategiesConfig` with `vcp_breakout`/`minervini` toggles, `PipelineBacktestConfig` with `enabled`) wired into `Config.pipeline` (default factory, disabled); `rs` provider field (`legacy`|`benchmark`) validated via `field_validator`
+- `config.yaml`: NEW additive `pipeline:` section — `enabled: false`, `rs: "legacy"`, `strategies: {vcp_breakout: false, minervini: false}`, `backtest: {enabled: false}` (documented)
+- `config.py` CONFIG dict NOT changed (pipeline reads the Pydantic config directly; no legacy bridge key needed)
+- Tests: `tests/test_config.py` 33→37 (+4 PipelineConfig: default disabled, values load, default factories, rs-provider validation); `tests/test_imports.py` CORE_MODULES now includes `sentinel.config`
+- Full suite (`pytest --tb=short`): **355 passed**, 0 failed, 0 skipped
+- Regression (`pytest tests/test_regression.py -v`): **9/9 passed** (344s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION preserved by default; sentinel.py untouched (no runtime code in this slice)
+- `git diff --check`: CLEAN (4 files: sentinel/config.py, config.yaml, tests/test_config.py, tests/test_imports.py + PROJECT_CONTEXT.md)
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase6_1.tar.gz` (verified, gzip OK)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase6_1-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — report; commit authorization pending; Slice 6.2 NOT started (engines/pipeline.py legacy-mode orchestrator)
+
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
 - Tests (all executed this session, no existing reports reused):

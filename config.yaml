@@ -163,6 +163,21 @@ filters:
     min_analyst_count: null      # 最低アナリスト数
 
 # ==============================================================================
+# PIPELINE (Phase 6) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# Integrated pipeline orchestrator (engines/pipeline.py). All features are
+# additive and OFF unless explicitly enabled. While `enabled: false`, the
+# scanner's default behavior (310/30/15) is byte-for-byte unchanged.
+pipeline:
+  enabled: false                 # パイプライン有効化（既定で無効）
+  rs: "legacy"                   # RSプロバイダ: legacy (RSAnalyzer) | benchmark (RelativeStrengthRanking)
+  strategies:
+    vcp_breakout: false          # VCPブレイクアウト戦略（既定で無効）
+    minervini: false             # ミネルヴィニ・テンプレート戦略（既定で無効）
+  backtest:
+    enabled: false               # バックテスト付加レコード（既定で無効）
+
+# ==============================================================================
 # NOTIFICATION SETTINGS
 # ==============================================================================
 notification:

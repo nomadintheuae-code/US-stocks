@@ -207,6 +207,29 @@ class FilterConfig(BaseModel):
     fundamental: FundamentalFilterConfig = Field(default_factory=FundamentalFilterConfig)
 
 
+class PipelineStrategiesConfig(BaseModel):
+    vcp_breakout: bool = Field(default=False, description="VCPブレイクアウト戦略（既定で無効）")
+    minervini: bool = Field(default=False, description="ミネルヴィニ・テンプレート戦略（既定で無効）")
+
+
+class PipelineBacktestConfig(BaseModel):
+    enabled: bool = Field(default=False, description="バックテスト付加レコード有効化（既定で無効）")
+
+
+class PipelineConfig(BaseModel):
+    enabled: bool = Field(default=False, description="パイプライン有効化（既定で無効）")
+    rs: str = Field(default="legacy", description="RSプロバイダ（legacy|benchmark）")
+    strategies: PipelineStrategiesConfig = Field(default_factory=PipelineStrategiesConfig)
+    backtest: PipelineBacktestConfig = Field(default_factory=PipelineBacktestConfig)
+
+    @field_validator("rs")
+    @classmethod
+    def validate_rs_provider(cls, v: str) -> str:
+        if v not in ("legacy", "benchmark"):
+            raise ValueError(f"rs must be 'legacy' or 'benchmark', got '{v}'")
+        return v
+
+
 class NotificationConfig(BaseModel):
     line_enabled: bool = Field(default=False, description="LINE通知有効化")
     line_chunk_size: int = Field(default=4000, ge=100, le=5000, description="メッセージ分割サイズ")
@@ -232,6 +255,7 @@ class Config(BaseModel):
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     data: DataConfig = Field(default_factory=DataConfig)
     filters: FilterConfig = Field(default_factory=FilterConfig)
+    pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     ui: UIConfig = Field(default_factory=UIConfig)
 

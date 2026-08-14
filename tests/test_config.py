@@ -256,3 +256,43 @@ def test_filters_config_optional_null_accepted():
     })
     assert cfg.filters.liquidity.min_avg_dollar_volume is None
     assert cfg.filters.liquidity.min_avg_volume is None
+
+
+# --- PipelineConfig (Phase 6.1) ----------------------------------------------
+
+def test_pipeline_config_default_disabled():
+    """Pipeline must default to fully disabled (legacy behavior preserved)."""
+    cfg = get_config()
+    assert cfg.pipeline.enabled is False
+    assert cfg.pipeline.rs == "legacy"
+    assert cfg.pipeline.strategies.vcp_breakout is False
+    assert cfg.pipeline.strategies.minervini is False
+    assert cfg.pipeline.backtest.enabled is False
+
+
+def test_pipeline_config_loads_values():
+    cfg = Config(pipeline={
+        "enabled": True,
+        "rs": "benchmark",
+        "strategies": {"vcp_breakout": True, "minervini": True},
+        "backtest": {"enabled": True},
+    })
+    assert cfg.pipeline.enabled is True
+    assert cfg.pipeline.rs == "benchmark"
+    assert cfg.pipeline.strategies.vcp_breakout is True
+    assert cfg.pipeline.strategies.minervini is True
+    assert cfg.pipeline.backtest.enabled is True
+
+
+def test_pipeline_config_default_factories():
+    cfg = Config()
+    assert cfg.pipeline.strategies.vcp_breakout is False
+    assert cfg.pipeline.strategies.minervini is False
+    assert cfg.pipeline.backtest.enabled is False
+
+
+def test_pipeline_rs_provider_validation():
+    with pytest.raises(Exception):
+        Config(pipeline={"rs": "unknown"})
+    assert Config(pipeline={"rs": "legacy"}).pipeline.rs == "legacy"
+    assert Config(pipeline={"rs": "benchmark"}).pipeline.rs == "benchmark"

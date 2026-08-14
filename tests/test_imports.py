@@ -4,6 +4,7 @@ import importlib
 CORE_MODULES = [
     "config",
     "sentinel",
+    "sentinel.config",
     "core_fmp",
     "engines.data",
     "engines.analysis",
