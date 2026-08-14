@@ -1,7 +1,9 @@
-"""Phase 5.1 BacktestEngine + Phase 5.2 purged k-fold CV tests (no network, synthetic data only)."""
+"""Phase 5.1 BacktestEngine + Phase 5.2 purged k-fold CV + Phase 5.3 OOS + Phase 5.4
+real-strategy integration tests (no network, synthetic data only)."""
 import copy
 import math
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -16,6 +18,7 @@ from engines.backtest import (
 from engines.analysis import StrategyValidator
 from engines.strategies.base import Strategy
 from engines.strategies.vcp_breakout import VCPBreakoutStrategy
+from engines.strategies.minervini_template import MinerviniTrendTemplate
 
 
 # ---------------------------------------------------------------------------
@@ -44,6 +47,88 @@ def _wavy_frame(n: int = 160, base: float = 100.0) -> pd.DataFrame:
             "Volume": [1_000_000] * n,
         },
         index=idx,
+    )
+
+
+def _vcp_breakout_frame(
+    n: int = 200,
+    breakout_close: float = 102.0,
+    base_volume: float = 1_000_000.0,
+    handle_volume: float = 4_000_000.0,
+    tail: dict = None,
+) -> pd.DataFrame:
+    """Deterministic VCP base with a confirmed breakout at the handle's end.
+
+    Mirrors the geometry of ``tests/test_analysis.py::_pivot_base_frame``
+    (same seed): rise to a left-side peak, contraction base, then a tightened
+    handle whose close pierces the pivot on the final bars while volume surges.
+    Empirically VCPBreakoutStrategy confirms at bar 198 (of 200). ``tail`` is an
+    optional dict of arrays appended after the base (breakout continuation bars).
+    """
+    rng = np.random.default_rng(5)
+    close = np.empty(n)
+    close[:111] = np.linspace(50.0, 96.0, 111)
+    close[111:151] = np.linspace(96.0, 62.0, 151 - 111)
+    close[150:] = np.linspace(62.0, 55.0, 50)
+    close[180:] = np.linspace(62.0, breakout_close, 20)
+    close = np.maximum(close, 1.0)
+    high = close + 1.5 + np.abs(rng.normal(0, 0.4, n))
+    low = close - 1.5 - np.abs(rng.normal(0, 0.4, n))
+    np.maximum(low, 0.1, out=low)
+    volume = np.full(n, base_volume).astype(float)
+    volume[180:] = handle_volume
+    df = pd.DataFrame(
+        {"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume}
+    )
+    if tail is not None:
+        df = pd.concat([df, pd.DataFrame(tail)], ignore_index=True)
+    return df
+
+
+def _vcp_breakout_tail(extra: int = 12) -> dict:
+    """Continuation bars after the confirmed breakout, rising above the target."""
+    rng = np.random.default_rng(7)
+    close = np.maximum(102.0 + np.arange(extra) * 1.8, 1.0)
+    high = close + 1.5 + np.abs(rng.normal(0, 0.4, extra))
+    low = close - 1.5 - np.abs(rng.normal(0, 0.4, extra))
+    np.maximum(low, 0.1, out=low)
+    return {
+        "Open": close,
+        "High": high,
+        "Low": low,
+        "Close": close,
+        "Volume": np.full(extra, 4_000_000.0),
+    }
+
+
+def _minervini_uptrend_frame(
+    n: int = 300,
+    slope: float = 0.3,
+    start: float = 50.0,
+    seed: int = 0,
+    crash_at: int = None,
+    crash_close: float = 55.0,
+) -> pd.DataFrame:
+    """Deterministic rising trend frame (passes MinerviniTrendTemplate).
+
+    Mirrors ``tests/test_analysis.py::_trend_frame`` (same seed). ``crash_at``
+    overwrites the close from that bar on with ``crash_close`` so a position is
+    stopped out instead of reaching its target.
+    """
+    rng = np.random.default_rng(seed)
+    close = np.maximum(start + np.arange(n) * slope + rng.normal(0, 0.5, n), 1.0)
+    if crash_at is not None:
+        close[crash_at:] = crash_close
+    high = close + 0.5 + np.abs(rng.normal(0, 0.3, n))
+    low = np.maximum(close - 0.5 - np.abs(rng.normal(0, 0.3, n)), 0.1)
+    return pd.DataFrame(
+        {
+            "Open": close,
+            "High": high,
+            "Low": low,
+            "Close": close,
+            "Volume": np.full(n, 1_000_000.0),
+        }
     )
 
 
@@ -787,3 +872,221 @@ def test_oos_real_strategy_smoke():
 
     rerun = eng.validate_oos(VCPBreakoutStrategy(), _wavy_frame(1000), 0.6, 0.2, 0.2)
     assert rerun == oos
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.4 — real-strategy integration (VCPBreakoutStrategy / MinerviniTrendTemplate)
+# ---------------------------------------------------------------------------
+
+def _first_actionable_r(eng, strat, df):
+    """(first_actionable_bar, decision) for a fresh strategy instance."""
+    for t in range(eng.min_bars_for_entry, len(df)):
+        d = eng.evaluate_at(strat, df, t)
+        if d["actionable"]:
+            return t, d
+    return None, None
+
+
+def test_backtest_5_4_strategies_importable_and_constructible():
+    assert isinstance(VCPBreakoutStrategy(), Strategy)
+    assert isinstance(MinerviniTrendTemplate(), Strategy)
+    for strat in (VCPBreakoutStrategy(), MinerviniTrendTemplate()):
+        for attr in ("calculate", "is_actionable", "get_entry_stop_target", "get_score", "get_signals"):
+            assert callable(getattr(strat, attr))
+
+
+def test_backtest_5_4_vcp_confirmed_breakout_enters_and_hits_target():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    df = _vcp_breakout_frame(tail=_vcp_breakout_tail())
+    strat = VCPBreakoutStrategy()
+    rec = eng.run(strat, df)
+
+    assert set(rec.keys()) == set(RESULT_KEYS)
+    assert rec["insufficient_data"] is False
+    assert rec["n_trades"] >= 1
+    assert rec["start"] == 50
+    assert rec["evaluated_bars"] == len(df) - 50
+
+    bar, d = _first_actionable_r(eng, strat, df)
+    assert bar is not None
+    # Target honoured exactly: first trade R == (target - entry) / (entry - stop).
+    expected_r = round((d["target"] - d["entry"]) / (d["entry"] - d["stop"]), 4)
+    assert rec["trades"][0] == expected_r
+    assert all(t > 0 for t in rec["trades"])
+    assert rec["win_rate"] == 1.0
+    assert rec["profit_factor"] == 5.0
+
+
+def test_backtest_5_4_vcp_stop_honored():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    df = _vcp_breakout_frame()
+    # Breakout confirms at bar 198 (entry); crash the very next bar below the stop.
+    df.iloc[199, df.columns.get_loc("Close")] = 55.0
+    df.iloc[199, df.columns.get_loc("High")] = 56.5
+    df.iloc[199, df.columns.get_loc("Low")] = 54.0
+    rec = eng.run(VCPBreakoutStrategy(), df)
+    assert rec["trades"] == [-1.0]
+    assert rec["n_trades"] == 1
+    assert rec["win_rate"] == 0.0
+    assert rec["profit_factor"] == 0.0
+
+
+def test_backtest_5_4_minervini_uptrend_enters_and_hits_target():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    df = _minervini_uptrend_frame()
+    strat = MinerviniTrendTemplate()
+    rec = eng.run(strat, df)
+
+    assert set(rec.keys()) == set(RESULT_KEYS)
+    assert rec["insufficient_data"] is False
+    assert rec["n_trades"] >= 1
+    assert rec["start"] == 50
+    assert rec["evaluated_bars"] == len(df) - 50
+
+    bar, d = _first_actionable_r(eng, strat, df)
+    assert bar is not None
+    # Target honoured exactly: first trade R == (target - entry) / (entry - stop).
+    expected_r = round((d["target"] - d["entry"]) / (d["entry"] - d["stop"]), 4)
+    assert rec["trades"][0] == expected_r
+    assert all(t > 0 for t in rec["trades"])
+    assert rec["win_rate"] == 1.0
+    assert rec["profit_factor"] == 5.0
+
+
+def test_backtest_5_4_minervini_stop_honored():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    df = _minervini_uptrend_frame(crash_at=253)
+    rec = eng.run(MinerviniTrendTemplate(), df)
+    assert rec["trades"] == [-1.0]
+    assert rec["n_trades"] == 1
+    assert rec["win_rate"] == 0.0
+    assert rec["profit_factor"] == 0.0
+
+
+def test_backtest_5_4_strategies_deterministic_repeated_runs():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    cases = [
+        (VCPBreakoutStrategy(), _vcp_breakout_frame(tail=_vcp_breakout_tail())),
+        (MinerviniTrendTemplate(), _minervini_uptrend_frame()),
+    ]
+    for strat, df in cases:
+        first = eng.run(strat, df)
+        assert eng.run(strat, df) == first == eng.run(strat, df)
+
+
+def test_backtest_5_4_strategy_no_input_mutation():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    cases = [
+        (VCPBreakoutStrategy(), _vcp_breakout_frame(tail=_vcp_breakout_tail())),
+        (MinerviniTrendTemplate(), _minervini_uptrend_frame()),
+    ]
+    for strat, df in cases:
+        df_snapshot = df.copy(deep=True)
+        strat_snapshot = copy.deepcopy(strat)
+        eng.run(strat, df)
+        pd.testing.assert_frame_equal(df, df_snapshot)
+
+        def _state(st):
+            state = {}
+            for k, v in vars(st).items():
+                state[k] = dict(vars(v)) if hasattr(v, "__dict__") else v
+            return state
+
+        # The engine deep-copies the strategy internally: the caller's instance
+        # (including any nested indicator) must be untouched.
+        assert _state(strat) == _state(strat_snapshot)
+
+
+def test_backtest_5_4_strategy_insufficient_data_safety():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    # Engine-level: below the engine's own warm-up bound.
+    for strat in (VCPBreakoutStrategy(), MinerviniTrendTemplate()):
+        rec = eng.run(strat, _frame(n=30))
+        assert rec["insufficient_data"] is True
+        assert rec["reason"] == "insufficient_data"
+        assert rec["trades"] == []
+
+    # Strategy-level: enough bars for the engine but below the strategy's own
+    # minimum (VCP >= 130, Minervini >= 252) -> safe, well-formed zero-trade run.
+    vcp_short = eng.run(VCPBreakoutStrategy(), _frame(n=100))
+    assert vcp_short["insufficient_data"] is False
+    assert vcp_short["trades"] == []
+    assert set(vcp_short.keys()) == set(RESULT_KEYS)
+
+    min_short = eng.run(MinerviniTrendTemplate(), _minervini_uptrend_frame(n=100))
+    assert min_short["insufficient_data"] is False
+    assert min_short["trades"] == []
+    assert set(min_short.keys()) == set(RESULT_KEYS)
+
+
+def test_backtest_5_4_strategy_point_in_time_isolation():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    cases = [
+        (VCPBreakoutStrategy(), _vcp_breakout_frame(tail=_vcp_breakout_tail())),
+        (MinerviniTrendTemplate(), _minervini_uptrend_frame()),
+    ]
+    for strat, df in cases:
+        spiked = df.copy(deep=True)
+        spiked.iloc[-1, spiked.columns.get_loc("Close")] = 9_000_000.0
+        spiked.iloc[-1, spiked.columns.get_loc("High")] = 9_000_000.0
+        for t in range(50, len(df) - 1):
+            assert eng.evaluate_at(strat, df, t) == eng.evaluate_at(strat, spiked, t)
+
+
+def test_backtest_5_4_strategy_run_level_no_future_bar_leakage():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    # VCP: entered at the bar-198 breakout, stopped out at bar 199. A future
+    # high-price bar with base volume (no surge -> no new confirmed breakout)
+    # must not alter any realized outcome.
+    df = _vcp_breakout_frame()
+    df.iloc[199, df.columns.get_loc("Close")] = 55.0
+    df.iloc[199, df.columns.get_loc("High")] = 56.5
+    df.iloc[199, df.columns.get_loc("Low")] = 54.0
+    vcp_base = eng.run(VCPBreakoutStrategy(), df)
+    assert vcp_base["trades"] == [-1.0]
+    vcp_future = eng.run(
+        VCPBreakoutStrategy(),
+        pd.concat(
+            [
+                df,
+                pd.DataFrame(
+                    {
+                        "Open": [9999.0],
+                        "High": [9999.0],
+                        "Low": [9999.0],
+                        "Close": [9999.0],
+                        "Volume": [1_000_000.0],
+                    }
+                ),
+            ],
+            ignore_index=True,
+        ),
+    )
+    for key in ("profit_factor", "trades", "n_trades", "win_rate", "total_return_pct", "max_drawdown_pct"):
+        assert vcp_base[key] == vcp_future[key], key
+
+    # Minervini: entered at the bar-251 qualifying uptrend, stopped out at bar 253.
+    # A future continuation of the crash must not alter any realized outcome.
+    mdf = _minervini_uptrend_frame(crash_at=253)
+    min_base = eng.run(MinerviniTrendTemplate(), mdf)
+    assert min_base["trades"] == [-1.0]
+    min_future = eng.run(
+        MinerviniTrendTemplate(),
+        pd.concat(
+            [
+                mdf,
+                pd.DataFrame(
+                    {
+                        "Open": [55.0],
+                        "High": [56.5],
+                        "Low": [54.0],
+                        "Close": [55.0],
+                        "Volume": [1_000_000.0],
+                    }
+                ),
+            ],
+            ignore_index=True,
+        ),
+    )
+    for key in ("profit_factor", "trades", "n_trades", "win_rate", "total_return_pct", "max_drawdown_pct"):
+        assert min_base[key] == min_future[key], key
