@@ -526,12 +526,12 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Next step: STOP — await authorization for slice 4.7 (Phase 4 finalization: commit + phase close record)
 
 ### Phase 5 Status (2026-08-14)
-**Phase 5 — Backtesting (roadmap §11: "Walk-forward, purged k-fold, OOS validation") — IN PROGRESS**
-- Phase 5.1 (BacktestEngine): ✅ COMPLETE (verified 2026-08-14, committed `dc1c775`)
-- Phase 5.2 (Purged K-Fold CV): ✅ COMPLETE (verified 2026-08-14, committed `b11d9c3`)
-- Phase 5.3 (OOS Validation): ✅ COMPLETE (verified 2026-08-14, NOT yet committed)
-- Phase 5.4 (Strategy Integration Tests): ✅ VERIFICATION COMPLETE (verified 2026-08-14, NOT yet committed)
-- Next slices: 5.5+ — NOT STARTED (await authorization)
+**Phase 5 — Backtesting (roadmap §11: "Walk-forward, purged k-fold, OOS validation") — COMPLETE**
+- Phase 5.1 (BacktestEngine): ✅ COMPLETE (committed `dc1c775`)
+- Phase 5.2 (Purged K-Fold CV): ✅ COMPLETE (committed `b11d9c3`)
+- Phase 5.3 (OOS Validation): ✅ COMPLETE (committed `de92a8d`)
+- Phase 5.4 (Strategy Integration Tests): ✅ COMPLETE (committed `37d08d6`)
+- Phase 5.5 (Final Regression Gate): ✅ COMPLETE (verified 2026-08-14, documentation only — no code changes)
 
 **✅ SLICE 5.1 COMPLETE — BacktestEngine** (verified 2026-08-14, committed `dc1c775`):
 - `engines/backtest.py` (NEW): `BacktestEngine(lookback_bars=250, min_bars_for_entry=50, risk_pct=0.015, initial_capital=100_000.0)` reading defaults from config.yaml `backtest:` section; `run(strategy, df) -> dict` and `evaluate_at(strategy, df, bar_idx) -> dict`; strict trailing-only (`df.iloc[:t+1]`), deterministic, additive (no wired-in use)
@@ -594,6 +594,19 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase5_4-checkpoint.tar.gz` (verified, gzip OK)
 - Known issues: None
 - Next step: STOP — report state; commit pending user authorization
+
+**✅ SLICE 5.5 COMPLETE — Final Regression Gate** (verified 2026-08-14, documentation only):
+- Objective: Final full verification that Phase 5 shipped without regressions and the golden baseline / production code remain untouched — ACHIEVED (started clean at `37d08d6`)
+- Full suite (`pytest --tb=short`): **351 passed**, 0 failed, 0 skipped (151s)
+- Regression (`pytest tests/test_regression.py -v --tb=short`): **9/9 passed** (90s)
+- Golden SHA256 exact match: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 selected, golden decision fields present: `qualified_full` = 30 records (26 ACTION + 4 WAIT) with full decision schema (entry/stop/target/pf/rs/vcp/sector/short_pct/pe_forward/analyst/insider/institution/revenue_growth/recommendation)
+- Golden artifact byte-identical and untouched: `git status` clean for `tests/golden/baseline_2026-08-12.json`, no diff vs `de92a8d`
+- Forbidden production changes: NONE — `sentinel.py`, `config.yaml`, `engines/analysis.py` byte-identical vs `de92a8d`; `StrategyValidator.run()`/`evaluate_walk_forward`/`run_walk_forward` intact (asserted in test_backtest.py)
+- `git diff --check`: CLEAN
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase5_5-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — report; commit authorization pending; no Phase 5.6
 
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
@@ -779,8 +792,9 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
 - [x] BacktestEngine with walk-forward validation — DONE 2026-08-14 (Phase 5.1, engines/backtest.py, committed `dc1c775`)
 - [x] Purged k-fold CV on BacktestEngine (purge gap + embargo) — DONE 2026-08-14 (Phase 5.2, engines/backtest.py, committed `b11d9c3`)
-- [x] Out-of-sample validation (train/validation/test split) — DONE 2026-08-14 (Phase 5.3, engines/backtest.py, uncommitted)
-- [x] BacktestEngine integration tests for VCPBreakoutStrategy + MinerviniTrendTemplate — DONE 2026-08-14 (Phase 5.4, tests/test_backtest.py, uncommitted)
+- [x] Out-of-sample validation (train/validation/test split) — DONE 2026-08-14 (Phase 5.3, engines/backtest.py, committed `de92a8d`)
+- [x] BacktestEngine integration tests for VCPBreakoutStrategy + MinerviniTrendTemplate — DONE 2026-08-14 (Phase 5.4, tests/test_backtest.py, committed `37d08d6`)
+- [x] Phase 5 final regression gate — DONE 2026-08-14 (Phase 5.5, full suite 351 passed, regression 9/9, golden SHA unchanged)
 - [ ] Multi-market support (Crypto, Forex)
 - [ ] CSV/Excel export from dashboard
 
