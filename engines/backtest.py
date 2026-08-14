@@ -34,6 +34,13 @@ fold. Trades still open at ``eval_end`` are closed with an end-of-window
 partial exit, so every fold's outcomes are confined to that fold — strictly no
 train/test temporal leakage. Folds too small to satisfy purge + embargo are
 returned as ``fold_too_small`` records rather than raising.
+
+``validate_oos()`` (Phase 5.3) adds explicit out-of-sample validation with a
+deterministic train / validation / test temporal split. The three segments are
+disjoint, contiguous, cover every bar exactly once, and are each simulated with
+``_simulate`` confined to their own bar range (end-of-window partial exit), so
+no trade label can leak across segment boundaries and no evaluated bar ever
+reads a future bar. ``oos_split()`` exposes the pure split math for tests.
 """
 from __future__ import annotations
 
@@ -81,6 +88,35 @@ FOLD_RECORD_KEYS = RESULT_KEYS + (
     "eval_end",
 )
 
+# Stable schema keys returned by BacktestEngine.validate_oos()
+OOS_KEYS = (
+    "train_frac",
+    "validation_frac",
+    "test_frac",
+    "n_bars",
+    "train_start",
+    "train_end",
+    "validation_start",
+    "validation_end",
+    "test_start",
+    "test_end",
+    "insufficient_data",
+    "reason",
+    "segments",
+    "out_of_sample",
+    "mean_profit_factor",
+    "mean_total_return_pct",
+)
+
+# A single segment's record = RESULT_KEYS + segment bookkeeping.
+OOS_SEGMENT_KEYS = RESULT_KEYS + (
+    "segment",
+    "segment_start",
+    "segment_end",
+    "eval_start",
+    "eval_end",
+)
+
 
 def _empty_record(reason: str) -> dict:
     """Well-formed record for insufficient / non-evaluable inputs."""
@@ -109,6 +145,28 @@ def _cv_empty(n_folds: int, purge_gap: int, embargo: int, reason: str) -> dict:
         "reason": reason,
         "fold_bounds": [],
         "folds": [],
+        "mean_profit_factor": None,
+        "mean_total_return_pct": None,
+    }
+
+
+def _oos_empty(train_frac, validation_frac, test_frac, reason: str) -> dict:
+    """Well-formed validate_oos() record for insufficient inputs."""
+    return {
+        "train_frac": float(train_frac),
+        "validation_frac": float(validation_frac),
+        "test_frac": float(test_frac),
+        "n_bars": 0,
+        "train_start": None,
+        "train_end": None,
+        "validation_start": None,
+        "validation_end": None,
+        "test_start": None,
+        "test_end": None,
+        "insufficient_data": True,
+        "reason": reason,
+        "segments": {},
+        "out_of_sample": None,
         "mean_profit_factor": None,
         "mean_total_return_pct": None,
     }
@@ -383,6 +441,151 @@ class BacktestEngine:
             "mean_total_return_pct": mean_tr,
         }
 
+    # ------------------------------------------------------ out-of-sample OOS
+
+    @staticmethod
+    def oos_split(
+        n_bars: int,
+        train_frac: float = 0.6,
+        validation_frac: float = 0.2,
+        test_frac: float = 0.2,
+    ) -> Optional[dict]:
+        """Deterministic train / validation / test split over ``[0, n_bars)``.
+
+        Segment sizes are ``round(n * frac)`` for train and validation; the test
+        segment absorbs rounding so the three segments are disjoint, contiguous,
+        and cover every bar exactly once. Returns None for non-positive input.
+        """
+        if n_bars <= 0:
+            return None
+        n_train = round(float(n_bars) * float(train_frac))
+        n_val = round(float(n_bars) * float(validation_frac))
+        n_test = int(n_bars) - n_train - n_val
+        return {
+            "train_start": 0,
+            "train_end": n_train - 1,
+            "validation_start": n_train,
+            "validation_end": n_train + n_val - 1,
+            "test_start": n_train + n_val,
+            "test_end": n_bars - 1,
+            "train_frac": float(train_frac),
+            "validation_frac": float(validation_frac),
+            "test_frac": float(test_frac),
+            "n_bars": int(n_bars),
+        }
+
+    def _segment_record(
+        self, strategy, df: pd.DataFrame, name: str, seg_start: int, seg_end: int
+    ) -> dict:
+        """Backtest a single temporal segment, confined to its own bar range.
+
+        ``eval_start`` is bounded below by ``min_bars_for_entry`` (feature
+        warm-up). Positions open at ``eval_end`` receive an end-of-window partial
+        exit, so no trade entered in this segment can realize a label in a later
+        segment.
+        """
+        eval_start = max(seg_start, self.min_bars_for_entry)
+        eval_end = seg_end
+        if seg_start > seg_end:
+            rec = _empty_record("empty_segment")
+            rec["start"] = seg_start
+            rec["evaluated_bars"] = 0
+        elif eval_start > eval_end:
+            rec = _empty_record("segment_too_small")
+            rec["start"] = seg_start
+            rec["evaluated_bars"] = 0
+        else:
+            local = copy.deepcopy(strategy)
+            trades, curve = self._simulate(local, df, eval_start, eval_end)
+            rec = self._metrics(trades, curve, eval_start, eval_end - eval_start + 1)
+        rec["segment"] = name
+        rec["segment_start"] = seg_start
+        rec["segment_end"] = seg_end
+        rec["eval_start"] = eval_start
+        rec["eval_end"] = eval_end
+        return rec
+
+    def validate_oos(
+        self,
+        strategy,
+        df: Optional[pd.DataFrame],
+        train_frac: float = 0.6,
+        validation_frac: float = 0.2,
+        test_frac: float = 0.2,
+    ) -> dict:
+        """Explicit out-of-sample validation: train / validation / test split.
+
+        The bar range is split deterministically into three disjoint, contiguous
+        segments (test = the last ``test_frac`` of bars, validation immediately
+        before it, train everything before that). Each segment is simulated
+        independently on a fresh deep copy of the strategy, with its own
+        end-of-window partial exit — so train/validation/test never overlap, no
+        segment's trade labels leak into a later segment, and no evaluated bar
+        ever reads a future bar.
+
+        ``segments`` maps train/validation/test to per-segment records; the
+        ``out_of_sample`` key is the test record for convenience. Never raises on
+        data problems; never mutates ``df`` or ``strategy``.
+        """
+        train_frac = float(train_frac)
+        validation_frac = float(validation_frac)
+        test_frac = float(test_frac)
+        total = train_frac + validation_frac + test_frac
+        if train_frac < 0 or validation_frac < 0 or test_frac < 0:
+            raise ValueError("all split fractions must be >= 0")
+        if abs(total - 1.0) > 1e-9:
+            raise ValueError("train_frac + validation_frac + test_frac must sum to 1.0")
+        if test_frac <= 0:
+            raise ValueError("test_frac must be > 0")
+
+        if df is None or len(df) < self.min_bars_for_entry:
+            return _oos_empty(train_frac, validation_frac, test_frac, "insufficient_data")
+
+        required = {"Close", "High", "Low"}
+        if not required.issubset(df.columns):
+            return _oos_empty(train_frac, validation_frac, test_frac, "missing_ohlc_columns")
+
+        split = self.oos_split(len(df), train_frac, validation_frac, test_frac)
+
+        segments = {}
+        for name, seg_start, seg_end in (
+            ("train", split["train_start"], split["train_end"]),
+            ("validation", split["validation_start"], split["validation_end"]),
+            ("test", split["test_start"], split["test_end"]),
+        ):
+            segments[name] = self._segment_record(strategy, df, name, seg_start, seg_end)
+
+        valid = [r for r in segments.values() if not r["insufficient_data"]]
+        if valid:
+            mean_pf = round(
+                sum(r["profit_factor"] for r in valid) / len(valid), 4
+            )
+            mean_tr = round(
+                sum(r["total_return_pct"] for r in valid) / len(valid), 4
+            )
+        else:
+            mean_pf = None
+            mean_tr = None
+
+        return {
+            "train_frac": train_frac,
+            "validation_frac": validation_frac,
+            "test_frac": test_frac,
+            "n_bars": len(df),
+            "train_start": split["train_start"],
+            "train_end": split["train_end"],
+            "validation_start": split["validation_start"],
+            "validation_end": split["validation_end"],
+            "test_start": split["test_start"],
+            "test_end": split["test_end"],
+            "insufficient_data": False,
+            "reason": None,
+            "segments": segments,
+            "out_of_sample": segments["test"],
+            "mean_profit_factor": mean_pf,
+            "mean_total_return_pct": mean_tr,
+        }
+
     # -------------------------------------------------------------- metrics
 
     @staticmethod
@@ -437,5 +640,7 @@ __all__ = [
     "RESULT_KEYS",
     "CV_KEYS",
     "FOLD_RECORD_KEYS",
+    "OOS_KEYS",
+    "OOS_SEGMENT_KEYS",
     "TRADING_DAYS_PER_YEAR",
 ]

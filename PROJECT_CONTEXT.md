@@ -528,8 +528,9 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 ### Phase 5 Status (2026-08-14)
 **Phase 5 — Backtesting (roadmap §11: "Walk-forward, purged k-fold, OOS validation") — IN PROGRESS**
 - Phase 5.1 (BacktestEngine): ✅ COMPLETE (verified 2026-08-14, committed `dc1c775`)
-- Phase 5.2 (Purged K-Fold CV): ✅ FINAL VERIFICATION COMPLETE (verified 2026-08-14, NOT yet committed)
-- Next slices: 5.3+ (OOS validation) — NOT STARTED (await authorization)
+- Phase 5.2 (Purged K-Fold CV): ✅ COMPLETE (verified 2026-08-14, committed `b11d9c3`)
+- Phase 5.3 (OOS Validation): ✅ FINAL VERIFICATION COMPLETE (verified 2026-08-14, NOT yet committed)
+- Next slices: 5.4+ — NOT STARTED (await authorization)
 
 **✅ SLICE 5.1 COMPLETE — BacktestEngine** (verified 2026-08-14, committed `dc1c775`):
 - `engines/backtest.py` (NEW): `BacktestEngine(lookback_bars=250, min_bars_for_entry=50, risk_pct=0.015, initial_capital=100_000.0)` reading defaults from config.yaml `backtest:` section; `run(strategy, df) -> dict` and `evaluate_at(strategy, df, bar_idx) -> dict`; strict trailing-only (`df.iloc[:t+1]`), deterministic, additive (no wired-in use)
@@ -557,6 +558,25 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase5_2-checkpoint.tar.gz` (verified, gzip OK)
 - Known issues: None
 - Next step: STOP — report state; Phase 5.3 NOT started (await authorization)
+
+**✅ SLICE 5.3 COMPLETE — Out-of-Sample Validation** (verified 2026-08-14):
+- Objective: Add explicit out-of-sample validation to `BacktestEngine` — train / validation / test temporal separation, configurable split boundaries, strictly no future-bar leakage, deterministic metrics/schema, additive (existing `run()`/`evaluate_at()`/`cross_validate()` unchanged) — ACHIEVED
+- `engines/backtest.py`: NEW `oos_split(n_bars, train_frac=0.6, validation_frac=0.2, test_frac=0.2)` — deterministic split; `n_train = round(n*train_frac)`, `n_val = round(n*validation_frac)`, test absorbs rounding so the three segments are disjoint, contiguous, and cover every bar exactly once. NEW `validate_oos(strategy, df, train_frac, validation_frac, test_frac)` — simulates each segment independently on a fresh deep copy via the shared `_simulate`, confined to its own bar range (end-of-window partial exit → no label crosses segment boundaries, no evaluated bar reads a future bar); returns `segments` (train/validation/test records) + `out_of_sample` (= test record) + `mean_profit_factor`/`mean_total_return_pct` over valid segments
+- Per-segment eval window = `[max(segment_start, min_bars_for_entry), segment_end]`; non-empty-but-too-short segments → `segment_too_small`, zero-width segments (e.g. `validation_frac=0`) → `empty_segment`, both safe zero-trade records
+- Validation: all fractions >= 0, sum == 1.0 (else ValueError), `test_frac > 0`; `None`/short/empty/missing-OHLC → safe `insufficient_data`/`missing_ohlc_columns` record
+- Schema: `OOS_KEYS` (train_frac, validation_frac, test_frac, n_bars, train/validation/test start+end, insufficient_data, reason, segments, out_of_sample, mean_profit_factor, mean_total_return_pct); each segment record = `RESULT_KEYS` + (segment, segment_start, segment_end, eval_start, eval_end) via `OOS_SEGMENT_KEYS`
+- Tests: `tests/test_backtest.py` 35→51 (+16: importability, split correctness incl. no-validation-segment and covers-every-bar-exactly-once, param validation, insufficient-data safety, temporal ordering, future-spike no-leakage (train/validation invariant to later spikes), determinism, schema, disjoint+confined segment evals, empty-segment, segment-too-small, no input/strategy mutation, real `VCPBreakoutStrategy` smoke)
+- NOT committed (awaiting user commit authorization)
+- Full suite (`pytest --tb=short`): **341 passed**, 0 failed, 0 skipped (249s)
+- Regression (`pytest tests/test_regression.py -v --tb=short`): **9/9 passed** (193s)
+- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
+- 310 scanned / 30 qualified / 15 ACTION — bit-identical to golden baseline
+- `git diff --check`: CLEAN (2 files: engines/backtest.py modified, tests/test_backtest.py modified)
+- Forbidden files untouched: sentinel.py, config.yaml, engines/analysis.py, `StrategyValidator.run()`, golden artifact
+- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase5_3.tar.gz` (verified, gzip OK)
+- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase5_3-checkpoint.tar.gz` (verified, gzip OK)
+- Known issues: None
+- Next step: STOP — report state; Phase 5.4 NOT started (await authorization)
 
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
@@ -741,7 +761,8 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Implement MinerviniTrendTemplate (8 criteria) — DONE 2026-08-12 (Phase 3.4, uncommitted)
 - [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
 - [x] BacktestEngine with walk-forward validation — DONE 2026-08-14 (Phase 5.1, engines/backtest.py, committed `dc1c775`)
-- [x] Purged k-fold CV on BacktestEngine (purge gap + embargo) — DONE 2026-08-14 (Phase 5.2, engines/backtest.py, uncommitted)
+- [x] Purged k-fold CV on BacktestEngine (purge gap + embargo) — DONE 2026-08-14 (Phase 5.2, engines/backtest.py, committed `b11d9c3`)
+- [x] Out-of-sample validation (train/validation/test split) — DONE 2026-08-14 (Phase 5.3, engines/backtest.py, uncommitted)
 - [ ] Multi-market support (Crypto, Forex)
 - [ ] CSV/Excel export from dashboard
 

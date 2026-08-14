@@ -10,6 +10,8 @@ from engines.backtest import (
     RESULT_KEYS,
     CV_KEYS,
     FOLD_RECORD_KEYS,
+    OOS_KEYS,
+    OOS_SEGMENT_KEYS,
 )
 from engines.analysis import StrategyValidator
 from engines.strategies.base import Strategy
@@ -558,3 +560,230 @@ def test_cv_real_strategy_smoke():
         VCPBreakoutStrategy(), _wavy_frame(1000), n_folds=4, purge_gap=20, embargo=10
     )
     assert rerun == cv
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.3 — OOS validation: importability / split correctness
+# ---------------------------------------------------------------------------
+
+def test_oos_importable():
+    from engines import backtest as m
+
+    assert hasattr(m, "OOS_KEYS")
+    assert hasattr(m, "OOS_SEGMENT_KEYS")
+    assert callable(BacktestEngine.validate_oos)
+    assert callable(BacktestEngine.oos_split)
+
+
+def test_oos_split_correctness():
+    split = BacktestEngine.oos_split(100, 0.6, 0.2, 0.2)
+    assert split == {
+        "train_start": 0,
+        "train_end": 59,
+        "validation_start": 60,
+        "validation_end": 79,
+        "test_start": 80,
+        "test_end": 99,
+        "train_frac": 0.6,
+        "validation_frac": 0.2,
+        "test_frac": 0.2,
+        "n_bars": 100,
+    }
+    assert BacktestEngine.oos_split(100, 0.5, 0.3, 0.2)["test_start"] == 80
+    assert BacktestEngine.oos_split(100, 0.5, 0.3, 0.2)["validation_start"] == 50
+    assert BacktestEngine.oos_split(0) is None
+    assert BacktestEngine.oos_split(-5) is None
+
+
+def test_oos_split_no_validation_segment():
+    split = BacktestEngine.oos_split(100, 0.8, 0.0, 0.2)
+    assert split["train_start"] == 0 and split["train_end"] == 79
+    assert split["validation_start"] == 80 and split["validation_end"] == 79  # empty
+    assert split["test_start"] == 80 and split["test_end"] == 99
+
+
+def test_oos_split_covers_every_bar_exactly_once():
+    for n in (50, 101, 300, 999):
+        split = BacktestEngine.oos_split(n, 0.6, 0.2, 0.2)
+        segs = [
+            (split["train_start"], split["train_end"]),
+            (split["validation_start"], split["validation_end"]),
+            (split["test_start"], split["test_end"]),
+        ]
+        assert segs[0][0] == 0
+        assert segs[0][1] + 1 == segs[1][0]          # no gap between train/val
+        assert segs[1][1] + 1 == segs[2][0]          # no gap between val/test
+        assert segs[2][1] == n - 1                    # test ends at last bar
+        covered = [bar for s, e in segs for bar in range(s, e + 1)]
+        assert len(covered) == n
+        assert sorted(covered) == list(range(n))      # every bar exactly once
+
+
+def test_oos_param_validation():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    stub = _BarTriggeredStrategy({})
+    with pytest.raises(ValueError):
+        eng.validate_oos(stub, _frame(100), 0.5, 0.5, 0.5)   # sum != 1
+    with pytest.raises(ValueError):
+        eng.validate_oos(stub, _frame(100), 1.1, 0.0, -0.1)  # negative frac
+    with pytest.raises(ValueError):
+        eng.validate_oos(stub, _frame(100), 1.0, 0.0, 0.0)   # no test segment
+
+
+def test_oos_insufficient_data_safe_record():
+    eng = BacktestEngine(min_bars_for_entry=50)
+    stub = _BarTriggeredStrategy({})
+    for bad in (None, pd.DataFrame(), _frame(n=30)):
+        oos = eng.validate_oos(stub, bad, 0.6, 0.2, 0.2)
+        assert oos["insufficient_data"] is True
+        assert oos["reason"] == "insufficient_data"
+        assert oos["segments"] == {}
+        assert oos["out_of_sample"] is None
+        assert oos["mean_profit_factor"] is None
+        assert oos["train_frac"] == 0.6
+
+
+def test_oos_missing_ohlc_columns_safe_record():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    df = pd.DataFrame({"Close": [100.0] * 100, "Volume": [1000] * 100})
+    oos = eng.validate_oos(_BarTriggeredStrategy({}), df, 0.6, 0.2, 0.2)
+    assert oos["insufficient_data"] is True
+    assert oos["reason"] == "missing_ohlc_columns"
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.3 — temporal ordering / no leakage / determinism / schema
+# ---------------------------------------------------------------------------
+
+def test_oos_temporal_ordering():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    oos = eng.validate_oos(_BarTriggeredStrategy({}), _frame(300), 0.6, 0.2, 0.2)
+    assert oos["train_start"] < oos["train_end"] < oos["validation_start"]
+    assert oos["validation_start"] < oos["validation_end"] < oos["test_start"]
+    assert oos["test_start"] < oos["test_end"]
+    assert oos["train_end"] + 1 == oos["validation_start"]
+    assert oos["validation_end"] + 1 == oos["test_start"]
+    assert oos["test_end"] == 299
+
+
+def test_oos_no_future_bar_leakage():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    df = _frame(300)
+    base = eng.validate_oos(_BarTriggeredStrategy({10, 12}), df, 0.6, 0.2, 0.2)
+
+    # Spike future bars: at validation start and at the very end of the test
+    # segment. Earlier segments must be unaffected.
+    spiked = df.copy(deep=True)
+    spiked.loc[spiked.index[180], "Close"] = 9_000_000.0   # validation segment
+    spiked.loc[spiked.index[290], "Close"] = 9_000_000.0   # test segment
+    future = eng.validate_oos(_BarTriggeredStrategy({10, 12}), spiked, 0.6, 0.2, 0.2)
+
+    assert base["segments"]["train"] == future["segments"]["train"]
+    assert base["train_start"] == future["train_start"]
+
+    # Spike only within the test segment: train/validation stay identical,
+    # while the test record may change (that is legitimate use of test data).
+    test_spike = df.copy(deep=True)
+    test_spike.loc[test_spike.index[290], "Close"] = 9_000_000.0
+    only_test = eng.validate_oos(_BarTriggeredStrategy({10, 12}), test_spike, 0.6, 0.2, 0.2)
+    assert only_test["segments"]["train"] == base["segments"]["train"]
+    assert only_test["segments"]["validation"] == base["segments"]["validation"]
+
+
+def test_oos_deterministic_repeated_runs():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    stub = _BarTriggeredStrategy({10, 12})
+    first = eng.validate_oos(stub, _frame(300), 0.6, 0.2, 0.2)
+    second = eng.validate_oos(stub, _frame(300), 0.6, 0.2, 0.2)
+    assert second == first
+
+
+def test_oos_schema():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    oos = eng.validate_oos(_BarTriggeredStrategy({10}), _frame(300), 0.6, 0.2, 0.2)
+    assert set(oos.keys()) == set(OOS_KEYS)
+    assert isinstance(oos["mean_profit_factor"], float)
+    for name in ("train", "validation", "test"):
+        rec = oos["segments"][name]
+        assert set(rec.keys()) == set(OOS_SEGMENT_KEYS)
+        assert rec["segment"] == name
+        assert isinstance(rec["profit_factor"], float)
+        assert isinstance(rec["trades"], list)
+        assert isinstance(rec["n_trades"], int)
+    assert oos["out_of_sample"] == oos["segments"]["test"]
+
+
+def test_oos_segment_evals_are_disjoint_and_confined():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    # Split 0.6/0.2/0.2 over 100 bars: train[0,59], validation[60,79], test[80,99].
+    # Stub actionable at bars 50 (train), 90 (test) — never in validation.
+    stub = _BarTriggeredStrategy({50, 90})
+    oos = eng.validate_oos(stub, _frame(100), 0.6, 0.2, 0.2)
+
+    train = oos["segments"]["train"]
+    assert train["eval_start"] == 10 and train["eval_end"] == 59
+    assert train["trades"] == [0.0]        # entered bar 50, partial-exit at 59
+
+    validation = oos["segments"]["validation"]
+    assert validation["eval_start"] == 60 and validation["eval_end"] == 79
+    assert validation["trades"] == []      # no actionable bar in validation
+
+    test = oos["segments"]["test"]
+    assert test["eval_start"] == 80 and test["eval_end"] == 99
+    assert test["trades"] == [0.0]         # entered bar 90, partial-exit at 99
+
+    # Segment evaluation windows are disjoint and ordered.
+    assert train["eval_end"] < validation["eval_start"]
+    assert validation["eval_end"] < test["eval_start"]
+
+
+def test_oos_no_validation_segment_record():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    oos = eng.validate_oos(_BarTriggeredStrategy({}), _frame(100), 0.8, 0.0, 0.2)
+    assert oos["segments"]["train"]["insufficient_data"] is False
+    assert oos["segments"]["validation"]["insufficient_data"] is True
+    assert oos["segments"]["validation"]["reason"] == "empty_segment"
+    assert oos["segments"]["test"]["insufficient_data"] is False
+    assert isinstance(oos["mean_profit_factor"], float)
+
+
+def test_oos_segment_too_small_safe():
+    # min_bars=90 over 100 bars with a 90-bar train segment: the whole train
+    # segment sits below the warm-up bound -> segment_too_small (never raises).
+    eng = BacktestEngine(min_bars_for_entry=90)
+    oos = eng.validate_oos(_BarTriggeredStrategy({}), _frame(100), 0.9, 0.0, 0.1)
+
+    train = oos["segments"]["train"]
+    assert train["insufficient_data"] is True
+    assert train["reason"] == "segment_too_small"
+    assert train["trades"] == []
+    assert train["eval_start"] == 90 and train["eval_end"] == 89  # empty window
+
+    assert oos["segments"]["validation"]["reason"] == "empty_segment"
+    assert oos["segments"]["test"]["insufficient_data"] is False
+
+
+def test_oos_no_input_mutation():
+    eng = BacktestEngine(min_bars_for_entry=10)
+    df = _frame(100)
+    df_snapshot = df.copy(deep=True)
+    stub = _BarTriggeredStrategy({10, 12})
+    eng.validate_oos(stub, df, 0.6, 0.2, 0.2)
+    pd.testing.assert_frame_equal(df, df_snapshot)
+    assert stub._bar == -1
+    assert stub._last_slice is None
+
+
+def test_oos_real_strategy_smoke():
+    eng = BacktestEngine(min_bars_for_entry=130)
+    oos = eng.validate_oos(VCPBreakoutStrategy(), _wavy_frame(1000), 0.6, 0.2, 0.2)
+    assert set(oos.keys()) == set(OOS_KEYS)
+    assert oos["insufficient_data"] is False
+    assert oos["segments"]["train"]["insufficient_data"] is False
+    assert oos["segments"]["validation"]["insufficient_data"] is False
+    assert oos["segments"]["test"]["insufficient_data"] is False
+    assert isinstance(oos["out_of_sample"]["profit_factor"], float)
+    assert oos["out_of_sample"]["eval_start"] <= oos["out_of_sample"]["eval_end"]
+
+    rerun = eng.validate_oos(VCPBreakoutStrategy(), _wavy_frame(1000), 0.6, 0.2, 0.2)
+    assert rerun == oos
