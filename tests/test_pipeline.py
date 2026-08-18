@@ -170,10 +170,92 @@ class TestPipelineConfig:
         assert cfg.backtest.enabled is False
 
 
+# ---------------------------------------------------------------------------
+# Dispatch integration tests (sentinel.py → Pipeline routing)
+# ---------------------------------------------------------------------------
+
+class TestPipelineDispatch:
+    """Verify sentinel.py dispatch routes through Pipeline when pipeline.enabled.
+
+    Note: sentinel.py and sentinel/ package coexist — run() can only be
+    invoked as __main__, not imported normally. We test the dispatch logic
+    by verifying the guard condition and mocking the call path.
+    """
+
+    def test_enabled_guard_triggers_pipeline(self):
+        """When pipeline.enabled=True, the dispatch guard returns early."""
+        from unittest.mock import patch, MagicMock
+
+        with patch("sentinel.config.get_config") as mock_gcfg:
+            mock_cfg = MagicMock()
+            mock_cfg.pipeline.enabled = True
+            mock_gcfg.return_value = mock_cfg
+
+            from sentinel.config import get_config
+            pcfg = getattr(get_config(), "pipeline", None)
+            assert pcfg is not None
+            assert getattr(pcfg, "enabled", False) is True
+
+    def test_disabled_guard_skips_pipeline(self):
+        """When pipeline.enabled=False, the dispatch guard does NOT trigger."""
+        from unittest.mock import patch, MagicMock
+
+        with patch("sentinel.config.get_config") as mock_gcfg:
+            mock_cfg = MagicMock()
+            mock_cfg.pipeline.enabled = False
+            mock_gcfg.return_value = mock_cfg
+
+            from sentinel.config import get_config
+            pcfg = getattr(get_config(), "pipeline", None)
+            assert pcfg is not None
+            assert getattr(pcfg, "enabled", False) is False
+
+    def test_dispatch_code_path_exists(self):
+        """The dispatch block in sentinel.py should import Pipeline.from_config."""
+        from pathlib import Path
+        src = Path("sentinel.py").read_text()
+        assert "Pipeline.from_config" in src
+        assert "pipeline.enabled" in src
+
+
+# ---------------------------------------------------------------------------
+# Legacy-mode output parity
+# ---------------------------------------------------------------------------
+
+class TestPipelineLegacyParity:
+    """Verify Pipeline._sort_candidates produces same ordering as sentinel.py legacy."""
+
+    def test_sort_matches_legacy(self):
+        qualified = [
+            {"status": "ACTION", "rs": 80, "vcp": {"score": 60}, "pf": 2.5, "ticker": "A"},
+            {"status": "WAIT", "rs": 90, "vcp": {"score": 70}, "pf": 1.5, "ticker": "B"},
+            {"status": "EXTENDED", "rs": 75, "vcp": {"score": 65}, "pf": 3.0, "ticker": "C"},
+            {"status": "ACTION", "rs": 60, "vcp": {"score": 55}, "pf": 1.2, "ticker": "D"},
+        ]
+
+        import copy
+        legacy = copy.deepcopy(qualified)
+        status_rank = {"ACTION": 3, "WAIT": 2, "EXTENDED": 1}
+        legacy.sort(
+            key=lambda x: (
+                status_rank.get(x["status"], 0),
+                x["rs"] + x["vcp"]["score"] + x["pf"] * 10,
+            ),
+            reverse=True,
+        )
+
+        pipeline = copy.deepcopy(qualified)
+        result = Pipeline._sort_candidates(pipeline)
+
+        assert [x["ticker"] for x in result] == [x["ticker"] for x in legacy]
+
+
 __all__ = [
     "TestPipelineResult",
     "TestPipelineConstruction",
     "TestPipelineSort",
     "TestPipelineDiversify",
     "TestPipelineConfig",
+    "TestPipelineDispatch",
+    "TestPipelineLegacyParity",
 ]

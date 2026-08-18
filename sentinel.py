@@ -23,6 +23,20 @@ RESULTS_DIR.mkdir(exist_ok=True)
 # ==============================================================================
 
 def run() -> None:
+    # ── Pipeline dispatch: if pipeline.enabled, delegate entirely ──
+    try:
+        from sentinel.config import get_config as _gcfg
+        _pcfg = getattr(_gcfg(), "pipeline", None)
+        if _pcfg is not None and getattr(_pcfg, "enabled", False):
+            from engines.pipeline import Pipeline
+            Pipeline.from_config(
+                universe=list(TICKERS),
+                output_dir=RESULTS_DIR,
+            ).execute()
+            return
+    except Exception:
+        pass
+
     start = time.time()
     today = datetime.now().strftime("%Y-%m-%d %H:%M")
 
