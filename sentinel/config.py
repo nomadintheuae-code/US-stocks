@@ -278,6 +278,31 @@ class RiskConfig(BaseModel):
     stops: StopsConfig = Field(default_factory=StopsConfig)
 
 
+class MarketItemConfig(BaseModel):
+    """Configuration for a single market (US stock, crypto, forex)."""
+    name: str = Field(description="Market display name")
+    type: str = Field(description="Market type: us_stock, crypto, forex")
+    enabled: bool = Field(default=False, description="Enable this market (disabled by default)")
+    tickers: List[str] = Field(default_factory=list, description="Ticker symbols for this market")
+    period: str = Field(default="700d", description="yfinance data period")
+    min_bars: int = Field(default=150, ge=10, le=1000, description="Minimum bars required")
+    sector_label: Optional[str] = Field(default=None, description="Sector label for crypto/forex")
+
+    @field_validator("type")
+    @classmethod
+    def validate_type(cls, v: str) -> str:
+        allowed = ("us_stock", "crypto", "forex")
+        if v not in allowed:
+            raise ValueError(f"Market type must be one of {allowed}, got '{v}'")
+        return v
+
+
+class MarketsConfig(BaseModel):
+    """Multi-market configuration. Opt-in, disabled by default."""
+    enabled: bool = Field(default=False, description="Multi-market有効化（既定で無効）")
+    markets_list: List[MarketItemConfig] = Field(default_factory=list, description="List of market definitions")
+
+
 class FilterConfig(BaseModel):
     enabled: bool = Field(default=False, description="フィルタ有効化（既定で無効）")
     liquidity: LiquidityFilterConfig = Field(default_factory=LiquidityFilterConfig)
@@ -335,6 +360,7 @@ class Config(BaseModel):
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     data: DataConfig = Field(default_factory=DataConfig)
     filters: FilterConfig = Field(default_factory=FilterConfig)
+    markets: MarketsConfig = Field(default_factory=MarketsConfig)
     patterns: PatternsConfig = Field(default_factory=PatternsConfig)
     regime: RegimeConfig = Field(default_factory=RegimeConfig)
     risk: RiskConfig = Field(default_factory=RiskConfig)

@@ -141,6 +141,40 @@ data:
   filter_delisted: true          # 上場廃止銘柄を除外
 
 # ==============================================================================
+# MULTI-MARKET SUPPORT (Phase 7) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# Enable additional markets (crypto, forex) beyond the default US stock universe.
+# While disabled, the scanner uses the existing TICKERS list unchanged.
+markets:
+  enabled: false                 # マルチマーケット有効化（既定で無効）
+  markets_list: []
+    # ── Example: Crypto market ──
+    # - name: "Crypto"
+    #   type: "crypto"
+    #   enabled: true
+    #   tickers:
+    #     - "BTC-USD"
+    #     - "ETH-USD"
+    #     - "SOL-USD"
+    #     - "BNB-USD"
+    #     - "XRP-USD"
+    #   period: "700d"
+    #   min_bars: 100
+    #   sector_label: "Cryptocurrency"
+    # ── Example: Forex market ──
+    # - name: "Forex"
+    #   type: "forex"
+    #   enabled: true
+    #   tickers:
+    #     - "EURUSD=X"
+    #     - "GBPUSD=X"
+    #     - "USDJPY=X"
+    #     - "AUDUSD=X"
+    #   period: "700d"
+    #   min_bars: 100
+    #   sector_label: "Forex"
+
+# ==============================================================================
 # FILTERS & RANKING (Phase 4) — OPT-IN, DISABLED BY DEFAULT
 # ==============================================================================
 # All filters are additive and OFF unless `enabled: true`. While disabled, the

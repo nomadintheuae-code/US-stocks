@@ -9,6 +9,7 @@ from engines.analysis import RSAnalyzer, VCPAnalyzer, StrategyValidator
 from engines.data import CurrencyEngine, DataEngine
 from engines.earnings import EarningsCalendarEngine
 from engines.fundamental import FundamentalEngine, InsiderEngine
+from engines.markets import MarketManager
 from engines.news import NewsEngine
 from engines.patterns import FibonacciEngine, CandlestickEngine, BBSqueezeEngine
 from engines.regime import MarketRegimeEngine
@@ -29,8 +30,15 @@ def run() -> None:
         _pcfg = getattr(_gcfg(), "pipeline", None)
         if _pcfg is not None and getattr(_pcfg, "enabled", False):
             from engines.pipeline import Pipeline
+            _universe = list(TICKERS)
+            try:
+                _mmgr = MarketManager.from_config()
+                if _mmgr.enabled:
+                    _universe = _mmgr.get_universe()
+            except Exception:
+                pass
             Pipeline.from_config(
-                universe=list(TICKERS),
+                universe=_universe,
                 output_dir=RESULTS_DIR,
             ).execute()
             return
@@ -40,9 +48,16 @@ def run() -> None:
     start = time.time()
     today = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # ── Resolve universe (multi-market or legacy TICKERS) ──
+    tickers = list(TICKERS)
+    market_mgr = MarketManager.from_config()
+    if market_mgr.enabled:
+        tickers = market_mgr.get_universe()
+        print(f"   Multi-market: {len(market_mgr)} markets, {len(tickers)} tickers")
+
     print("=" * 60)
     print("🛡️  SENTINEL PRO v5.0")
-    print(f"   {today}  |  Universe: {len(TICKERS)} tickers")
+    print(f"   {today}  |  Universe: {len(tickers)} tickers")
     print(f"   Capital: ¥{CONFIG['CAPITAL_JPY']:,}")
     print("=" * 60)
 
@@ -50,10 +65,10 @@ def run() -> None:
     print(f"USD/JPY: {usd_jpy}")
 
     # ── Phase 1: 全銘柄の RS 生スコアを算出 ─────────────────────────
-    print(f"\n[Phase 1] Scanning {len(TICKERS)} tickers...")
+    print(f"\n[Phase 1] Scanning {len(tickers)} tickers...")
     raw_list: list[dict] = []
 
-    for ticker in TICKERS:
+    for ticker in tickers:
         df = DataEngine.get_data(ticker)
         if df is None:
             continue
@@ -321,7 +336,7 @@ def run() -> None:
         "timestamp": datetime.now().isoformat(),
         "runtime": f"{round(time.time() - start, 2)}s",
         "usd_jpy": usd_jpy,
-        "scan_count": len(TICKERS),
+        "scan_count": len(tickers),
         "qualified_count": len(qualified),
         "selected_count": len(selected),
         "selected": selected,

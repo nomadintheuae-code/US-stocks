@@ -93,6 +93,7 @@ User input → DataEngine.get_data() → ECRStrategyEngine.analyze_single()
 | `engines/regime.py` | MarketRegimeEngine (rule-based bull/bear/sideways) | Medium |
 | `engines/risk.py` | PositionSizer, PortfolioRisk, StopManager | Medium |
 | `engines/pipeline.py` | Configurable scan pipeline orchestrator | High |
+| `engines/markets.py` | Multi-market support (US stocks, Crypto, Forex) | Medium |
 | `engines/ecr_strategy.py` | ECR Strategy Engine (Energy Compression Rotation) | High |
 | `engines/sentinel_efficiency.py` | SES (Sentinel Efficiency Score) | High |
 | `engines/fundamental.py` | FundamentalEngine, InsiderEngine | Medium |
@@ -638,13 +639,24 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Regression: **9/9 passed** (138s)
 - Commit: `6b3a81b`
 
-### Phase 7 Status (2026-08-18)
-**Phase 7 — Earnings Calendar Engine — COMPLETE**
+### Phase 7A Status (2026-08-18)
+**Phase 7A — Earnings Calendar Engine — COMPLETE**
 - `engines/earnings.py`: `EarningsCalendarEngine` with 5 methods (get_market_earnings, get_next_earnings, get_earnings_dates, filter_earnings_this_week, build_earnings_map)
 - `EarningsFilter` in `engines/filters.py`: universe-stage, exclude/include modes, pre-built map
 - Config: `filters.earnings` section (exclude_days_before, include_days_ahead)
 - Integration: Phase 3.5 earnings warning flags in sentinel.py output + LINE
 - Tests: 29 passing
+
+### Phase 7B Status (2026-08-18)
+**Phase 7B — Multi-Market Support — COMPLETE**
+- `engines/markets.py`: `MarketProvider` (US stocks, crypto, forex), `MarketManager` (aggregates markets, deduplicates universe)
+- `MarketType` enum: US_STOCK, CRYPTO, FOREX
+- Default crypto: 30 tickers (BTC-USD, ETH-USD, SOL-USD, …); default forex: 16 pairs (EURUSD=X, GBPUSD=X, …)
+- Config: `markets:` section (`enabled: false`, `markets_list` with per-market `name/type/tickers/period/min_bars/sector_label`)
+- Integration: `sentinel.py` resolves universe via `MarketManager.from_config()` when enabled; pipeline dispatch also supports multi-market
+- `sentinel/config.py`: `MarketsConfig`, `MarketItemConfig` Pydantic models
+- Tests: 21 passing
+- Full suite: **516 passed**
 
 ### Phase 8 Status (2026-08-18)
 **Phase 8 — Technical Patterns Engine — COMPLETE**
@@ -868,7 +880,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Technical Patterns (engines/patterns.py) — DONE 2026-08-18 (Phase 8, committed `da8568b`)
 - [x] Market Regime Engine (engines/regime.py) — DONE 2026-08-18 (Phase 9, committed `da8568b`)
 - [x] Enhanced Risk Management (engines/risk.py) — DONE 2026-08-18 (Phase 10, committed `da8568b`)
-- [ ] Multi-market support (Crypto, Forex)
+- [x] Multi-market support (Crypto, Forex) — DONE 2026-08-18 (Phase 7, engines/markets.py)
 - [ ] CSV/Excel export from dashboard
 
 ## 11. Current Plan
