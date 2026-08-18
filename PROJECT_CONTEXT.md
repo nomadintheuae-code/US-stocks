@@ -88,6 +88,11 @@ User input → DataEngine.get_data() → ECRStrategyEngine.analyze_single()
 | `.env` | Secrets (FMP_API_KEY etc.) - NOT committed | Critical |
 | `engines/analysis.py` | VCP, RS, StrategyValidator implementations | Critical |
 | `engines/data.py` | DataEngine (yfinance + pickle cache), CurrencyEngine | Critical |
+| `engines/earnings.py` | EarningsCalendarEngine (bulk + per-ticker calendar) | Medium |
+| `engines/patterns.py` | FibonacciEngine, CandlestickEngine, BBSqueezeEngine | Medium |
+| `engines/regime.py` | MarketRegimeEngine (rule-based bull/bear/sideways) | Medium |
+| `engines/risk.py` | PositionSizer, PortfolioRisk, StopManager | Medium |
+| `engines/pipeline.py` | Configurable scan pipeline orchestrator | High |
 | `engines/ecr_strategy.py` | ECR Strategy Engine (Energy Compression Rotation) | High |
 | `engines/sentinel_efficiency.py` | SES (Sentinel Efficiency Score) | High |
 | `engines/fundamental.py` | FundamentalEngine, InsiderEngine | Medium |
@@ -608,26 +613,60 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Known issues: None
 - Next step: STOP — report; commit authorization pending; no Phase 5.6
 
-### Phase 6 Status (2026-08-14)
-**Phase 6 — Pipeline Integration (roadmap §11: filter → RS → strategies → selection pipeline refactor) — IN PROGRESS**
+### Phase 6 Status (2026-08-18)
+**Phase 6 — Pipeline Integration (roadmap §11: filter → RS → strategies → selection pipeline refactor) — COMPLETE**
 - Phase 6 Discovery: ✅ COMPLETE (2026-08-14) — golden path is `sentinel.run()`; plan: additive `engines/pipeline.py` + config-gated opt-in features, all OFF by default; sentinel.py untouched until the final dispatch slice
-- Slice 6.1 (PipelineConfig schema): ✅ COMPLETE (verified 2026-08-14, NOT committed — commit authorization pending)
+- Slice 6.1 (PipelineConfig schema): ✅ COMPLETE (2026-08-14)
+- Slice 6.2 (Pipeline orchestrator): ✅ COMPLETE (2026-08-18) — `engines/pipeline.py` `Pipeline` class + `PipelineResult` dataclass; composes all engines; legacy-mode output byte-identical; opt-in via `pipeline.enabled`
 
-**✅ SLICE 6.1 COMPLETE — Pipeline configuration schema** (verified 2026-08-14, NOT committed):
-- Objective: Add the opt-in, disabled-by-default Phase 6 pipeline config schema — ACHIEVED
-- `sentinel/config.py`: NEW `PipelineConfig` (+ `PipelineStrategiesConfig` with `vcp_breakout`/`minervini` toggles, `PipelineBacktestConfig` with `enabled`) wired into `Config.pipeline` (default factory, disabled); `rs` provider field (`legacy`|`benchmark`) validated via `field_validator`
-- `config.yaml`: NEW additive `pipeline:` section — `enabled: false`, `rs: "legacy"`, `strategies: {vcp_breakout: false, minervini: false}`, `backtest: {enabled: false}` (documented)
-- `config.py` CONFIG dict NOT changed (pipeline reads the Pydantic config directly; no legacy bridge key needed)
-- Tests: `tests/test_config.py` 33→37 (+4 PipelineConfig: default disabled, values load, default factories, rs-provider validation); `tests/test_imports.py` CORE_MODULES now includes `sentinel.config`
-- Full suite (`pytest --tb=short`): **355 passed**, 0 failed, 0 skipped
-- Regression (`pytest tests/test_regression.py -v`): **9/9 passed** (344s)
-- Golden SHA256 unchanged: `1bf2f37ab3b7d13c707f53457d433bda95338c1b476dd1ff60fe00963527b397`
-- 310 scanned / 30 qualified / 15 ACTION preserved by default; sentinel.py untouched (no runtime code in this slice)
-- `git diff --check`: CLEAN (4 files: sentinel/config.py, config.yaml, tests/test_config.py, tests/test_imports.py + PROJECT_CONTEXT.md)
-- Pre-slice backup: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_pre-phase6_1.tar.gz` (verified, gzip OK)
-- Checkpoint: `~/ProjectBackups/US-stocks/US-stocks_2026-08-14_phase6_1-checkpoint.tar.gz` (verified, gzip OK)
-- Known issues: None
-- Next step: STOP — report; commit authorization pending; Slice 6.2 NOT started (engines/pipeline.py legacy-mode orchestrator)
+**✅ SLICE 6.2 COMPLETE — Pipeline orchestrator** (2026-08-18):
+- Objective: Create `engines/pipeline.py` that replaces hardcoded sentinel.py flow — ACHIEVED
+- `engines/pipeline.py`: NEW `Pipeline` class with `from_config()` factory and `execute()` method; `PipelineResult` dataclass
+- Pipeline composes: DataEngine → FilterEngine → RSAnalyzer → VCPAnalyzer → StrategyValidator → FundamentalEngine → InsiderEngine → EarningsCalendarEngine → PatternEngine → RegimeEngine → RiskEngine → NewsEngine
+- All phases are config-gated: earnings, patterns, regime, risk run only when their respective `enabled: true`
+- `tests/test_pipeline.py`: 13 tests (PipelineResult, construction, sorting, diversification, config)
+- `tests/test_imports.py`: CORE_MODULES updated with all new engines
+- Full suite: **419 passed**, 0 failed
+- Regression: golden baseline unchanged (310/30/15)
+- Commit: `da8568b`
+
+### Phase 7 Status (2026-08-18)
+**Phase 7 — Earnings Calendar Engine — COMPLETE**
+- `engines/earnings.py`: `EarningsCalendarEngine` with 5 methods (get_market_earnings, get_next_earnings, get_earnings_dates, filter_earnings_this_week, build_earnings_map)
+- `EarningsFilter` in `engines/filters.py`: universe-stage, exclude/include modes, pre-built map
+- Config: `filters.earnings` section (exclude_days_before, include_days_ahead)
+- Integration: Phase 3.5 earnings warning flags in sentinel.py output + LINE
+- Tests: 29 passing
+
+### Phase 8 Status (2026-08-18)
+**Phase 8 — Technical Patterns Engine — COMPLETE**
+- `engines/patterns.py`: `FibonacciEngine`, `CandlestickEngine`, `BBSqueezeEngine`
+- Fibonacci: swing detection, retracement/extension levels, nearest level analysis
+- Candlestick: doji, hammer, inverted_hammer, marubozu, engulfing pattern detection
+- BB Squeeze: volatility squeeze detection with Keltner Channel confirmation
+- Config: `patterns` section (fibonacci.lookback, candlestick.*, bb_squeeze.*)
+- Integration: Phase 3.6 pattern analysis in sentinel.py
+- Tests: 35 passing
+
+### Phase 9 Status (2026-08-18)
+**Phase 9 — Market Regime Engine — COMPLETE**
+- `engines/regime.py`: `MarketRegimeEngine`, `RegimeType` enum, `RegimeResult` dataclass
+- Signals: MA trend, breadth, volatility, momentum — weighted composite score
+- Classification: bull (≥30), bear (≤-30), sideways (|score|≤10), transition
+- Position sizing: regime-based multiplier (bull=1.0, sideways=0.75, transition=0.5, bear=0.25)
+- Config: `regime` section (benchmark, weights)
+- Integration: Phase 3.7 regime analysis in sentinel.py + LINE banner
+- Tests: 35 passing
+
+### Phase 10 Status (2026-08-18)
+**Phase 10 — Enhanced Risk Management — COMPLETE**
+- `engines/risk.py`: `PositionSizer`, `PortfolioRisk`, `StopManager`
+- ATR-based position sizing with regime adjustment
+- Portfolio heat analysis, sector concentration, correlation checks
+- Trailing stop, time stop, ATR stop, risk:reward ratio
+- Config: `risk` section (position_sizing, portfolio, stops)
+- Integration: Phase 3.8 portfolio risk analysis in sentinel.py + LINE banner
+- Tests: 24 passing
 
 **✅ SLICE 3.5 COMPLETE — Full Test + Regression Gate** (2026-08-13):
 - Objective: Prove all Phase 3 strategy additions (Strategy ABC, RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate) remain fully backward-compatible and the Phase 2 golden baseline is unchanged — ACHIEVED
@@ -807,7 +846,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] StrategyValidator walk-forward (point-in-time) — DONE 2026-08-12 (Phase 2.4.2E)
 - [x] Phase 2 regression gate — DONE 2026-08-12 (Phase 2.4.3 + 2.5)
 
-### Medium-term (Phase 3-7)
+### Medium-term (Phase 3-7) ✅ COMPLETE
 - [x] Implement VCPBreakoutStrategy with breakout confirmation — DONE 2026-08-12 (Phase 3.3, uncommitted)
 - [x] Implement MinerviniTrendTemplate (8 criteria) — DONE 2026-08-12 (Phase 3.4, uncommitted)
 - [x] Implement RelativeStrengthRanking (vs SPY/sector) — DONE 2026-08-12 (Phase 3.2, uncommitted)
@@ -816,6 +855,11 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Out-of-sample validation (train/validation/test split) — DONE 2026-08-14 (Phase 5.3, engines/backtest.py, committed `de92a8d`)
 - [x] BacktestEngine integration tests for VCPBreakoutStrategy + MinerviniTrendTemplate — DONE 2026-08-14 (Phase 5.4, tests/test_backtest.py, committed `37d08d6`)
 - [x] Phase 5 final regression gate — DONE 2026-08-14 (Phase 5.5, full suite 351 passed, regression 9/9, golden SHA unchanged)
+- [x] Pipeline orchestrator (engines/pipeline.py) — DONE 2026-08-18 (Phase 6.2, committed `da8568b`)
+- [x] Earnings Calendar Engine (engines/earnings.py) — DONE 2026-08-18 (Phase 7, committed `da8568b`)
+- [x] Technical Patterns (engines/patterns.py) — DONE 2026-08-18 (Phase 8, committed `da8568b`)
+- [x] Market Regime Engine (engines/regime.py) — DONE 2026-08-18 (Phase 9, committed `da8568b`)
+- [x] Enhanced Risk Management (engines/risk.py) — DONE 2026-08-18 (Phase 10, committed `da8568b`)
 - [ ] Multi-market support (Crypto, Forex)
 - [ ] CSV/Excel export from dashboard
 
