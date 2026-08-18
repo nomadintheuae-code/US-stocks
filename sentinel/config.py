@@ -199,12 +199,92 @@ class FundamentalFilterConfig(BaseModel):
     min_analyst_count: Optional[int] = Field(default=None, ge=0, le=100, description="最低アナリスト数")
 
 
+class EarningsFilterConfig(BaseModel):
+    exclude_days_before: Optional[int] = Field(default=None, ge=1, le=30, description="決算日前N日以内を除外")
+    include_days_ahead: Optional[int] = Field(default=None, ge=1, le=30, description="決算日N日以内のみ含む")
+
+    @model_validator(mode="after")
+    def check_modes(self) -> "EarningsFilterConfig":
+        if self.exclude_days_before is not None and self.include_days_ahead is not None:
+            raise ValueError("exclude_days_before and include_days_ahead cannot both be set")
+        return self
+
+
+class FibonacciConfig(BaseModel):
+    lookback: int = Field(default=60, ge=10, le=200, description="フィボナッチ・スイング検出ルックバック")
+
+
+class CandlestickConfig(BaseModel):
+    lookback: int = Field(default=5, ge=1, le=20, description="ローソク足パターン検出バー数")
+    doji_threshold: float = Field(default=0.1, gt=0, le=1.0, description="ドジー判定閾値")
+    marubozu_threshold: float = Field(default=0.9, gt=0, le=1.0, description="まるぼう判定閾値")
+
+
+class BBSqueezeConfig(BaseModel):
+    period: int = Field(default=20, ge=5, le=100, description="ボリンジャーバンド期間")
+    std_dev: float = Field(default=2.0, gt=0, le=5.0, description="ボリンジャーバンド標準偏差")
+    percentile_threshold: float = Field(default=20.0, gt=0, le=50.0, description="スクイーズ判定パーセンタイル閾値")
+
+
+class PatternsConfig(BaseModel):
+    enabled: bool = Field(default=False, description="パターンエンジン有効化（既定で無効）")
+    fibonacci: FibonacciConfig = Field(default_factory=FibonacciConfig)
+    candlestick: CandlestickConfig = Field(default_factory=CandlestickConfig)
+    bb_squeeze: BBSqueezeConfig = Field(default_factory=BBSqueezeConfig)
+
+
+class RegimeWeightsConfig(BaseModel):
+    trend: float = Field(default=0.35, gt=0, le=1.0, description="トレンド信号の重み")
+    breadth: float = Field(default=0.25, gt=0, le=1.0, description="ブレッドスIGNALの重み")
+    volatility: float = Field(default=0.20, gt=0, le=1.0, description="ボラティリティ信号の重み")
+    momentum: float = Field(default=0.20, gt=0, le=1.0, description="モメンタム信号の重み")
+
+    @model_validator(mode="after")
+    def check_weights_sum(self) -> "RegimeWeightsConfig":
+        total = self.trend + self.breadth + self.volatility + self.momentum
+        if abs(total - 1.0) > 0.001:
+            raise ValueError(f"Regime weights must sum to 1.0, got {total}")
+        return self
+
+
+class RegimeConfig(BaseModel):
+    enabled: bool = Field(default=False, description="レジームエンジン有効化（既定で無効）")
+    benchmark: str = Field(default="SPY", description="ベンチマーク銘柄")
+    weights: RegimeWeightsConfig = Field(default_factory=RegimeWeightsConfig)
+
+
+class PositionSizingConfig(BaseModel):
+    risk_per_trade_pct: float = Field(default=0.015, gt=0, le=0.1, description="1トレードあたりリスク比率")
+    stop_atr_multiplier: float = Field(default=2.0, gt=0, le=10.0, description="ATRストップ乗数")
+    atr_period: int = Field(default=14, ge=5, le=50, description="ATR計算期間")
+
+
+class PortfolioRiskConfig(BaseModel):
+    max_heat_pct: float = Field(default=0.06, gt=0, le=0.5, description="ポートフォリオ最大リスクヘート")
+    max_sector_pct: float = Field(default=0.40, gt=0, le=1.0, description="セクター最大集中度")
+    max_correlation: float = Field(default=0.70, gt=0, le=1.0, description="相関警告閾値")
+
+
+class StopsConfig(BaseModel):
+    trailing_pct: float = Field(default=0.05, gt=0, le=0.20, description="トレーリングストップ%")
+    max_days_in_trade: int = Field(default=20, ge=1, le=100, description="タイムストップ日数")
+    profit_time_threshold: float = Field(default=0.05, gt=0, le=0.5, description="タイムストップ回避閾値")
+
+
+class RiskConfig(BaseModel):
+    enabled: bool = Field(default=False, description="リスク管理有効化（既定で無効）")
+    position_sizing: PositionSizingConfig = Field(default_factory=PositionSizingConfig)
+    portfolio: PortfolioRiskConfig = Field(default_factory=PortfolioRiskConfig)
+    stops: StopsConfig = Field(default_factory=StopsConfig)
+
+
 class FilterConfig(BaseModel):
     enabled: bool = Field(default=False, description="フィルタ有効化（既定で無効）")
     liquidity: LiquidityFilterConfig = Field(default_factory=LiquidityFilterConfig)
     market_cap: MarketCapFilterConfig = Field(default_factory=MarketCapFilterConfig)
     sector: SectorFilterConfig = Field(default_factory=SectorFilterConfig)
     fundamental: FundamentalFilterConfig = Field(default_factory=FundamentalFilterConfig)
+    earnings: EarningsFilterConfig = Field(default_factory=EarningsFilterConfig)
 
 
 class PipelineStrategiesConfig(BaseModel):
@@ -255,6 +335,9 @@ class Config(BaseModel):
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     data: DataConfig = Field(default_factory=DataConfig)
     filters: FilterConfig = Field(default_factory=FilterConfig)
+    patterns: PatternsConfig = Field(default_factory=PatternsConfig)
+    regime: RegimeConfig = Field(default_factory=RegimeConfig)
+    risk: RiskConfig = Field(default_factory=RiskConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     ui: UIConfig = Field(default_factory=UIConfig)

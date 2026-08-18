@@ -27,7 +27,8 @@ from config while ``filters.enabled`` is false, is an identity pass-through:
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Sequence, Tuple
+from datetime import datetime
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
@@ -289,6 +290,88 @@ class FundamentalFilter(Filter):
         return FilterResult(passed=True)
 
 
+class EarningsFilter(Filter):
+    """Universe-stage earnings calendar filter.
+
+    Two modes of operation:
+
+    1. **exclude_days_before** — filter OUT tickers whose next earnings date
+       falls within N days (avoids earnings volatility risk).
+    2. **include_days_ahead** — filter to ONLY tickers whose next earnings
+       date falls within N days (earnings catalyst play).
+
+    If both are set, ``exclude_days_before`` takes priority.
+    The filter uses a pre-built ``earnings_map`` to avoid per-ticker API calls
+    during the filter run.
+
+    Missing earnings data is default-permissive (passes through).
+    """
+
+    name = "earnings"
+    stage = STAGE_UNIVERSE
+
+    def __init__(
+        self,
+        exclude_days_before: Optional[int] = None,
+        include_days_ahead: Optional[int] = None,
+        earnings_map: Optional[Dict[str, datetime]] = None,
+    ) -> None:
+        self.exclude_days_before = exclude_days_before
+        self.include_days_ahead = include_days_ahead
+        self._earnings_map = earnings_map or {}
+
+    def set_earnings_map(self, earnings_map: Dict[str, datetime]) -> None:
+        """Set the pre-built earnings map (ticker -> next earnings date)."""
+        self._earnings_map = earnings_map
+
+    def check(self, ctx: FilterContext) -> FilterResult:
+        if self.exclude_days_before is None and self.include_days_ahead is None:
+            return FilterResult(passed=True)
+
+        ticker = ctx.ticker.upper()
+        earnings_date = self._earnings_map.get(ticker)
+
+        # No earnings data available — default-permissive
+        if earnings_date is None:
+            return FilterResult(passed=True)
+
+        # Handle list values (yfinance can return [date])
+        if isinstance(earnings_date, list):
+            earnings_date = earnings_date[0] if earnings_date else None
+            if earnings_date is None:
+                return FilterResult(passed=True)
+
+        # Normalize earnings_date to datetime
+        if isinstance(earnings_date, str):
+            try:
+                earnings_date = datetime.strptime(earnings_date, "%Y-%m-%d")
+            except ValueError:
+                try:
+                    earnings_date = datetime.strptime(earnings_date, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    return FilterResult(passed=True)
+
+        now = datetime.now()
+        delta = earnings_date - now
+        days_until = delta.days
+
+        # Exclude mode: reject if earnings within N days
+        if self.exclude_days_before is not None and days_until <= self.exclude_days_before and days_until >= 0:
+            return FilterResult(
+                passed=False,
+                reason=f"earnings in {days_until} days (excluded < {self.exclude_days_before})",
+            )
+
+        # Include mode: reject if earnings NOT within N days
+        if self.include_days_ahead is not None and (days_until < 0 or days_until > self.include_days_ahead):
+            return FilterResult(
+                passed=False,
+                reason=f"earnings in {days_until} days (not within {self.include_days_ahead})",
+            )
+
+        return FilterResult(passed=True)
+
+
 class FilterEngine:
     """Registry + execution pipeline for scan filters.
 
@@ -381,6 +464,16 @@ class FilterEngine:
                 min_earnings_growth=fund.min_earnings_growth,
                 max_forward_pe=fund.max_forward_pe,
                 min_analyst_count=fund.min_analyst_count,
+            ))
+
+        earn = getattr(filter_cfg, "earnings", None)
+        if earn is not None and (
+            getattr(earn, "exclude_days_before", None) is not None
+            or getattr(earn, "include_days_ahead", None) is not None
+        ):
+            filters.append(EarningsFilter(
+                exclude_days_before=earn.exclude_days_before,
+                include_days_ahead=earn.include_days_ahead,
             ))
 
         return filters
@@ -490,5 +583,6 @@ __all__ = [
     "MarketCapFilter",
     "SectorFilter",
     "FundamentalFilter",
+    "EarningsFilter",
     "FilterEngine",
 ]

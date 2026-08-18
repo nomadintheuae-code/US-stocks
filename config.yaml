@@ -161,6 +161,9 @@ filters:
     min_earnings_growth: null    # 最低利益成長率 (earningsGrowth)
     max_forward_pe: null         # 最高予想PER (forwardPE)
     min_analyst_count: null      # 最低アナリスト数
+  earnings:
+    exclude_days_before: null    # 決算日前N日以内を除外 (default: 7)
+    include_days_ahead: null     # 決算日N日以内のみ含む (mutually exclusive with exclude)
 
 # ==============================================================================
 # PIPELINE (Phase 6) — OPT-IN, DISABLED BY DEFAULT
@@ -176,6 +179,60 @@ pipeline:
     minervini: false             # ミネルヴィニ・テンプレート戦略（既定で無効）
   backtest:
     enabled: false               # バックテスト付加レコード（既定で無効）
+
+# ==============================================================================
+# TECHNICAL PATTERNS (Phase 8) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# Additive pattern recognition engines (Fibonacci, candlestick, BB squeeze).
+# All features are OFF unless explicitly enabled. While disabled, the
+# scanner's default behavior (310/30/15) is byte-for-byte unchanged.
+patterns:
+  enabled: false                 # パターンエンジン有効化（既定で無効）
+  fibonacci:
+    lookback: 60                 # フィボナッチ・スイング検出ルックバック
+  candlestick:
+    lookback: 5                  # ローソク足パターン検出バー数
+    doji_threshold: 0.1          # ドジー判定閾値（ボディ/レンジ比）
+    marubozu_threshold: 0.9      # まるぼう判定閾値（ボディ/レンジ比）
+  bb_squeeze:
+    period: 20                   # ボリンジャーバンド期間
+    std_dev: 2.0                 # ボリンジャーバンド標準偏差
+    percentile_threshold: 20.0   # スクイーズ判定パーセンタイル閾値
+
+# ==============================================================================
+# MARKET REGIME (Phase 9) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# Market regime detection engine (bull/bear/sideways/transition).
+# Uses SPY/QQQ as benchmark indices for rule-based regime classification.
+# While disabled, the scanner's default behavior (310/30/15) is unchanged.
+regime:
+  enabled: false                 # レジームエンジン有効化（既定で無効）
+  benchmark: "SPY"               # ベンチマーク銘柄
+  weights:
+    trend: 0.35                  # トレンド信号の重み
+    breadth: 0.25                # ブレッドスIGNALの重み
+    volatility: 0.20             # ボラティリティ信号の重み
+    momentum: 0.20               # モメンタム信号の重み
+
+# ==============================================================================
+# ENHANCED RISK MANAGEMENT (Phase 10) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# Portfolio-level risk analysis, ATR-based sizing, dynamic stops.
+# While disabled, the scanner's default behavior (310/30/15) is unchanged.
+risk:
+  enabled: false                 # リスク管理有効化（既定で無効）
+  position_sizing:
+    risk_per_trade_pct: 0.015    # 1トレードあたりリスク比率
+    stop_atr_multiplier: 2.0     # ATRストップ乗数
+    atr_period: 14               # ATR計算期間
+  portfolio:
+    max_heat_pct: 0.06           # ポートフォリオ最大リスクヘート
+    max_sector_pct: 0.40         # セクター最大集中度
+    max_correlation: 0.70        # 相関警告閾値
+  stops:
+    trailing_pct: 0.05           # トレーリングストップ%
+    max_days_in_trade: 20        # タイムストップ日数
+    profit_time_threshold: 0.05  # タイムストップ回避閾値
 
 # ==============================================================================
 # NOTIFICATION SETTINGS

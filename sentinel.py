@@ -7,8 +7,12 @@ from pathlib import Path
 from config import CONFIG, TICKERS
 from engines.analysis import RSAnalyzer, VCPAnalyzer, StrategyValidator
 from engines.data import CurrencyEngine, DataEngine
+from engines.earnings import EarningsCalendarEngine
 from engines.fundamental import FundamentalEngine, InsiderEngine
 from engines.news import NewsEngine
+from engines.patterns import FibonacciEngine, CandlestickEngine, BBSqueezeEngine
+from engines.regime import MarketRegimeEngine
+from engines.risk import PositionSizer, PortfolioRisk, StopManager
 from engines.notify import calculate_position, send_line
 
 RESULTS_DIR = Path("./results")
@@ -121,6 +125,149 @@ def run() -> None:
             "insider_detail": insider,
         })
 
+    # ── Phase 3.5: カレンダー チェック ────────────────────────────────
+    if qualified:
+        qualified_tickers = [q["ticker"] for q in qualified]
+        try:
+            earnings_map = EarningsCalendarEngine.build_earnings_map(
+                qualified_tickers, days_ahead=14
+            )
+        except Exception:
+            earnings_map = {}
+
+        for q in qualified:
+            ed = earnings_map.get(q["ticker"].upper())
+            if ed is not None:
+                from datetime import datetime as _dt
+                if isinstance(ed, list):
+                    ed = ed[0] if ed else None
+                if isinstance(ed, str):
+                    try:
+                        ed = _dt.strptime(ed, "%Y-%m-%d")
+                    except ValueError:
+                        try:
+                            ed = _dt.strptime(ed, "%Y-%m-%d %H:%M:%S")
+                        except ValueError:
+                            ed = None
+                if ed is not None:
+                    try:
+                        days_until = (ed.date() - _dt.now().date()).days
+                    except AttributeError:
+                        days_until = (ed - _dt.now().date()).days
+                    if 0 <= days_until <= 7:
+                        q["earnings_warning"] = f"Earnings in {days_until}d"
+                    elif days_until == 0:
+                        q["earnings_warning"] = "Earnings TODAY"
+
+    # ── Phase 3.6: パターン分析 ──────────────────────────────────────
+    if qualified:
+        try:
+            from sentinel.config import get_config
+            _scfg = get_config()
+            _pcfg = getattr(_scfg, "patterns", None)
+            _pat_enabled = getattr(_pcfg, "enabled", False) if _pcfg else False
+        except Exception:
+            _pat_enabled = False
+
+        if _pat_enabled and _pcfg is not None:
+            for q in qualified:
+                ticker = q["ticker"]
+                df = DataEngine.get_data(ticker)
+                if df is None or df.empty:
+                    continue
+
+                fib_cfg = getattr(_pcfg, "fibonacci", None)
+                cs_cfg = getattr(_pcfg, "candlestick", None)
+                bb_cfg = getattr(_pcfg, "bb_squeeze", None)
+
+                # Fibonacci
+                fib_lb = getattr(fib_cfg, "lookback", 60) if fib_cfg else 60
+                fib = FibonacciEngine.analyze(df, lookback=fib_lb, current_price=q["price"])
+                if fib["nearest_level"] is not None:
+                    q["fib_nearest"] = fib["nearest_level"]
+                    q["fib_distance_pct"] = fib["nearest_distance_pct"]
+                    q["fib_support"] = fib["support_levels"]
+                    q["fib_resistance"] = fib["resistance_levels"]
+
+                # Candlestick
+                cs_lb = getattr(cs_cfg, "lookback", 5) if cs_cfg else 5
+                cs_summary = CandlestickEngine.summary(df, lookback=cs_lb)
+                if cs_summary["total"] > 0:
+                    q["candle_bias"] = cs_summary["bias"]
+                    q["candle_patterns"] = cs_summary["patterns"]
+
+                # BB Squeeze
+                bb_period = getattr(bb_cfg, "period", 20) if bb_cfg else 20
+                bb_std = getattr(bb_cfg, "std_dev", 2.0) if bb_cfg else 2.0
+                bb_thresh = getattr(bb_cfg, "percentile_threshold", 20.0) if bb_cfg else 20.0
+                bb = BBSqueezeEngine.analyze(df, bb_period=bb_period, bb_std=bb_std)
+                if bb["status"] != "insufficient_data":
+                    q["bb_squeeze"] = bb["squeezing"]
+                    q["bb_squeeze_status"] = bb["status"]
+                    if bb["squeezing"]:
+                        q["bb_squeeze_confirmed"] = bb.get("squeeze_confirmed", False)
+
+    # ── Phase 3.7: マーケット レジーム ────────────────────────────────
+    regime_info = None
+    try:
+        from sentinel.config import get_config as _gcfg
+        _rcfg = getattr(_gcfg(), "regime", None)
+        _regime_enabled = getattr(_rcfg, "enabled", False) if _rcfg else False
+    except Exception:
+        _regime_enabled = False
+
+    if _regime_enabled and _rcfg is not None:
+        benchmark = getattr(_rcfg, "benchmark", "SPY") or "SPY"
+        bench_df = DataEngine.get_data(benchmark)
+        if bench_df is not None and not bench_df.empty:
+            weights = None
+            wc = getattr(_rcfg, "weights", None)
+            if wc is not None:
+                weights = {
+                    "trend": wc.trend,
+                    "breadth": wc.breadth,
+                    "volatility": wc.volatility,
+                    "momentum": wc.momentum,
+                }
+            try:
+                regime_info = MarketRegimeEngine.analyze(bench_df, weights=weights)
+            except Exception:
+                regime_info = None
+
+    # ── Phase 3.8: リスク分析 ────────────────────────────────────────
+    portfolio_risk_info = None
+    try:
+        from sentinel.config import get_config as _gcfg2
+        _rcfg2 = getattr(_gcfg2(), "risk", None)
+        _risk_enabled = getattr(_rcfg2, "enabled", False) if _rcfg2 else False
+    except Exception:
+        _risk_enabled = False
+
+    if _risk_enabled and qualified:
+        try:
+            risk_cfg = _rcfg2.portfolio if _rcfg2 else None
+            max_heat = getattr(risk_cfg, "max_heat_pct", 0.06) if risk_cfg else 0.06
+            max_sec = getattr(risk_cfg, "max_sector_pct", 0.40) if risk_cfg else 0.40
+
+            # Build positions list for risk analysis
+            _positions = []
+            for q in qualified:
+                _positions.append({
+                    "ticker": q["ticker"],
+                    "shares": q["shares"],
+                    "sector": q.get("sector", "Unknown"),
+                    "stop_distance": abs(q["entry"] - q["stop"]),
+                    "risk_amount": q["shares"] * abs(q["entry"] - q["stop"]),
+                })
+
+            capital_usd = CONFIG["CAPITAL_JPY"] / usd_jpy if usd_jpy > 0 else CONFIG["CAPITAL_JPY"]
+            portfolio_risk_info = PortfolioRisk.analyze(
+                _positions, capital_usd,
+                max_heat=max_heat, max_sector_pct=max_sec,
+            )
+        except Exception:
+            portfolio_risk_info = None
+
     # ── Phase 4: ソート ──────────────────────────────────────────────
     # ACTION優先 → RS + VCP + PF×10 の総合スコアで降順
     status_rank = {"ACTION": 3, "WAIT": 2, "EXTENDED": 1}
@@ -167,6 +314,10 @@ def run() -> None:
         "watchlist_wait": [q for q in qualified if q["status"] == "WAIT"][:8],
         "qualified_full": qualified,
     }
+    if regime_info is not None:
+        run_info["regime"] = regime_info.to_dict()
+    if portfolio_risk_info is not None:
+        run_info["portfolio_risk"] = portfolio_risk_info.to_dict()
 
     out_path = RESULTS_DIR / f"{date_str}.json"
     with open(out_path, "w", encoding="utf-8") as f:
@@ -192,6 +343,20 @@ def _notify(run_info: dict, usd_jpy: float) -> None:
         "─" * 20,
     ]
 
+    # Regime banner
+    regime = run_info.get("regime")
+    if regime:
+        r_label = regime["regime"].upper()
+        r_score = regime["score"]
+        lines.append(f"📊 Market Regime: {r_label} ({r_score:+d})")
+
+    # Portfolio risk banner
+    prisk = run_info.get("portfolio_risk")
+    if prisk:
+        heat = prisk["total_heat"] * 100
+        risk_lvl = prisk["risk_level"].upper()
+        lines.append(f"⚠️ Portfolio Risk: {risk_lvl} (heat: {heat:.1f}%)")
+
     if not selected:
         lines.append("⚠️  No actionable setups today.")
     else:
@@ -199,10 +364,13 @@ def _notify(run_info: dict, usd_jpy: float) -> None:
             sigs = ", ".join(s["vcp"]["signals"]) or "—"
             upside_str = f"  Analyst: {s['analyst_upside']:+.1f}%" if s.get("analyst_upside") else ""
             alert_str = "  ⚠️ INSIDER SELL" if s.get("insider_alert") else ""
+            earn_str = f"  📅 {s['earnings_warning']}" if s.get("earnings_warning") else ""
+            squeeze_str = "  💥 BB SQUEEZE" if s.get("bb_squeeze") else ""
+            candle_str = f"  🕯️ {s['candle_bias']}" if s.get("candle_bias") and s["candle_bias"] != "neutral" else ""
             lines += [
                 f"\n💎 {s['ticker']}  [RS{s['rs']} VCP{s['vcp']['score']} PF{s['pf']:.1f}]",
                 f"   {s['shares']}株  Entry ${s['entry']}  Stop ${s['stop']}  Target ${s['target']}",
-                f"   {sigs}{upside_str}{alert_str}",
+                f"   {sigs}{upside_str}{alert_str}{earn_str}{squeeze_str}{candle_str}",
                 "─" * 15,
             ]
 

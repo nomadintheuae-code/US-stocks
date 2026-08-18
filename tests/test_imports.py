@@ -15,6 +15,11 @@ CORE_MODULES = [
     "engines.sentinel_efficiency",
     "engines.filters",
     "engines.backtest",
+    "engines.earnings",
+    "engines.patterns",
+    "engines.regime",
+    "engines.risk",
+    "engines.pipeline",
 ]
 
 

@@ -132,7 +132,8 @@ def run_frozen_scan() -> dict:
              mock.patch.object(scanner.CurrencyEngine, "get_usd_jpy", lambda: meta.get("usd_jpy", 150.0)), \
              mock.patch.object(scanner.FundamentalEngine, "get", lambda ticker: {}), \
              mock.patch.object(scanner.InsiderEngine, "get", insider_stub), \
-             mock.patch.object(scanner.NewsEngine, "get", lambda ticker: {"articles": [], "fetched_at": "frozen"}):
+             mock.patch.object(scanner.NewsEngine, "get", lambda ticker: {"articles": [], "fetched_at": "frozen"}), \
+             mock.patch.object(scanner.EarningsCalendarEngine, "build_earnings_map", lambda tickers, days_ahead=14: {}):
 
             scanner.run()
 
