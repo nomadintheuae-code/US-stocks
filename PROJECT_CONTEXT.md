@@ -630,6 +630,14 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Regression: golden baseline unchanged (310/30/15)
 - Commit: `da8568b`
 
+**✅ SLICE 6.3 COMPLETE — Pipeline dispatch wired into sentinel.py** (2026-08-18):
+- Objective: Wire pipeline dispatch so `pipeline.enabled: true` routes through Pipeline — ACHIEVED
+- `sentinel.py`: early dispatch guard — when `pipeline.enabled=True`, calls `Pipeline.from_config(universe=TICKERS, output_dir=RESULTS_DIR).execute()` and returns; legacy flow untouched
+- `tests/test_pipeline.py`: +4 dispatch tests (enabled guard, disabled guard, code-path existence, sort parity) → 17 total
+- Full suite: **422 passed**, 0 failed
+- Regression: **9/9 passed** (138s)
+- Commit: `6b3a81b`
+
 ### Phase 7 Status (2026-08-18)
 **Phase 7 — Earnings Calendar Engine — COMPLETE**
 - `engines/earnings.py`: `EarningsCalendarEngine` with 5 methods (get_market_earnings, get_next_earnings, get_earnings_dates, filter_earnings_this_week, build_earnings_map)
