@@ -340,6 +340,14 @@ class NotificationConfig(BaseModel):
     line_chunk_size: int = Field(default=4000, ge=100, le=5000, description="メッセージ分割サイズ")
 
 
+class ExportConfig(BaseModel):
+    enabled: bool = Field(default=False, description="CSV/Excel出力有効化（既定で無効）")
+    csv: bool = Field(default=True, description="CSV出力（有効時）")
+    excel: bool = Field(default=True, description="Excel出力（有効時）")
+    include_watchlist: bool = Field(default=True, description="Excelにウォッチリストシート追加")
+    columns: Optional[List[str]] = Field(default=None, description="出力カラム（nullならデフォルト）")
+
+
 class UIConfig(BaseModel):
     default_language: str = Field(default="ja", description="デフォルト言語")
     chart_days: int = Field(default=120, ge=30, le=365, description="チャート表示日数")
@@ -366,6 +374,7 @@ class Config(BaseModel):
     risk: RiskConfig = Field(default_factory=RiskConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
+    export: ExportConfig = Field(default_factory=ExportConfig)
     ui: UIConfig = Field(default_factory=UIConfig)
 
     # Runtime values (not from config file)

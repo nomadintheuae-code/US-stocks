@@ -94,6 +94,7 @@ User input → DataEngine.get_data() → ECRStrategyEngine.analyze_single()
 | `engines/risk.py` | PositionSizer, PortfolioRisk, StopManager | Medium |
 | `engines/pipeline.py` | Configurable scan pipeline orchestrator | High |
 | `engines/markets.py` | Multi-market support (US stocks, Crypto, Forex) | Medium |
+| `engines/export.py` | CSV/Excel scan result export | Medium |
 | `engines/ecr_strategy.py` | ECR Strategy Engine (Energy Compression Rotation) | High |
 | `engines/sentinel_efficiency.py` | SES (Sentinel Efficiency Score) | High |
 | `engines/fundamental.py` | FundamentalEngine, InsiderEngine | Medium |
@@ -658,8 +659,8 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Tests: 21 passing
 - Full suite: **516 passed**
 
-### Phase 8 Status (2026-08-18)
-**Phase 8 — Technical Patterns Engine — COMPLETE**
+### Phase 8A Status (2026-08-18)
+**Phase 8A — Technical Patterns Engine — COMPLETE**
 - `engines/patterns.py`: `FibonacciEngine`, `CandlestickEngine`, `BBSqueezeEngine`
 - Fibonacci: swing detection, retracement/extension levels, nearest level analysis
 - Candlestick: doji, hammer, inverted_hammer, marubozu, engulfing pattern detection
@@ -667,6 +668,17 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - Config: `patterns` section (fibonacci.lookback, candlestick.*, bb_squeeze.*)
 - Integration: Phase 3.6 pattern analysis in sentinel.py
 - Tests: 35 passing
+
+### Phase 8B Status (2026-08-18)
+**Phase 8B — CSV/Excel Export — COMPLETE**
+- `engines/export.py`: `export_csv()`, `export_excel()`, `run_export()`
+- CSV: utf-8-sig encoding, configurable columns, nested VCP flattening
+- Excel: openpyxl with header styling, auto-width, freeze panes, watchlist sheet
+- Default columns: ticker, status, price, entry, stop, target, shares, rs, pf, sector
+- Config: `export:` section (enabled, csv, excel, include_watchlist, columns)
+- Integration: sentinel.py auto-exports after JSON save when enabled
+- Tests: 23 passing
+- Full suite: **539 passed**
 
 ### Phase 9 Status (2026-08-18)
 **Phase 9 — Market Regime Engine — COMPLETE**
@@ -881,7 +893,7 @@ result = vcp.calculate(df)  # returns score, atr, signals, breakdown
 - [x] Market Regime Engine (engines/regime.py) — DONE 2026-08-18 (Phase 9, committed `da8568b`)
 - [x] Enhanced Risk Management (engines/risk.py) — DONE 2026-08-18 (Phase 10, committed `da8568b`)
 - [x] Multi-market support (Crypto, Forex) — DONE 2026-08-18 (Phase 7, engines/markets.py)
-- [ ] CSV/Excel export from dashboard
+- [x] CSV/Excel export from dashboard — DONE 2026-08-18 (Phase 8, engines/export.py)
 
 ## 11. Current Plan
 

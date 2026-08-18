@@ -276,6 +276,18 @@ notification:
   line_chunk_size: 4000          # LINEメッセージ分割サイズ
 
 # ==============================================================================
+# CSV/EXCEL EXPORT (Phase 8) — OPT-IN, DISABLED BY DEFAULT
+# ==============================================================================
+# Scan result export to CSV and Excel files in ./results/.
+# While disabled, no export files are created.
+export:
+  enabled: false                 # CSV/Excel出力有効化（既定で無効）
+  csv: true                      # CSV出力（有効時）
+  excel: true                    # Excel出力（有効時）
+  include_watchlist: true        # Excelにウォッチリストシート追加
+  columns: null                  # 出力カラム（nullならデフォルトカラム使用）
+
+# ==============================================================================
 # UI SETTINGS
 # ==============================================================================
 ui:

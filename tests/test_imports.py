@@ -21,6 +21,7 @@ CORE_MODULES = [
     "engines.risk",
     "engines.pipeline",
     "engines.markets",
+    "engines.export",
 ]
 
 

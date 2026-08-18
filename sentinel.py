@@ -356,6 +356,28 @@ def run() -> None:
     print(f"   Qualified: {len(qualified)}  |  Action: {len(selected)}")
     print(f"   Runtime: {run_info['runtime']}")
 
+    # ── CSV/Excel Export ────────────────────────────────────────────────
+    try:
+        from sentinel.config import get_config as _gcfg3
+        _ecfg = getattr(_gcfg3(), "export", None)
+        if _ecfg is not None and getattr(_ecfg, "enabled", False):
+            from engines.export import run_export
+            _watchlist = run_info.get("watchlist_wait", [])
+            _cols = getattr(_ecfg, "columns", None)
+            exported = run_export(
+                selected=selected,
+                qualified_full=qualified,
+                watchlist_wait=_watchlist if getattr(_ecfg, "include_watchlist", True) else None,
+                output_dir=RESULTS_DIR,
+                csv_enabled=getattr(_ecfg, "csv", True),
+                excel_enabled=getattr(_ecfg, "excel", True),
+                columns=_cols,
+            )
+            for fmt, path in exported.items():
+                print(f"   📄 {fmt.upper()} → {path}")
+    except Exception:
+        pass
+
     # ── LINE 通知 ─────────────────────────────────────────────────────
     _notify(run_info, usd_jpy)
 
