@@ -152,6 +152,45 @@ pytest                      # or: python -m pytest
 
 The suite contains 169 tests (offline, no network) covering config loading, FMP client, indicator calculations (RSIndicator + VCPIndicator + VCP pivot/breakout + walk-forward), strategy layer (RelativeStrengthRanking, VCPBreakoutStrategy, MinerviniTrendTemplate), import checks, and the Phase 2 golden regression replay.
 
+
+## Premarket Alerts (التنبيهات قبل الافتتاح)
+
+Quick scanner for the `stockanalysis.com` premarket movers list, focused on stocks between **$2 and $50**:
+
+```bash
+./venv/bin/python premarket_alerts.py
+```
+
+What it does:
+
+- Scrapes the premarket gainers/losers tables and filters by price range (`--min-price 2 --max-price 50`)
+- Fetches recent headlines per symbol (Yahoo Finance + Google News RSS, cached 30 min)
+- Classifies each move as real catalyst (earnings/FDA/contract/M&A), mixed, speculative, or unclear
+- Prints an Arabic report with reasons, suitability hint (swing vs day trade), optional JSON export and LINE push
+
+Common options:
+
+```bash
+./venv/bin/python premarket_alerts.py --side gainers --min-change 10 --line
+./venv/bin/python premarket_alerts.py --refresh --json results/premarket.json
+```
+
+**HTML report generator** (`premarket_html_report.py`) builds a mobile-friendly Arabic page for gainers only,
+saves it to `~/Documents/PremarketAlerts_<date>_<time>.html`, and **opens it in the browser automatically**.
+It reuses the project engines (yfinance only) to add a per-stock technical layer
+(VCP/RS vs SPY, market regime, ATR-based entry/stop/targets, suggested position size) and an upcoming-earnings flag:
+
+```bash
+./venv/bin/python premarket_html_report.py          # توليد وفتح فوري
+./venv/bin/python premarket_html_report.py --no-open   # توليد بدون فتح
+```
+
+Run it from cron every 15–30 min during the premarket session (11:00–16:30 Riyadh time):
+
+```bash
+*/15 11-16 * * 1-5 cd /home/macbook-cachy/Projects/US-stocks && ./venv/bin/python premarket_alerts.py --side both --line >> cache_premarket/cron.log 2>&1
+```
+
 ## Known Limitations
 
 - **FMP news returns HTTP 402** on the current FMP plan. `app.py` handles this gracefully and shows a notice instead of crashing; the RSS/Yahoo news path (`engines/news.py`, used by `app2.py`) is unaffected. Upgrading the FMP plan (or using the RSS path) is required for FMP news.

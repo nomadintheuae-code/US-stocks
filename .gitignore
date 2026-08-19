@@ -24,3 +24,7 @@ results/*.json
 
 # Backup / docs generated
 AUDIT_REPORT.md
+
+# Premarket share/cache
+serve_premarket/
+cache_premarket/
