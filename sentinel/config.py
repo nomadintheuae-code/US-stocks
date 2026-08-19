@@ -210,6 +210,17 @@ class EarningsFilterConfig(BaseModel):
         return self
 
 
+class PriceFilterConfig(BaseModel):
+    min_price: Optional[float] = Field(default=None, ge=0, description="最低価格(USD)")
+    max_price: Optional[float] = Field(default=None, ge=0, description="最高価格(USD)")
+
+    @model_validator(mode="after")
+    def check_range(self) -> "PriceFilterConfig":
+        if self.min_price is not None and self.max_price is not None and self.min_price > self.max_price:
+            raise ValueError("price.min_price must be <= price.max_price")
+        return self
+
+
 class FibonacciConfig(BaseModel):
     lookback: int = Field(default=60, ge=10, le=200, description="フィボナッチ・スイング検出ルックバック")
 
@@ -307,6 +318,7 @@ class FilterConfig(BaseModel):
     enabled: bool = Field(default=False, description="フィルタ有効化（既定で無効）")
     liquidity: LiquidityFilterConfig = Field(default_factory=LiquidityFilterConfig)
     market_cap: MarketCapFilterConfig = Field(default_factory=MarketCapFilterConfig)
+    price: PriceFilterConfig = Field(default_factory=PriceFilterConfig)
     sector: SectorFilterConfig = Field(default_factory=SectorFilterConfig)
     fundamental: FundamentalFilterConfig = Field(default_factory=FundamentalFilterConfig)
     earnings: EarningsFilterConfig = Field(default_factory=EarningsFilterConfig)

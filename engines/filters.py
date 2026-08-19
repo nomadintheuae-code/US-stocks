@@ -290,6 +290,59 @@ class FundamentalFilter(Filter):
         return FilterResult(passed=True)
 
 
+class PriceFilter(Filter):
+    """Universe-stage price range filter.
+
+    Applies ``min_price`` / ``max_price`` (inclusive) to the latest closing
+    price from ``ctx.df`` (OHLCV frame). When the frame is unavailable,
+    falls back to ``ctx.profile["price"]``. Missing data is
+    default-permissive.
+    """
+
+    name = "price"
+    stage = STAGE_UNIVERSE
+
+    def __init__(
+        self,
+        min_price: Optional[float] = None,
+        max_price: Optional[float] = None,
+    ) -> None:
+        self.min_price = min_price
+        self.max_price = max_price
+
+    def check(self, ctx: FilterContext) -> FilterResult:
+        if self.min_price is None and self.max_price is None:
+            return FilterResult(passed=True)
+
+        price = self._get_price(ctx)
+        if price is None:
+            return FilterResult(passed=True)
+
+        if self.min_price is not None and price < self.min_price:
+            return FilterResult(passed=False, reason=f"price {price:.2f} < {self.min_price:.2f}")
+        if self.max_price is not None and price > self.max_price:
+            return FilterResult(passed=False, reason=f"price {price:.2f} > {self.max_price:.2f}")
+        return FilterResult(passed=True)
+
+    @staticmethod
+    def _get_price(ctx: FilterContext) -> Optional[float]:
+        # Try OHLCV frame first (latest close)
+        if ctx.df is not None and not ctx.df.empty:
+            try:
+                return float(ctx.df["Close"].iloc[-1])
+            except Exception:
+                pass
+        # Fallback to profile
+        if ctx.profile:
+            p = ctx.profile.get("price")
+            if p is not None:
+                try:
+                    return float(p)
+                except (TypeError, ValueError):
+                    pass
+        return None
+
+
 class EarningsFilter(Filter):
     """Universe-stage earnings calendar filter.
 
@@ -418,7 +471,10 @@ class FilterEngine:
             except Exception:
                 cfg = None
 
+        # Support both Config (has .filters) and FilterConfig passed directly
         filter_cfg = getattr(cfg, "filters", None)
+        if filter_cfg is None and hasattr(cfg, "enabled") and hasattr(cfg, "liquidity"):
+            filter_cfg = cfg  # already a FilterConfig
         enabled = bool(filter_cfg.enabled) if filter_cfg is not None else False
         if enabled_override is not None:
             enabled = bool(enabled_override)
@@ -447,6 +503,10 @@ class FilterEngine:
         mc = filter_cfg.market_cap
         if mc.min_usd is not None or mc.max_usd is not None:
             filters.append(MarketCapFilter(min_usd=mc.min_usd, max_usd=mc.max_usd))
+
+        pr = getattr(filter_cfg, "price", None)
+        if pr is not None and (pr.min_price is not None or pr.max_price is not None):
+            filters.append(PriceFilter(min_price=pr.min_price, max_price=pr.max_price))
 
         sector = filter_cfg.sector
         if sector.include or sector.exclude:
@@ -581,6 +641,7 @@ __all__ = [
     "Filter",
     "LiquidityFilter",
     "MarketCapFilter",
+    "PriceFilter",
     "SectorFilter",
     "FundamentalFilter",
     "EarningsFilter",

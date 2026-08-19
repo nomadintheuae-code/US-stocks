@@ -195,7 +195,9 @@ def test_universemanager_external_empty_file_falls_back(tmp_path):
 
 def test_filters_config_default_disabled():
     cfg = get_config()
-    assert cfg.filters.enabled is False
+    assert cfg.filters.enabled is True
+    assert cfg.filters.price.min_price == 2.0
+    assert cfg.filters.price.max_price == 50.0
     assert cfg.filters.liquidity.min_avg_dollar_volume is None
     assert cfg.filters.liquidity.min_avg_volume is None
     assert cfg.filters.market_cap.min_usd is None

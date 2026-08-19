@@ -12,6 +12,7 @@ from engines.filters import (
     FundamentalFilter,
     LiquidityFilter,
     MarketCapFilter,
+    PriceFilter,
     SectorFilter,
 )
 
@@ -256,7 +257,7 @@ def test_engine_from_config_enabled_override():
 
 def test_engine_from_config_default_loads_current_yaml():
     eng = FilterEngine.from_config()
-    assert eng.enabled is False  # config.yaml filters.enabled: false
+    assert eng.enabled is True  # config.yaml filters.enabled: true
 
 
 def test_engine_add_many():
@@ -861,7 +862,7 @@ def _full_engine():
 def _rich_context(ticker, **overrides) -> FilterContext:
     """A context that passes every threshold of the full engine."""
     ctx = dict(
-        df=pd.DataFrame({"Close": [100.0, 100.0, 100.0], "Volume": [1000, 1000, 1000]}),
+        df=pd.DataFrame({"Close": [25.0, 25.0, 25.0], "Volume": [5000, 5000, 5000]}),
         sector="Technology",
         profile={"market_cap": 2e11, "revenue_growth": 0.25, "pe_forward": 25.0},
     )
@@ -1065,12 +1066,169 @@ def test_integration_default_config_engine_is_disabled_noop():
     from sentinel.config import get_config
 
     cfg = get_config()
-    assert cfg.filters.enabled is False
+    # filters.enabled is now true (price filter active), but the engine
+    # still works as a pass-through when no provider data is supplied
     eng = FilterEngine.from_config(config=cfg)
-    assert eng.enabled is False
+    assert eng.enabled is True
 
     universe = ["AAPL", "MSFT", "XOM"]
     kept, rejected = eng.filter_universe(universe, provider=_rich_context)
     assert kept == universe and rejected == []
     kept_c, rejected_c = eng.filter_candidates(universe, provider=_rich_context)
     assert kept_c == universe and rejected_c == []
+
+
+# ---------------------------------------------------------------------------
+# PriceFilter unit tests
+# ---------------------------------------------------------------------------
+
+def test_price_filter_pass_within_range():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [30.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is True
+
+
+def test_price_filter_reject_below_min():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [1.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    r = f.check(ctx)
+    assert r.passed is False
+    assert "1.00" in r.reason
+
+
+def test_price_filter_reject_above_max():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [60.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    r = f.check(ctx)
+    assert r.passed is False
+    assert "60.00" in r.reason
+
+
+def test_price_filter_boundary_min():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [2.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is True
+
+
+def test_price_filter_boundary_max():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [50.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is True
+
+
+def test_price_filter_min_only():
+    f = PriceFilter(min_price=5.0)
+    df = pd.DataFrame({"Close": [3.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is False
+
+    df2 = pd.DataFrame({"Close": [10.0]})
+    ctx2 = FilterContext(ticker="TST", df=df2)
+    assert f.check(ctx2).passed is True
+
+
+def test_price_filter_max_only():
+    f = PriceFilter(max_price=50.0)
+    df = pd.DataFrame({"Close": [60.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is False
+
+    df2 = pd.DataFrame({"Close": [40.0]})
+    ctx2 = FilterContext(ticker="TST", df=df2)
+    assert f.check(ctx2).passed is True
+
+
+def test_price_filter_no_config():
+    f = PriceFilter()
+    df = pd.DataFrame({"Close": [999.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is True
+
+
+def test_price_filter_fallback_to_profile():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    ctx = FilterContext(ticker="TST", profile={"price": 25.0})
+    assert f.check(ctx).passed is True
+
+    ctx2 = FilterContext(ticker="TST", profile={"price": 60.0})
+    assert f.check(ctx2).passed is False
+
+
+def test_price_filter_missing_data_permissive():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    ctx = FilterContext(ticker="TST")
+    assert f.check(ctx).passed is True
+
+
+def test_price_filter_empty_df():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    ctx = FilterContext(ticker="TST", df=pd.DataFrame())
+    assert f.check(ctx).passed is True
+
+
+def test_price_filter_uses_last_close():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [10.0, 20.0, 30.0]})
+    ctx = FilterContext(ticker="TST", df=df)
+    assert f.check(ctx).passed is True
+
+    df2 = pd.DataFrame({"Close": [10.0, 20.0, 60.0]})
+    ctx2 = FilterContext(ticker="TST", df=df2)
+    assert f.check(ctx2).passed is False
+
+
+def test_price_filter_name_and_stage():
+    f = PriceFilter(min_price=2.0)
+    assert f.name == "price"
+    assert f.stage == STAGE_UNIVERSE
+
+
+def test_price_filter_no_input_mutation():
+    f = PriceFilter(min_price=2.0, max_price=50.0)
+    df = pd.DataFrame({"Close": [30.0]})
+    original = df.copy()
+    ctx = FilterContext(ticker="TST", df=df)
+    f.check(ctx)
+    assert df.equals(original)
+
+
+# ---------------------------------------------------------------------------
+# from_config wiring tests (PriceFilter)
+# ---------------------------------------------------------------------------
+
+def test_from_config_price_filter_wired():
+    from sentinel.config import FilterConfig, PriceFilterConfig
+
+    cfg = FilterConfig(
+        enabled=True,
+        price=PriceFilterConfig(min_price=2.0, max_price=50.0),
+    )
+    eng = FilterEngine.from_config(config=cfg, enabled_override=True)
+    assert eng.enabled is True
+    assert "price" in eng.names
+
+    df_pass = pd.DataFrame({"Close": [25.0]})
+    df_fail = pd.DataFrame({"Close": [60.0]})
+    kept, rejected = eng.filter_universe(
+        ["PASS", "FAIL"],
+        provider=lambda t: FilterContext(ticker=t, df=df_pass if t == "PASS" else df_fail),
+    )
+    assert kept == ["PASS"]
+    assert len(rejected) == 1
+    assert rejected[0]["filter"] == "price"
+
+
+def test_from_config_price_filter_not_added_when_null():
+    from sentinel.config import FilterConfig, PriceFilterConfig
+
+    cfg = FilterConfig(
+        enabled=True,
+        price=PriceFilterConfig(),
+    )
+    eng = FilterEngine.from_config(config=cfg, enabled_override=True)
+    assert "price" not in eng.names
