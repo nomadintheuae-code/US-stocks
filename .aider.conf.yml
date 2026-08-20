@@ -1,0 +1,24 @@
+# Aider Configuration
+# Points to: AI_INSTRUCTIONS.md for full rules
+
+model: deepseek/deepseek-chat
+auto-commits: false
+git-commit: false
+
+# Read these files for context
+read:
+  - AI_INSTRUCTIONS.md
+  - PROJECT_CONTEXT.md
+  - README.md
+
+# Never read or commit these
+ignore:
+  - .env
+  - venv/
+  - cache_v45/
+  - __pycache__/
+  - "*.log"
+
+# Commit format when committing
+# aider: action: description
+# Example: aider: feat: add new filter engine

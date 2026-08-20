@@ -1,0 +1,43 @@
+# Hermes Agent Skills for SENTINEL PRO - US Stock Scanner
+# Points to: AI_INSTRUCTIONS.md for full rules
+
+project: US-stocks
+ai_instructions: AI_INSTRUCTIONS.md
+project_context: PROJECT_CONTEXT.md
+
+skills:
+  - name: sentinel-scan
+    command: ./venv/bin/python sentinel.py
+    description: Run full 310-ticker scan for VCP/RS setups
+    timeout: 300
+
+  - name: sentinel-test
+    command: ./venv/bin/python -m pytest --tb=short -q
+    description: Run full test suite
+    timeout: 300
+
+  - name: sentinel-test-fast
+    command: ./venv/bin/python -m pytest tests/test_config.py tests/test_analysis.py -q
+    description: Run fast tests (config + analysis only)
+    timeout: 60
+
+  - name: sentinel-backup
+    command: tar -czf ~/ProjectBackups/US-stocks/US-stocks_$(date +%Y-%m-%d_%H-%M).tar.gz --exclude='venv' --exclude='__pycache__' --exclude='cache_v45' --exclude='cache' --exclude='.env' --exclude='.git' --exclude='*.log' .
+    description: Create backup of project
+    timeout: 60
+
+  - name: sentinel-status
+    command: git status && echo "---" && git log --oneline -5
+    description: Check git status and recent commits
+
+  - name: sentinel-dashboard
+    command: ./venv/bin/streamlit run app2.py
+    description: Launch Streamlit dashboard (ECR strategy)
+    background: true
+
+memory:
+  test_command: "./venv/bin/python -m pytest --tb=short -q"
+  backup_location: "~/ProjectBackups/US-stocks/"
+  config_file: "config.yaml"
+  secrets_file: ".env"
+  dashboard_port: 8501

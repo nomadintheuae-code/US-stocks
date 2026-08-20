@@ -410,5 +410,269 @@ If session interrupted (crash, network, context limit, model change):
 
 ---
 
-*Last updated: 2026-08-11*
-*Version: 1.0*
+## 16. Universal AI CLI Rules
+
+### Required Before ANY Session (All AI Tools)
+1. Read this file (AI_INSTRUCTIONS.md) — START HERE
+2. Read PROJECT_CONTEXT.md — current state of project
+3. Read README.md — overview and setup
+4. Check `git status` — working tree state
+5. Check `git log -5 --oneline` — recent history
+6. Verify Python environment: `./venv/bin/python --version`
+
+### File Priority (ALL AI Tools Must Follow)
+1. `.env` → NEVER read, NEVER commit, NEVER log
+2. `config.yaml` → READ only, modify ONLY with explicit approval
+3. `AI_INSTRUCTIONS.md` → READ only, modify ONLY with explicit approval
+4. `PROJECT_CONTEXT.md` → READ and UPDATE allowed (document changes)
+
+### Forbidden Patterns (ALL AI Tools)
+- Never run: `rm -rf`, `sudo`, `git push --force`
+- Never commit: `.env`, `*.key`, `*_secret*`, `*token*`
+- Never skip: tests, backups, documentation
+- Never claim completion if tests fail
+
+### Universal Test Command
+```bash
+./venv/bin/python -m pytest --tb=short -q
+```
+
+### Universal Backup Command
+```bash
+tar -czf ~/ProjectBackups/US-stocks/US-stocks_$(date +%Y-%m-%d_%H-%M).tar.gz \
+  --exclude='venv' --exclude='__pycache__' --exclude='cache_v45' \
+  --exclude='cache' --exclude='.env' --exclude='.git' --exclude='*.log' \
+  .
+```
+
+---
+
+## 17. Change Documentation Protocol (MANDATORY)
+
+### Every AI Model MUST Document Changes
+When making ANY change to the project, you MUST record:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Date/Time** | UTC timestamp | `2026-08-20 15:30` |
+| **Tool** | Which AI tool made the change | `Hermes`, `Codex`, `Claude`, `opencode`, `Aider` |
+| **Action** | What was changed | `Added new filter engine` |
+| **Reason** | Why it was changed | `To filter low-liquidity stocks` |
+| **Files** | List of files modified | `engines/filters.py, tests/test_filters.py` |
+| **Tests** | Test results after change | `555 passed, 0 failed` |
+
+### Where to Document
+
+| Change Size | Documentation Location |
+|-------------|----------------------|
+| **Minor** (typo, small fix) | Git commit message only |
+| **Medium** (new feature, refactor) | Git commit + PROJECT_CONTEXT.md |
+| **Major** (architecture, phases) | Git commit + PROJECT_CONTEXT.md + Session History |
+
+### Session History Entry Format (required at session end)
+```markdown
+### YYYY-MM-DD HH:MM — [TOOL NAME]
+**Goal**: [what was intended]
+**Work completed**: [list of changes]
+**Files changed**: [list]
+**Tests**: [result]
+**Tool used**: [Hermes/Codex/Claude/opencode/Aider/Other]
+**Next step**: [what comes next]
+```
+
+### Git Commit Format
+```
+[tool]: action: description
+
+Tools: hermes, codex, claude, opencode, aider, manual
+Actions: feat, fix, refactor, config, test, docs, style
+
+Examples:
+hermes: feat: add new filter engine
+codex: fix: resolve VCP calculation bug
+claude: refactor: extract common utilities
+opencode: config: update cache settings
+aider: test: add unit tests for filters
+```
+
+### Prohibited
+- ❌ Making changes without documenting
+- ❌ Leaving PROJECT_CONTEXT.md outdated
+- ❌ Forgetting to update "Last updated" date
+- ❌ Not specifying which AI tool made the change
+- ❌ Fabricating information in documentation
+
+---
+
+## 18. Hermes Agent Configuration
+
+### Installation
+```bash
+pip install hermes-agent
+hermes init
+```
+
+### Hermes-Specific Rules
+- Use `hermes skills list` to verify available skills
+- Hermes memory: stored in `~/.hermes/memory/`
+- Skills auto-created from successful tasks
+- Provider: use same `.env` keys (FMP_API_KEY, DEEPSEEK_API_KEY)
+
+### Hermes Skills for This Project
+```yaml
+skills:
+  - name: sentinel-scan
+    command: ./venv/bin/python sentinel.py
+    description: Run full 310-ticker scan
+    
+  - name: sentinel-test
+    command: ./venv/bin/python -m pytest --tb=short -q
+    description: Run test suite
+    
+  - name: sentinel-backup
+    command: tar -czf ~/ProjectBackups/US-stocks/US-stocks_$(date +%Y-%m-%d_%H-%M).tar.gz --exclude='venv' --exclude='__pycache__' --exclude='.env' .
+    description: Create backup
+```
+
+### Hermes Memory Seeds
+```json
+{
+  "project": "US-stocks",
+  "test_command": "./venv/bin/python -m pytest --tb=short -q",
+  "backup_location": "~/ProjectBackups/US-stocks/",
+  "config_file": "config.yaml",
+  "secrets_file": ".env",
+  "ai_instructions": "AI_INSTRUCTIONS.md"
+}
+```
+
+---
+
+## 19. OpenAI Codex Configuration
+
+### Installation
+```bash
+npm install -g @openai/codex
+```
+
+### Codex-Specific Rules
+- Codex reads: `AGENTS.md`, `codex.md`, or `AI_INSTRUCTIONS.md`
+- Config: `~/.codex/config.json`
+- Model: use `o3-mini` or `gpt-4o` for this project
+
+### Codex Configuration (`~/.codex/config.json`)
+```json
+{
+  "model": "o3-mini",
+  "approval_mode": "suggest",
+  "instructions_file": "AI_INSTRUCTIONS.md",
+  "ignore_patterns": [".env", "venv/", "cache_v45/", "__pycache__/"]
+}
+```
+
+### Project-Level AGENTS.md
+See `AGENTS.md` in project root — points to AI_INSTRUCTIONS.md
+
+---
+
+## 20. Claude Code Configuration
+
+### Installation
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+### Claude Code Rules
+- Uses: `CLAUDE.md` or `AI_INSTRUCTIONS.md`
+- Config: `~/.claude/config.json`
+- Model: `claude-sonnet-4-20250514`
+
+### Claude Code Configuration (`~/.claude/config.json`)
+```json
+{
+  "model": "claude-sonnet-4-20250514",
+  "instructions_file": "AI_INSTRUCTIONS.md",
+  "ignore_patterns": [".env", "venv/", "cache_v45/"]
+}
+```
+
+### Project-Level CLAUDE.md
+See `CLAUDE.md` in project root — points to AI_INSTRUCTIONS.md
+
+---
+
+## 21. Aider Configuration
+
+### Installation
+```bash
+pip install aider-chat
+```
+
+### Aider Rules
+- Config: `.aider.conf.yml` or `~/.aider.conf.yml`
+- Model: use `deepseek/deepseek-chat` or `claude-sonnet-4-20250514`
+
+### Project-Level Config
+See `.aider.conf.yml` in project root
+
+---
+
+## 22. Multi-Device Sync Protocol
+
+### Files to Sync (Always)
+- `AI_INSTRUCTIONS.md` — rules
+- `PROJECT_CONTEXT.md` — state
+- `config.yaml` — configuration
+- `.env.sample` — template (NOT .env)
+- `requirements.txt` — dependencies
+- All source code (`*.py`)
+- All tests (`tests/`)
+- `scripts/` — utilities
+
+### Files NEVER to Sync
+- `.env` — use `.env.sample` + manual secure copy
+- `venv/` — recreate on each device
+- `cache_v45/` — regenerate
+- `__pycache__/` — regenerate
+- `*.log` — temporary
+
+### Sync Methods (Priority Order)
+1. **Git** (preferred): `git push origin main` → `git clone`
+2. **Cloud Drive**: Google Drive / Dropbox / OneDrive
+3. **USB**: Direct copy
+4. **SCP**: `scp -r user@host:~/Projects/US-stocks .`
+
+### Device Setup Checklist
+- [ ] Clone repo or copy files
+- [ ] Create venv: `python -m venv venv`
+- [ ] Install deps: `pip install -r requirements.txt`
+- [ ] Copy `.env` (manually, securely)
+- [ ] Verify: `./venv/bin/python -m pytest --tb=short -q`
+
+---
+
+## 23. AI Instructions Version Control
+
+### Versioning Scheme
+- **Major**: 1.0 → 2.0 (breaking changes to rules)
+- **Minor**: 1.0 → 1.1 (new sections, significant additions)
+- **Patch**: 1.0.1 → 1.0.2 (typo fixes, clarifications)
+
+### Changelog
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | 2026-08-11 | Initial creation | opencode |
+| 1.1 | 2026-08-20 | Added Sections 16-23 (Universal AI Rules, Hermes, Codex, Claude, Aider, Sync, Versioning) | opencode |
+
+### Update Protocol
+1. Edit `AI_INSTRUCTIONS.md`
+2. Update "Last updated" date at bottom
+3. Update Version number at bottom
+4. Add entry to Changelog table above
+5. Commit: `docs: update AI_INSTRUCTIONS.md vX.Y`
+6. Sync to all devices via git
+
+---
+
+*Last updated: 2026-08-20 15:30 UTC*
+*Version: 1.1*
